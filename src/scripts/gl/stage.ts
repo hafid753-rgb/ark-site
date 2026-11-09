@@ -87,7 +87,7 @@ export async function startStage() {
     cellMat.uniforms.uCells.value.set(cols, rows);
     compMat.uniforms.uCells.value.set(cols, rows);
     compMat.uniforms.uRes.value.set(bw, bh);
-    compMat.uniforms.uRadius.value = 12 * pr;
+    compMat.uniforms.uPx.value = pr;
     measure();
   };
   resize();
@@ -115,6 +115,42 @@ export async function startStage() {
   lensEl.addEventListener('pointermove', drag);
   lensEl.addEventListener('pointerup', () => (lens.drag = false));
   lensEl.addEventListener('pointercancel', () => (lens.drag = false));
+
+  // Hold the glass and it floods the screen: everything shows in 3D. Press again for the letters.
+  // `grow` is a spring, so the glass swells, overshoots a little and settles like a drop of liquid.
+  const glass = { real: false, grow: 0, vel: 0, hold: 0, holding: false, sx: 0, sy: 0, timer: 0, armed: false };
+  let lensChapter = false; // does the current chapter have letters to trade for 3D?
+  const hints = [...document.querySelectorAll<HTMLElement>('[data-hint-real]')];
+  const setReal = (real: boolean) => {
+    glass.real = real;
+    document.documentElement.dataset.view = real ? 'real' : 'letters';
+    hints.forEach((h) => (h.textContent = real ? h.dataset.hintReal! : (touch && h.dataset.hintTouch) || h.dataset.hint!));
+    navigator.vibrate?.(8);
+  };
+  const busy = (t: EventTarget | null) => (t as Element | null)?.closest?.('a, button, input, select, label, summary, .phone, .bar, .rail');
+  addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || !lensChapter || busy(e.target)) return;
+    glass.sx = e.clientX;
+    glass.sy = e.clientY;
+    if (glass.real) { glass.armed = true; return; }
+    if (touch && e.target !== lensEl) return; // on touch screens, only the glass itself is held
+    glass.holding = true;
+    clearTimeout(glass.timer);
+    glass.timer = window.setTimeout(() => { glass.holding = false; setReal(true); }, 480);
+  });
+  addEventListener('pointermove', (e) => {
+    if (Math.hypot(e.clientX - glass.sx, e.clientY - glass.sy) < 12) return;
+    glass.armed = false;
+    if (glass.holding) { glass.holding = false; clearTimeout(glass.timer); }
+  }, { passive: true });
+  const release = () => {
+    clearTimeout(glass.timer);
+    glass.holding = false;
+    if (glass.armed && glass.real) setReal(false);
+    glass.armed = false;
+  };
+  addEventListener('pointerup', release);
+  addEventListener('pointercancel', () => { glass.armed = false; release(); });
 
   // Clicking a room in the 3D house toggles its light (the scene decides what was hit).
   let active: Chapter | undefined;
@@ -212,8 +248,16 @@ export async function startStage() {
     ch.camera.updateMatrixWorld();
 
     // Lens placement: the pointer once it has moved, otherwise the scene's subject.
-    const lensOn = ch.lens !== 0 && fade > 0.6;
-    const lw = touch ? 92 : 124, lh = lw / 2;
+    lensChapter = ch.lens !== 0;
+    if (reduced) { glass.grow = glass.real ? 1 : 0; glass.vel = 0; }
+    else {
+      glass.vel += ((glass.real ? 1 : 0) - glass.grow) * 70 * dt - glass.vel * 12 * dt;
+      glass.grow += glass.vel * dt;
+    }
+    glass.hold = approach(glass.hold, glass.holding ? 1 : 0, dt, glass.holding ? 2.4 : 10);
+    const flooded = glass.real && glass.grow > 0.995;
+    const lensOn = lensChapter && (fade > 0.6 || glass.grow > 0.01);
+    const lw = (touch ? 64 : 80) * (1 + glass.hold * 0.14), lh = lw / 2;
     if (!lens.moved && ch.focus) {
       const v = ch.focus.clone().project(ch.camera);
       const x = ((v.x + 1) / 2) * W, y = ((1 - v.y) / 2) * H;
@@ -223,28 +267,41 @@ export async function startStage() {
       lens.x = approach(lens.x, lens.tx, dt, 9);
       lens.y = approach(lens.y, lens.ty, dt, 9);
     }
-    lensEl.classList.toggle('on', lensOn);
+    lensEl.classList.toggle('on', lensOn && !glass.real);
     lensEl.style.width = `${lw * 2}px`;
     lensEl.style.height = `${lh * 2}px`;
     lensEl.style.transform = `translate(${lens.x - lw}px, ${lens.y - lh}px)`;
-    if (lensOn) lensPx.set(lens.x * pr, (H - lens.y) * pr, lw * pr, lh * pr);
+    // The glass's size: the small lens, swelling to cover the screen as `grow` reaches 1.
+    const g = glass.grow;
+    const reach = 0.4 * Math.max(W, H);
+    const fx = Math.max(lens.x, W - lens.x) + reach, fy = Math.max(lens.y, H - lens.y) + reach;
+    const k = g >= 0 ? g : 0;
+    const wob = Math.max(-0.12, Math.min(0.12, glass.vel * 0.05)) * (1 - Math.min(1, Math.abs(g)));
+    const gw = (lw + (fx - lw) * k) * (g < 0 ? 1 + g * 2 : 1) * (1 + wob);
+    const gh = (lh + (fy - lh) * k) * (g < 0 ? 1 + g * 2 : 1) * (1 - wob);
+    const u = compMat.uniforms;
+    u.uRadius.value = Math.min(gw, gh) * 0.6 * pr;
+    u.uBevel.value = Math.min(30, lh * 0.8) * pr;
+    u.uGrow.value = Math.min(1, k);
+    // The x-ray (device chapter) needs the shell cut away under the small lens only.
+    if (lensOn && ch.lens === 2 && g < 0.01) lensPx.set(lens.x * pr, (H - lens.y) * pr, gw * pr, gh * pr);
     else lensPx.set(-9999, -9999, 1, 1);
     showMarkers(ch, (ch.anchorAlpha ?? 0) * (fade > 0.6 ? 1 : 0));
 
     renderer.setRenderTarget(sceneRT);
     renderer.render(ch.scene, ch.camera);
-    const glyphOn = ch.glyph > 0 || ch.lens !== 0;
+    const glyphOn = (ch.glyph > 0 || ch.lens !== 0) && !flooded;
     if (glyphOn) {
       cellMat.uniforms.tScene.value = sceneRT.texture;
       renderer.setRenderTarget(cellRT);
       renderer.render(cellQuad, quadCam);
     }
-    const u = compMat.uniforms;
     u.tScene.value = sceneRT.texture;
     u.tCells.value = cellRT.texture;
     u.uGlyphMix.value = glyphOn ? ch.glyph : 0;
-    u.uLensMode.value = lensOn ? ch.lens : 0;
-    u.uLens.value.copy(lensPx);
+    // Once the glass grows it shows the real scene everywhere it reaches, whatever the chapter.
+    u.uLensMode.value = !lensOn || flooded ? 0 : g > 0.01 ? 1 : ch.lens;
+    u.uLens.value.set(lens.x * pr, (H - lens.y) * pr, gw * pr, gh * pr);
     u.uFade.value = fade;
     u.uFall.value = ch.fall;
     u.uTime.value = time;

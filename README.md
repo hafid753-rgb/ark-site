@@ -38,8 +38,8 @@ The output in `dist/` is plain static files and can go on any static host.
 - [ ] **Contact details:** set `email` and/or `whatsapp` in `src/site.ts`. Until then, the contact section says "Contact details are coming soon".
 - [ ] **Domain:** replace `https://ark.example` in `astro.config.mjs`. It's used for canonical links, language alternates and the share-image URL.
 - [ ] **Share image:** add `public/og.png` (1200 × 630). A screenshot of the hero works.
+- [ ] **Timeline sources:** open the four links in *Elsewhere* once in a browser; they were confirmed through search results, not read directly.
 - [ ] **Native-speaker review** of the French and Arabic copy in `src/i18n.ts`.
-- [ ] **Browser test run:** `node tests/e2e/run.mjs` was written, but its first full run was interrupted. Run it once and fix anything it reports.
 - [ ] **Real devices:** everything was checked in headless Chromium with software rendering. Test on an iPhone (Safari), an Android phone and a laptop before launch.
 - [ ] **Hosting headers:** `public/_headers` carries a strict Content-Security-Policy and privacy headers in Netlify / Cloudflare Pages format. On another host, set the same headers there.
 - [ ] **Optional textures:** the free Studio Hosqo packs can be added; see [Assets and licences](#assets-and-licences).
@@ -52,8 +52,8 @@ Each chapter is a `<section>` in `src/components/Page.astro`. Its text lives in 
 
 | Chapter | What the visitor sees | Built in |
 |---|---|---|
-| **Hero** | *Nothing rented. Everything yours*. The Ark mark in chrome, assembling from its two halves over rings like the Eye of the Sahara. Everything is drawn in the letters of the word *sovereignty*; a blue window shows the real chrome underneath. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
-| **01 Rented** | Four dated, sourced facts about things people paid for and lost. Each one's object (a hub, a bulb, a screen of purchases, a receipt that says BUY) pours away like sand, letter by letter, as its fact scrolls past. A small house that stays intact closes the chapter: *Unless it lives in your house*. | `gl/rented.ts` |
+| **Hero** | *Nothing rented. Everything yours*. The Ark mark in chrome, assembling from its two halves over rings like the Eye of the Sahara. Everything is drawn in the letters of the word *sovereignty*; a small piece of liquid glass shows the real chrome underneath. **Hold the glass** and it floods the screen: everything shows in 3D. **Press anywhere** and the letters come back. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
+| **01 Elsewhere** | *A country going digital, on tools made for somewhere else*. A sourced timeline: the 2018 cable cut that took Mauritania offline, the 2022 national digital agenda, 800+ procedures online in 2026, and a global payment platform that still doesn't serve Mauritanian businesses. Each fact has an object: a cut submarine cable, a telecom mast, a phone of public services, a foreign checkout that says *Not supported*. What depends on somewhere else (the cable, the checkout) pours away like sand as it scrolls past; what's being built here stays. It closes on *Ark is made here, and it runs in your house*. | `gl/rented.ts` |
 | **02 Yours** | Grains of sand gather into the small machine Ark runs on (sand becomes silicon), then the machine opens into four labelled parts. The window works as an x-ray: the shell cuts away under it and the inside is drawn in letters. | `gl/device.ts` |
 | **03 Offline** | A courtyard house at night under clouds, with blue threads running from its roof mast up into the cloud. *Turn the lights on* (a simulated trip to a server abroad, labelled as simulated), *then cut the cloud and try again*. The threads fall, the clouds clear to stars and a moon, and the house answers instantly. That time is **measured** on the visitor's device. | `gl/night.ts`, `gl/house.ts`, `scripts/main.ts` |
 | **04 Control** | The same house seen from above with its roof off, beside a working Ark Home phone mock. It has rooms, AC with temperature, a gate that **asks before opening**, scenes, a live courtyard camera drawn in letters, and its own EN / FR / ع switch. Tapping a room in the 3D house works too. The first time the chapter comes into view, "Arrive home" runs by itself, unless the visitor has already used the phone or the cloud demo. | `gl/night.ts`, Page phone markup, `scripts/main.ts` |
@@ -77,9 +77,11 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
   2. The second pass draws that letter from an atlas, tinted with the scene's own colour.
 
   The letters are the page's word: *sovereignty* in English, *souveraineté* in French, and *السيادة التقنية* in Arabic. In Arabic the scenes are literally drawn in Arabic letters.
-- **The window lens.** It is the mark's 2:1 opening, used as the site's signature detail.
-  - **Hero:** it shows the real object inside a scene drawn in letters.
-  - **Device chapter:** it does the opposite (letters inside, real outside). The shell's material cuts itself away under the window so you see inside.
+- **The liquid-glass lens.** A small 2:1 piece of glass (160 × 80 px, 128 × 64 on phones), the shape of the mark's window.
+  - **Optics:** a rounded-rectangle bevel with two-surface refraction, colour fringing at the edges, Fresnel, highlights from the top left, a thin inner rim and a soft shadow. The maths is adapted from [LiquidGlass](https://github.com/ybouane/liquidglass) (MIT) and runs inside the glyph composite, so it bends the live 3D scene rather than a screenshot of the page.
+  - **Hero and Elsewhere:** it shows the real object inside a scene drawn in letters.
+  - **Device chapter:** it does the opposite (letters inside, real outside). The shell's material cuts itself away under the glass so you see inside.
+  - **Hold to flood:** holding the glass for half a second (anywhere on desktop, since the glass sits under the cursor; on the glass itself on touch screens) makes it swell and spread over the whole screen on a spring, so it overshoots and settles like liquid. Everything shows in 3D, and the letter pass is skipped while flooded. A press anywhere shrinks it back with a small wobble. The state carries across chapters, and the hint text changes to say how to go back. Reduced motion snaps between the two states.
   - **Input:** it follows the mouse; on touch screens it is dragged.
 - **Crumbling.** The "pour away" effect shifts each column of character cells downward at its own speed and scrambles the letters as they fall. It costs almost nothing.
 - **Phone camera feed.** The courtyard is rendered from a second camera into a tiny target and run through the same glyph pass. It refreshes every 150 ms, only while the phone is on screen, and is drawn into the phone's canvas from the same atlas.
@@ -165,11 +167,13 @@ The direction came from the owner's requests: a cool, edgy site, not literally a
 
 ## Content and claims
 
-The four facts in *Rented*, with sources linked on the page:
-- **2016:** a smart home hub sold with a lifetime subscription, switched off by its new owner. Revolv / Nest, [Hackaday](https://hackaday.com/2016/04/07/alphabet-to-turn-off-revolvs-lights/).
-- **2022:** a smart home company's servers went dark overnight. Insteon, [The Register](https://www.theregister.com/2022/04/19/insteon_cloud_shutdown/).
-- **2023:** a console store told customers 1,300+ purchased TV shows would disappear from their libraries, and backed down after an outcry. PlayStation / Discovery, [What Hi-Fi](https://www.whathifi.com/news/sony-is-set-to-remove-over-a-thousand-purchased-tv-shows-from-ps5-users-digital-video-libraries), reversal reported by [Thurrott](https://www.thurrott.com/music-videos/295070/playstation-will-no-longer-remove-discovery-shows-from-users-libraries).
-- **2025:** California requires stores to say when "buy" means a revocable license. AB 2426, [Greenberg Traurig](https://www.gtlaw.com/en/insights/2024/12/ab-2426-new-california-law-requires-clear-licensing-disclosures-for-digital-goods).
+The four facts in *Elsewhere*, with sources linked on the page:
+- **2018:** the only submarine cable linking Mauritania to the internet (ACE) was cut near Nouakchott; the country was offline for almost 48 hours. [Fortune](https://fortune.com/2018/04/09/mauritania-cable-break-internet), citing Dyn's measurements.
+- **2022:** Mauritania adopted its *Agenda national de transformation numérique 2022–2025*. [UN-ESCWA's national plans repository](https://andp.unescwa.org/plans/1516).
+- **2026:** more than 800 administrative procedures gathered on one online platform. [Managers.tn, 21 Feb 2026](https://managers.tn/2026/02/21/mauritanie-plus-de-800-demarches-administratives-desormais-centralisees-et-numerisees/).
+- **Today:** the best-known global payment platform opens business accounts in five African countries (Côte d'Ivoire, Ghana, Kenya, Nigeria, South Africa), not Mauritania. [Stripe's global availability page](https://stripe.com/global).
+
+How they were checked: this environment couldn't open those pages directly (its network blocks them), so each fact was confirmed through several independent search results quoting them. **Open each link once before launch.** One idea was dropped: "speech recognition doesn't cover Mauritania" turned out to be false, because Google's speech service lists Arabic (Mauritania). Government internet shutdowns were deliberately left out as politically sensitive for a Mauritanian company.
 
 Brands are not named on the page; the facts are described generically and linked.
 
@@ -188,6 +192,7 @@ Brands are not named on the page; the facts are described generically and linked
 | **ascii3d** (Alec Jacobson) | C++ tool that ray-traces meshes into ASCII in a terminal. **No licence file.** | Its idea (matching glyph shapes) was re-implemented on the GPU; no code copied. The owner reports the author supports the project. Ask him for written permission or a licence file before launch. Credited in the footer. |
 | **unslop** (Damir Sokolovsky) | An AI design-review skill, CC BY 4.0 | Used as the design rulebook: one accent, no cards or glows, sentence case, no trailing periods, 4px grid, one easing curve. Credited in the footer. |
 | **ponytail** (Dietrich Gebert) | MIT "write less code" rules for agents | Used as the engineering rulebook: native scrolling and controls, no animation or smooth-scroll libraries, one stylesheet, reuse of three.js add-ons, tests for non-trivial logic. Credited in the footer. |
+| **LiquidGlass** (@ybouane) | MIT library that renders glass panels over HTML by screenshotting the page into its own WebGL context | **Its optics are used, its runtime isn't.** The glass maths (bevel, refraction, dispersion, Fresnel, highlights, rim) was ported into the site's own composite shader, so it refracts the live 3D scene with no page capture, no second WebGL context and no extra download. Notice in `THIRD_PARTY_NOTICES.md`; credited in the footer. The repo states "MIT" without a copyright name, so the notice names the author by handle. |
 | **shaders** (shaders.com) | MIT library of 200+ WebGPU effects | **Not used in the end.** It needs WebGPU (Safari 26+, Chrome 113+, partial Firefox), so older iPhones would need a second path for every effect. All effects are written once in WebGL 2. It can be added later as an extra layer on WebGPU devices if wanted. |
 | **designeer.xyz** | Curated directory of design-engineering resources | Inspiration only. It answered 403 Forbidden even with its host allowed, so nothing was read or taken from it. |
 | **Studio Hosqo** (Gumroad) | Free packs: 40 gradient maps, 20 glass-distortion textures, a displacement map, a MacBook mockup. Paid (US$5 each): Gradient Maps Vol. 1/2, Mixed Texture Pack, Mockup Pack 1. | **Not added yet.** Free Gumroad products still need a checkout with your email, which wasn't done on your behalf. Only Mockup Pack 1 states commercial use. To add them, download the packs and export what's needed as PNGs (the glass and displacement packs are Photoshop files), for example the gradients as small PNG strips. Natural uses are colour grading per scene, the lens refraction and the crumble. |
@@ -201,6 +206,7 @@ Brands are not named on the page; the facts are described generically and linked
 
 ```
 astro.config.mjs        site URL (placeholder), CSS inlined, scripts kept as files
+THIRD_PARTY_NOTICES.md  licence notice for the LiquidGlass optics
 public/
   _headers              CSP and privacy headers (Netlify / Cloudflare Pages format)
   sw.js                 offline copy, installed only on request
@@ -257,9 +263,11 @@ About 4,000 lines of source in total.
   - the gate asking before it opens;
   - text mode hiding the stage;
   - nothing installed before the visitor asks, then the offline copy opening with the network off;
-  - no-JS rendering, and the one-file edition having no scripts or external files.
+  - no-JS rendering, and the one-file edition having no scripts or external files;
+  - holding the glass turning everything 3D, and a press bringing the letters back.
 
-  **Its first run failed to start its own server and the second run was interrupted, so it has not passed yet.**
+  **All 23 checks pass.** Earlier runs failed for two reasons, both in the test, not the site. Astro 7's preview writes a lock file, and killing `npx` left the server running, so later runs couldn't start their own. The runner now starts it with `--ignore-lock` in its own process group and stops the whole group. Also, the selector `[data-cut]` matched the demo's container, which carries a `data-cut` label, before the button; it is now `button[data-cut]`.
+- **Glass on a phone:** checked on an emulated iPhone 13 with real touch events. Holding the glass floods the screen, and a tap brings the letters back.
 - **Visual review:** every chapter was screenshotted in headless Chromium at desktop (1440 × 900), phone (390 × 844) and in Arabic, and reviewed after each change. Those runs showed no console errors and **no third-party requests**.
 
 ---
@@ -311,6 +319,10 @@ In the test browser, the *Proof* chapter reported roughly 320–360 KB downloade
    - unit tests, the build check, the browser test;
    - committed as `59fed5d` and pushed once the Claude GitHub App had access;
    - draft pull request #1.
+8. **Second feedback round:** "the square should be smaller and liquid glass; holding it should expand it and turn everything 3D, pressing again turns it back; the timeline should talk about Mauritania's digitalization and Western services not made for Mauritanian users."
+   - The lens became a smaller liquid-glass piece with hold-to-flood and press-to-return.
+   - The timeline was rewritten around Mauritania, in three languages, with new objects.
+   - The browser test was fixed and extended, and passes in full for the first time.
 
 ---
 
@@ -319,7 +331,6 @@ In the test browser, the *Proof* chapter reported roughly 320–360 KB downloade
 - **Not yet tested on real phones or in Safari.**
   - All checks so far ran in headless Chromium with software rendering, which is slower than real GPUs.
   - Check frame rate, the camera-feed readback, and the scroll-driven focus pull: Safari 26 supports scroll timelines; older Safari gets the fallback.
-- **Browser test** still needs one full passing run.
 - **Accessibility:** structure, focus styles, reduced motion, text mode and labelled controls are in place. A full audit (screen reader pass, keyboard path through the phone mock and rule builder) is still to do.
 - **Before launch:** contact details, domain, share image and native review (see [Before going live](#before-going-live)).
 - **Optional:** add the Studio Hosqo free packs; add a WebGPU layer with the `shaders` library; a Mauritanian artist collaboration for the house patterns; real photography or footage if wanted later.
@@ -331,5 +342,6 @@ In the test browser, the *Proof* chapter reported roughly 320–360 KB downloade
 - **Type:** IBM Plex Sans, IBM Plex Sans Arabic and IBM Plex Mono, SIL Open Font License
 - **3D:** three.js, MIT
 - **Glyph rendering** after ascii3d by Alec Jacobson, with his support
+- **Liquid glass lens** after LiquidGlass by @ybouane, MIT
 - **Design review:** unslop by Damir Sokolovsky, CC BY 4.0
 - **Engineering approach:** ponytail by Dietrich Gebert, MIT

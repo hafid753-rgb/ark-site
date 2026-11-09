@@ -135,6 +135,8 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .closing { margin-top: 96px; }
 .closing-line { font-size: clamp(40px, 6.2vw, 84px); line-height: 0.98; letter-spacing: -0.035em; font-weight: 500; max-width: 12ch; }
 :lang(ar) .closing-line { letter-spacing: 0; line-height: 1.22; }
+.year.word { letter-spacing: -0.03em; }
+:lang(ar) .year.word { letter-spacing: 0; line-height: 1.2; }
 
 /* 02 Yours */
 .parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; max-width: 32rem; }
@@ -315,8 +317,9 @@ select {
   }
   :root:not([data-mode='text']) .lens {
     display: block; position: fixed; left: 0; top: 0; z-index: 2;
-    border: 1px solid var(--blue); border-radius: 12px;
+    border-radius: 999px; /* the glass itself is drawn by the stage; this is its handle */
     opacity: 0; pointer-events: none; touch-action: none; cursor: grab;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
     transition: opacity var(--mid) var(--ease);
   }
   :root:not([data-mode='text']) .lens.on { opacity: 1; }

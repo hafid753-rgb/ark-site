@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const PORT = 4329;
 const BASE = `http://127.0.0.1:${PORT}`;
-const server = spawn('npx', ['astro', 'preview', '--host', '127.0.0.1', '--port', String(PORT)], { stdio: 'ignore' });
+const server = spawn('npx', ['astro', 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--ignore-lock'], { detached: true, stdio: 'ignore' });
 let failures = 0;
 const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) failures++; };
 
@@ -36,6 +36,21 @@ try {
     await page.close();
   }
 
+  // The glass: hold it and everything shows in 3D; press again and the letters return.
+  {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2000);
+    await page.mouse.move(900, 400);
+    await page.mouse.down();
+    await page.waitForTimeout(900);
+    await page.mouse.up();
+    check(await page.evaluate(() => document.documentElement.dataset.view) === 'real', 'holding the glass turns everything 3D');
+    await page.mouse.click(900, 400);
+    check(await page.evaluate(() => document.documentElement.dataset.view) === 'letters', 'pressing again brings the letters back');
+    await page.close();
+  }
+
   // Interactions on the English page.
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
@@ -44,9 +59,9 @@ try {
   await page.click('[data-lights]');
   await page.waitForFunction(() => /simulated/.test(document.querySelector('[data-status]').textContent), null, { timeout: 4000 });
   check(true, 'cloud round trip is labelled simulated');
-  await page.click('[data-cut]');
+  await page.click('button[data-cut]');
   await page.click('[data-lights]');
-  await page.waitForFunction(() => document.querySelector('[data-status]').dataset.tone === 'local', null, { timeout: 2000 });
+  await page.waitForFunction(() => document.querySelector('[data-status]').dataset.tone === 'local', null, { timeout: 15000 }); // software GL paints the night house slowly
   check(/measured/.test(await page.textContent('[data-status]')), 'offline answer is measured on the device');
 
   await page.locator('#control').scrollIntoViewIfNeeded();
@@ -80,7 +95,7 @@ try {
   await nojs.close();
   await browser.close();
 } finally {
-  server.kill();
+  process.kill(-server.pid); // the whole group: npx and the server it started
 }
 console.log(failures ? `\n${failures} failed` : '\nall passed');
 process.exit(failures ? 1 : 0);

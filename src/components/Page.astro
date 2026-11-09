@@ -82,7 +82,7 @@ const chapters = [
             <a class="btn primary" href="#rented">{t.hero.primary}</a>
             <a class="btn" href="#start">{t.hero.secondary}</a>
           </div>
-          <p class="hint full-only reveal" data-hint={t.hero.lens} data-hint-touch={t.hero.lensTouch}>{t.hero.lens}</p>
+          <p class="hint full-only reveal" data-hint={t.hero.lens} data-hint-touch={t.hero.lensTouch} data-hint-real={t.hero.lensReal}>{t.hero.lens}</p>
           <pre class="art text-only" aria-hidden="true">{art}</pre>
         </div>
       </section>
@@ -96,7 +96,7 @@ const chapters = [
           <ol class="facts">
             {t.rented.facts.map((f) => (
               <li class="step fact">
-                <p class="year mono reveal"><time datetime={f.year}>{f.year}</time></p>
+                <p class:list={["year reveal", /^\d{4}$/.test(f.year) ? "mono" : "word"]}><time datetime={/^\d{4}$/.test(f.year) ? f.year : undefined}>{f.year}</time></p>
                 <p class="reveal">{f.text}</p>
                 <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
               </li>
@@ -119,7 +119,7 @@ const chapters = [
                 <li class="reveal"><span class="num mono">{String(i + 1).padStart(2, '0')}</span><span><strong>{p.name}</strong> {p.text}</span></li>
               ))}
             </ol>
-            <p class="hint full-only reveal" data-hint={t.yours.lens} data-hint-touch={t.yours.lensTouch}>{t.yours.lens}</p>
+            <p class="hint full-only reveal" data-hint={t.yours.lens} data-hint-touch={t.yours.lensTouch} data-hint-real={t.hero.lensReal}>{t.yours.lens}</p>
           </div>
         </div>
         <div class="markers full-only" aria-hidden="true">
