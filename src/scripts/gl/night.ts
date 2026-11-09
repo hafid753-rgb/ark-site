@@ -159,7 +159,6 @@ export function create(ctx: SceneCtx): Chapter {
     scene,
     camera,
     glyph: 0,
-    lens: 0,
     fall: 0,
     feed: null,
     update(f) {

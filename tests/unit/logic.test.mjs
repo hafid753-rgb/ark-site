@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { UPPER, LOWER, inside, asciiMark } from '../../src/mark.ts';
-import { hash, random, toCode, toSentence } from '../../src/scripts/rule.ts';
 import { classify, kindOf, formatBytes } from '../../src/scripts/ledger-core.ts';
 import { regionCoverage, normalise, nearest } from '../../src/scripts/gl/glyph-math.ts';
 
@@ -19,24 +18,6 @@ test('the text-mode mark is written in the given word, row by row', () => {
   assert.equal(lines.length, 15);
   assert.match(art, /^[ark\s]+$/);
   assert.ok(lines[7].includes('  '), 'the window shows as a gap in the middle rows');
-});
-
-test('the same rule always draws the same poster, a different rule a different one', () => {
-  const a = toCode({ trigger: 0, condition: 0, actions: [0, 1] });
-  const b = toCode({ trigger: 1, condition: 2, actions: [2] });
-  assert.equal(hash(a), hash(a));
-  assert.notEqual(hash(a), hash(b));
-  const r1 = random(hash(a)), r2 = random(hash(a));
-  assert.equal(r1(), r2());
-  assert.equal(a, 'when arrive_home and after_dark:\n  gate.open()\n  lights.warm()');
-  assert.equal(b, 'when sunset:\n  ac.set(24)');
-  assert.equal(toCode({ trigger: 0, condition: 2, actions: [] }), 'when arrive_home:\n  pass');
-});
-
-test('the rule reads as a sentence in the page language', () => {
-  const words = { when: 'When', then: 'then', triggers: ['I arrive home'], conditions: ['if it is after dark'], actions: ['open the gate', 'warm lights'] };
-  assert.equal(toSentence({ trigger: 0, condition: 0, actions: [0, 1] }, words), 'When I arrive home, if it is after dark, then open the gate, warm lights');
-  assert.equal(toSentence({ trigger: 0, condition: 0, actions: [0] }, words, '، '), 'When I arrive home، if it is after dark، then open the gate');
 });
 
 test('the ledger counts every other company, and only bytes from this site', () => {

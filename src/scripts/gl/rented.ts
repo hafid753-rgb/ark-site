@@ -106,34 +106,117 @@ export function create(ctx: SceneCtx): Chapter {
   phone.add(ui);
   phone.rotation.x = -0.12;
 
-  // Today: a checkout built elsewhere, which has no place for Mauritania.
-  const checkout = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.2, 2.6),
+  // 15 GB: a folder of family photos, kept on someone else's servers.
+  const drive = new THREE.Group();
+  drive.add(new THREE.Mesh(new RoundedBoxGeometry(2.6, 1.8, 0.1, 3, 0.05), matte));
+  const tab = new THREE.Mesh(new RoundedBoxGeometry(0.9, 0.3, 0.1, 3, 0.05), matte);
+  tab.position.set(-0.85, 0.95, 0);
+  drive.add(tab);
+  const photos = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.2, 1.5),
     panel((c, w, h) => {
       c.fillStyle = '#f1ece2';
       c.fillRect(0, 0, w, h);
-      c.fillStyle = '#1a1916';
-      c.font = '700 40px sans-serif';
-      c.fillText('Checkout', 30, 70);
-      c.font = '24px sans-serif';
-      c.fillStyle = '#6b6760';
-      c.fillText('Country or region', 30, 130);
-      c.strokeStyle = '#c0392b';
-      c.lineWidth = 4;
-      c.strokeRect(30, 145, w - 60, 64);
-      c.fillStyle = '#1a1916';
-      c.font = '28px sans-serif';
-      c.fillText('Mauritania', 48, 188);
-      c.fillStyle = '#c0392b';
-      c.font = '600 24px sans-serif';
-      c.fillText('Not supported', 30, 245);
-      c.fillStyle = '#d8d1c4';
-      for (let i = 0; i < 3; i++) c.fillRect(30, 290 + i * 52, w - 60, 34);
-      c.fillStyle = '#bdb6aa';
-      rounded(c, 30, h - 100, w - 60, 64, 32);
-    }, 420, 496),
+      for (let i = 0; i < 6; i++) {
+        c.fillStyle = ['#2997ff', '#3a3833', '#9d968a', '#1a1916', '#6b6760', '#c9c2b5'][i];
+        rounded(c, 20 + (i % 3) * 124, 22 + Math.floor(i / 3) * 112, 108, 96, 10);
+      }
+    }, 400, 250),
   );
-  checkout.rotation.y = 0.3;
+  photos.position.set(0, 0.25, 0.08);
+  photos.rotation.z = -0.06;
+  drive.add(photos);
+  const flap = new THREE.Mesh(new RoundedBoxGeometry(2.6, 1.2, 0.08, 3, 0.04), matte);
+  flap.position.set(0, -0.32, 0.22);
+  flap.rotation.x = -0.25;
+  drive.add(flap);
+
+  // $7.99: a film on a screen, priced in dollars.
+  const tv = new THREE.Group();
+  tv.add(new THREE.Mesh(new RoundedBoxGeometry(3.4, 2.0, 0.12, 3, 0.04), dark));
+  const film = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.2, 1.8),
+    panel((c, w, h) => {
+      // High contrast so it still reads as a screen with a play button once drawn in letters.
+      c.fillStyle = '#f1ece2';
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = '#111';
+      c.beginPath();
+      c.arc(w / 2, h / 2, 92, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = '#f1ece2';
+      c.beginPath();
+      c.moveTo(w / 2 - 28, h / 2 - 46);
+      c.lineTo(w / 2 + 50, h / 2);
+      c.lineTo(w / 2 - 28, h / 2 + 46);
+      c.fill();
+      c.fillStyle = '#2997ff';
+      c.fillRect(0, h - 18, w * 0.38, 18);
+    }, 512, 288),
+  );
+  film.position.z = 0.065;
+  tv.add(film);
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.6, 12), dark);
+  stand.position.y = -1.3;
+  tv.add(stand);
+  const foot = new THREE.Mesh(new RoundedBoxGeometry(1.2, 0.08, 0.5, 2, 0.03), dark);
+  foot.position.y = -1.6;
+  tv.add(foot);
+
+  // $3.29: music, also in dollars.
+  const phones = new THREE.Group();
+  const band = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.09, 12, 48, Math.PI), matte);
+  band.position.y = 0.2;
+  phones.add(band);
+  for (const x of [-1, 1]) {
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.34, 32), matte);
+    cup.rotation.z = Math.PI / 2;
+    cup.position.set(x * 1.0, -0.15, 0);
+    phones.add(cup);
+    const pad = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.1, 10, 32), dark);
+    pad.rotation.y = Math.PI / 2;
+    pad.position.set(x * 0.8, -0.15, 0);
+    phones.add(pad);
+  }
+
+  // 2021: a speaker that learned Gulf Arabic, not Hassaniya.
+  const speaker = new THREE.Group();
+  speaker.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.85, 1.9, 48), matte));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.06, 10, 48), blue);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.96;
+  speaker.add(ring);
+  for (let k = 0; k < 9; k++) {
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.02), dark);
+    slot.position.set(0, -0.6 + k * 0.1, 0.84);
+    speaker.add(slot);
+  }
+
+  // 2025: the national identity card, now an app too.
+  const card = new THREE.Group();
+  card.add(new THREE.Mesh(new RoundedBoxGeometry(2.9, 1.8, 0.06, 3, 0.03), dark));
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.8, 1.7),
+    panel((c, w, h) => {
+      c.fillStyle = '#e6dfd2';
+      c.fillRect(0, 0, w, h);
+      // A portrait, a few lines of particulars, and a band of colour: an identity card, no real emblems.
+      c.fillStyle = '#3a3833';
+      rounded(c, 32, 56, 120, 150, 12);
+      c.fillStyle = '#e6dfd2';
+      c.beginPath();
+      c.arc(92, 112, 28, 0, Math.PI * 2);
+      c.fill();
+      c.fillRect(56, 150, 72, 56);
+      c.fillStyle = '#3a3833';
+      for (let i = 0; i < 4; i++) rounded(c, 176, 70 + i * 36, 220 - i * 30, 14, 7);
+      c.fillStyle = '#2997ff';
+      c.fillRect(0, 0, w, 26);
+    }, 448, 272),
+  );
+  face.position.z = 0.035;
+  card.add(face);
+  card.rotation.x = -0.2;
 
   // What remains: a house that keeps its things.
   const house = new THREE.Group();
@@ -152,9 +235,9 @@ export function create(ctx: SceneCtx): Chapter {
   house.add(door);
   house.rotation.set(0.25, -0.5, 0);
 
-  const things = [cable, mast, phone, checkout, house];
+  const things = [cable, mast, card, phone, drive, tv, phones, speaker, house];
   // Only what depends on somewhere else pours away; what is built here stays.
-  const pours = [true, false, false, true, false];
+  const pours = [true, false, false, false, true, true, true, true, false];
   const holder = new THREE.Group();
   things.forEach((t) => holder.add(t));
   scene.add(holder);
@@ -178,7 +261,6 @@ export function create(ctx: SceneCtx): Chapter {
     scene,
     camera,
     glyph: 1,
-    lens: 0,
     fall: 0,
     update(f) {
       if (!marks.length) marks = [...f.el.querySelectorAll<HTMLElement>('.fact, .closing')];
@@ -199,7 +281,7 @@ export function create(ctx: SceneCtx): Chapter {
       const t = things[i];
       t.scale.setScalar(0.6 + 0.4 * grow);
       // Flat things sway so they never turn edge-on; solid things turn slowly.
-      const flat = t === phone || t === checkout;
+      const flat = t === phone || t === card || t === drive || t === tv;
       t.rotation.y = flat ? 0.25 * side0 + Math.sin(f.time * 0.6) * 0.45 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
       t.position.y = Math.sin(f.time * 0.8) * 0.06;
 

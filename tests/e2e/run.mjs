@@ -8,6 +8,13 @@ const PORT = 4329;
 const BASE = `http://127.0.0.1:${PORT}`;
 const server = spawn('npx', ['astro', 'preview', '--host', '127.0.0.1', '--port', String(PORT), '--ignore-lock'], { detached: true, stdio: 'ignore' });
 let failures = 0;
+// Software GL in a headless browser draws only a few frames a second; smooth scrolling then takes so
+// long that elements never count as "stable". Tests check behaviour, so scrolling jumps instead.
+const instant = (page) => page.addInitScript(() => addEventListener('DOMContentLoaded', () => {
+  const st = document.createElement('style');
+  st.textContent = 'html { scroll-behavior: auto !important }';
+  document.head.append(st);
+}));
 const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) failures++; };
 
 try {
@@ -19,13 +26,14 @@ try {
 
   for (const [path, lang, dir] of [['/', 'en', 'ltr'], ['/fr/', 'fr', 'ltr'], ['/ar/', 'ar', 'rtl']]) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await instant(page);
     const errors = [], foreign = [];
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
     page.on('request', (r) => { const u = new URL(r.url()); if (u.protocol.startsWith('http') && u.host !== `127.0.0.1:${PORT}`) foreign.push(r.url()); });
     await page.goto(BASE + path, { waitUntil: 'networkidle' });
     await page.waitForTimeout(2500);
-    for (const id of ['#rented', '#yours', '#offline', '#control', '#cinema', '#tailored', '#proof']) {
+    for (const id of ['#rented', '#yours', '#offline', '#control', '#cinema', '#setup', '#start']) {
       await page.evaluate((id) => document.querySelector(id).scrollIntoView(), id);
       await page.waitForTimeout(500);
     }
@@ -36,36 +44,32 @@ try {
     await page.close();
   }
 
-  // The glass: hold it and everything shows in 3D; press again and the letters return.
+  // Liquid glass: no lens any more; headlines are painted by the stage as glass, the page keeps the words.
   {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await instant(page);
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(2000);
-    await page.mouse.move(900, 400);
-    await page.mouse.down();
-    await page.waitForTimeout(900);
-    await page.mouse.up();
-    check(await page.evaluate(() => document.documentElement.dataset.view) === 'real', 'holding the glass turns everything 3D');
-    await page.mouse.click(900, 400);
-    check(await page.evaluate(() => document.documentElement.dataset.view) === 'letters', 'pressing again brings the letters back');
-    await page.mouse.down();
-    await page.waitForTimeout(900);
-    await page.mouse.up();
-    await page.evaluate(() => document.querySelector('#rented').scrollIntoView());
-    // Smooth scrolling takes a moment to land; then the letters must be back.
-    await page.waitForFunction(() => document.querySelector('#rented').getBoundingClientRect().top < 10, null, { timeout: 15000 });
-    await page.waitForTimeout(500);
-    check(await page.evaluate(() => document.documentElement.dataset.view) === 'letters', 'scrolling down stays in letters');
+    await page.waitForFunction(() => 'glassOn' in document.documentElement.dataset, null, { timeout: 20000 });
+    check(!(await page.$('.lens')), 'the ascii-to-3D lens is gone');
+    check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color === 'rgba(0, 0, 0, 0)'), 'the headline is painted as glass by the stage');
+    check((await page.textContent('h1')).length > 0 && (await page.getAttribute('h1', 'aria-label')).length > 0, 'the headline words stay in the page for reading aloud');
+    // Build your own setup: choosing a place shows what Ark does there.
+    await page.locator('#setup').scrollIntoViewIfNeeded();
+    check(await page.isVisible('[data-place="home"]') && !(await page.isVisible('[data-place="office"]')), 'the setup starts on Home');
+    await page.click('label.place:has(input[value="office"])');
+    check(await page.isVisible('[data-place="office"]') && !(await page.isVisible('[data-place="home"]')), 'choosing Office shows the office setup');
     await page.close();
   }
 
   // Interactions on the English page.
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await ctx.newPage();
+  await instant(page);
+  page.setDefaultTimeout(120000); // clicks wait for steady frames, which software GL draws about once a second
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
   await page.locator('#offline').scrollIntoViewIfNeeded();
   await page.click('[data-lights]');
-  await page.waitForFunction(() => /simulated/.test(document.querySelector('[data-status]').textContent), null, { timeout: 4000 });
+  await page.waitForFunction(() => /simulated/.test(document.querySelector('[data-status]').textContent), null, { timeout: 20000 });
   check(true, 'cloud round trip is labelled simulated');
   await page.click('button[data-cut]');
   await page.click('[data-lights]');
@@ -84,7 +88,7 @@ try {
 
   // Offline copy, only when asked.
   check(!(await page.evaluate(() => navigator.serviceWorker.getRegistration())), 'nothing is installed before the visitor asks');
-  await page.locator('#proof').scrollIntoViewIfNeeded();
+  await page.locator('footer').scrollIntoViewIfNeeded();
   await page.click('[data-offline]');
   await page.waitForFunction(() => document.querySelector('[data-offline]').dataset.saved === 'true', null, { timeout: 30000 });
   await ctx.setOffline(true);

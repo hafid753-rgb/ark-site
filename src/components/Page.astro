@@ -22,11 +22,13 @@ const appStrings = Object.fromEntries(langs.map((l) => [l, copy[l].app]));
 const rooms = Object.keys(t.app.rooms) as (keyof typeof t.app.rooms)[];
 const whatsapp = contact.whatsapp.replace(/\D/g, '');
 const url = (l: Lang) => new URL(pathFor(l), Astro.site).href;
-// "01 Rented" → number in the accent, label quiet.
+// "01 Elsewhere" → number in the accent, label quiet.
+// Timeline labels: years in mono; prices and percentages in the sans, which spaces "$7.99" properly.
+const isFigure = (v: string) => /^\d{4}$/.test(v);
 const kick = (k: string) => { const [n, ...rest] = k.split(' '); return { n, label: rest.join(' ') }; };
 const chapters = [
   ['rented', t.rented.kicker], ['yours', t.yours.kicker], ['offline', t.offline.kicker], ['control', t.control.kicker],
-  ['cinema', t.cinema.kicker], ['tailored', t.tailored.kicker], ['proof', t.proof.kicker],
+  ['cinema', t.cinema.kicker], ['setup', t.setup.kicker],
 ].map(([id, k]) => ({ id, ...kick(k) }));
 ---
 <!doctype html>
@@ -53,9 +55,8 @@ const chapters = [
     <a class="skip" href="#main">{t.nav.skip}</a>
     <canvas id="stage" aria-hidden="true"></canvas>
     <div class="scrim full-only" aria-hidden="true"></div>
-    <div class="lens" aria-hidden="true"></div>
 
-    <header class="bar">
+    <header class="bar" data-glass>
       <a class="brand" href={pathFor(lang)} aria-label="Ark"><Mark size={30} /><span>Ark</span></a>
       <div class="bar-end">
         <nav class="langs" aria-label={t.nav.language}>
@@ -79,10 +80,9 @@ const chapters = [
           <Words as="h1" text={t.hero.title} />
           <p class="lede reveal">{t.hero.sub}</p>
           <div class="actions reveal">
-            <a class="btn primary" href="#rented">{t.hero.primary}</a>
-            <a class="btn" href="#start">{t.hero.secondary}</a>
+            <a class="btn primary" href="#rented" data-glass="blue">{t.hero.primary}</a>
+            <a class="btn" href="#start" data-glass>{t.hero.secondary}</a>
           </div>
-          <p class="hint full-only reveal" data-hint={t.hero.lens} data-hint-touch={t.hero.lensTouch} data-hint-real={t.hero.lensReal}>{t.hero.lens}</p>
           <pre class="art text-only" aria-hidden="true">{art}</pre>
         </div>
       </section>
@@ -96,7 +96,7 @@ const chapters = [
           <ol class="facts">
             {t.rented.facts.map((f) => (
               <li class="step fact">
-                <p class:list={["year reveal", /^\d{4}$/.test(f.year) ? "mono" : "word"]}><time datetime={/^\d{4}$/.test(f.year) ? f.year : undefined}>{f.year}</time></p>
+                <p class:list={["year reveal", isFigure(f.year) ? "mono" : "word"]}>{/^\d{4}$/.test(f.year) ? <time datetime={f.year}>{f.year}</time> : <bdi dir="ltr">{f.year}</bdi>}</p>
                 <p class="reveal">{f.text}</p>
                 <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
               </li>
@@ -119,7 +119,6 @@ const chapters = [
                 <li class="reveal"><span class="num mono">{String(i + 1).padStart(2, '0')}</span><span><strong>{p.name}</strong> {p.text}</span></li>
               ))}
             </ol>
-            <p class="hint full-only reveal" data-hint={t.yours.lens} data-hint-touch={t.yours.lensTouch}>{t.yours.lens}</p>
           </div>
         </div>
         <div class="markers full-only" aria-hidden="true">
@@ -134,10 +133,10 @@ const chapters = [
             <Words text={t.offline.title} />
             <p class="body reveal">{t.offline.body}</p>
             <div class="demo reveal" data-demo data-on={t.offline.on} data-off={t.offline.off} data-cut={t.offline.cut} data-reconnect={t.offline.reconnect} data-waiting={t.offline.waiting} data-cloud={t.offline.viaCloud} data-local={t.offline.local} data-after={t.offline.after}>
-              <button class="switch" type="button" data-lights aria-pressed="false">
+              <button class="switch" type="button" data-lights aria-pressed="false" data-glass>
                 <span class="knob" aria-hidden="true"></span><span>{t.offline.lights}</span><span class="state mono">{t.offline.off}</span>
               </button>
-              <button class="btn cut" type="button" data-cut aria-pressed="false">{t.offline.cut}</button>
+              <button class="btn cut" type="button" data-cut aria-pressed="false" data-glass>{t.offline.cut}</button>
               <p class="status mono" data-status aria-live="polite"></p>
             </div>
           </div>
@@ -224,71 +223,28 @@ const chapters = [
         </div>
       </section>
 
-      <section class="chapter plain" id="tailored">
-        <div class="wrap split">
-          <div>
-            <header class="head">
-              <p class="kicker reveal"><span class="kn">{kick(t.tailored.kicker).n}</span> {kick(t.tailored.kicker).label}</p>
-              <Words text={t.tailored.title} />
-              <p class="body reveal">{t.tailored.body}</p>
-            </header>
-            <form class="rule reveal" data-rule>
-              <label class="rule-line"><span>{t.tailored.when}</span>
-                <select name="trigger">{t.tailored.triggers.map((o, i) => <option value={i}>{o}</option>)}</select>
-              </label>
-              <label class="rule-line"><span class="sr-only">{t.tailored.when}</span>
-                <select name="condition">{t.tailored.conditions.map((o, i) => <option value={i}>{o}</option>)}</select>
-              </label>
-              <fieldset class="rule-line">
-                <legend>{t.tailored.then}</legend>
-                <div class="chips">
-                  {t.tailored.actions.map((o, i) => (
-                    <label class="check"><input type="checkbox" name="action" value={i} checked={i < 2} /><span>{o}</span></label>
-                  ))}
-                </div>
-              </fieldset>
-            </form>
-            <figure class="code reveal">
-              <figcaption class="meta">{t.tailored.code}</figcaption>
-              <pre class="mono" data-code dir="ltr"></pre>
-            </figure>
-          </div>
-          <figure class="poster reveal">
-            <canvas width="1080" height="1350" data-poster aria-hidden="true"></canvas>
-            <figcaption>
-              <span class="meta">{t.tailored.note}</span>
-              <a class="btn" href="#" download="ark-rule.png" data-poster-download>{t.tailored.download}</a>
-            </figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <section class="chapter plain" id="proof">
+      <section class="chapter plain setup" id="setup">
         <div class="wrap">
           <header class="head">
-            <p class="kicker reveal"><span class="kn">{kick(t.proof.kicker).n}</span> {kick(t.proof.kicker).label}</p>
-            <Words text={t.proof.title} />
-            <p class="body reveal">{t.proof.body}</p>
+            <p class="kicker reveal"><span class="kn">{kick(t.setup.kicker).n}</span> {kick(t.setup.kicker).label}</p>
+            <Words text={t.setup.title} />
+            <p class="body reveal">{t.setup.body}</p>
           </header>
-          <dl class="stats">
-            <div class="reveal"><dd class="mono" data-stat="third">0</dd><dt>{t.proof.thirdParty}</dt></div>
-            <div class="reveal"><dd class="mono" data-stat="cookies">0</dd><dt>{t.proof.cookies}</dt></div>
-            <div class="reveal"><dd class="mono" data-stat="trackers">0</dd><dt>{t.proof.trackers}</dt></div>
-            <div class="reveal"><dd class="mono" data-stat="bytes" dir="ltr">–</dd><dt>{t.proof.bytes}</dt></div>
-          </dl>
-          <div class="proof-grid">
-            <svg class="rings reveal" data-rings viewBox="-100 -100 200 200" aria-hidden="true"></svg>
-            <details class="ledger-box reveal" open>
-              <summary>{t.proof.ledger}</summary>
-              <ol class="ledger mono" data-ledger dir="ltr"></ol>
-            </details>
+          <!-- Choosing a place is plain radio buttons; CSS shows the matching list, so it works without JavaScript. -->
+          <fieldset class="places reveal">
+            <legend class="meta">{t.setup.choose}</legend>
+            {t.setup.places.map((pl, i) => (
+              <label class="place" data-glass><input type="radio" name="place" value={pl.id} checked={i === 0} /><span>{pl.name}</span></label>
+            ))}
+          </fieldset>
+          <div class="place-panels">
+            {t.setup.places.map((pl) => (
+              <ul class="place-items" data-place={pl.id} aria-label={pl.name}>
+                {pl.items.map((it, j) => <li><span class="num mono">{String(j + 1).padStart(2, '0')}</span><span>{it}</span></li>)}
+              </ul>
+            ))}
           </div>
-          <div class="actions reveal">
-            <button class="btn" type="button" data-offline data-progress={t.proof.offlineProgress} data-done={t.proof.offlineDone} data-remove={t.proof.offlineRemove} data-save={t.proof.offline} data-fail={t.proof.offlineFail}>{t.proof.offline}</button>
-            <a class="btn" href={`/edition/${lang}/`} download={`ark-${lang}.html`}>{t.proof.edition}</a>
-          </div>
-          <p class="meta" data-offline-status aria-live="polite"></p>
-          <p class="meta reveal">{t.proof.editionNote}</p>
+          <div class="actions reveal"><a class="btn primary" href="#start" data-glass="blue">{t.setup.cta}</a></div>
         </div>
       </section>
 
@@ -304,8 +260,8 @@ const chapters = [
             <h3>{t.start.contact}</h3>
             {contact.email || whatsapp ? (
               <div class="actions">
-                {contact.email && <a class="btn primary" href={`mailto:${contact.email}`}>{t.start.email}</a>}
-                {whatsapp && <a class="btn" href={`https://wa.me/${whatsapp}`} rel="noreferrer noopener">{t.start.whatsapp}</a>}
+                {contact.email && <a class="btn primary" href={`mailto:${contact.email}`} data-glass="blue">{t.start.email}</a>}
+                {whatsapp && <a class="btn" href={`https://wa.me/${whatsapp}`} rel="noreferrer noopener" data-glass>{t.start.whatsapp}</a>}
               </div>
             ) : (
               <p class="meta">{t.start.soon}</p>
@@ -326,6 +282,11 @@ const chapters = [
           <summary>{t.footer.credits}</summary>
           <ul>{t.credits.map((c) => <li>{c}</li>)}</ul>
         </details>
+        <p class="foot-links">
+          <button class="link" type="button" data-offline data-progress={t.footer.offlineProgress} data-done={t.footer.offlineDone} data-remove={t.footer.offlineRemove} data-save={t.footer.offline} data-fail={t.footer.offlineFail}>{t.footer.offline}</button>
+          <a class="link" href={`/edition/${lang}/`} download={`ark-${lang}.html`}>{t.footer.edition}</a>
+        </p>
+        <p class="meta" data-offline-status aria-live="polite"></p>
         <p class="meta text-only">{t.footer.textNote}</p>
         <p class="meta mono coords" dir="ltr">{coordinates}</p>
       </div>

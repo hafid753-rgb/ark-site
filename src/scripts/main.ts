@@ -1,6 +1,4 @@
 import { state, update, bus, anyLight, ROOMS, type Room } from './home';
-import { toCode, toSentence, type Rule } from './rule';
-import { drawPoster } from './poster';
 import { startLedger } from './ledger';
 import type { Lang } from '../i18n';
 
@@ -67,12 +65,6 @@ if (railLinks.length) {
     { rootMargin: '-50% 0px -50% 0px' },
   );
   railLinks.forEach((a) => { const s = document.getElementById(a.dataset.rail!); if (s) rail.observe(s); });
-}
-
-/* ---------- Touch wording for the lens hints ---------- */
-
-if (matchMedia('(hover: none)').matches) {
-  $$('[data-hint-touch]').forEach((el) => (el.textContent = el.dataset.hintTouch!));
 }
 
 /* ---------- 03 Offline: cut the cloud ---------- */
@@ -187,52 +179,7 @@ if (phone) {
   }, { threshold: 0.4 }).observe(phone);
 }
 
-/* ---------- 06 Tailored: the rule builder ---------- */
-
-const form = $<HTMLFormElement>('[data-rule]');
-const canvas = $<HTMLCanvasElement>('[data-poster]');
-if (form && canvas) {
-  const codeEl = $('[data-code]')!;
-  const link = $<HTMLAnchorElement>('[data-poster-download]')!;
-  const read = (): Rule => ({
-    trigger: Number(form.trigger.value),
-    condition: Number(form.condition.value),
-    actions: $$<HTMLInputElement>('input[name="action"]:checked', form).map((i) => Number(i.value)),
-  });
-  // The sentence is assembled from the form's own words, already in the page language.
-  const texts = (sel: string) => $$(sel, form).map((el) => el.textContent!.trim());
-  const words = {
-    when: $('.rule-line > span', form)!.textContent!.trim(),
-    then: $('legend', form)!.textContent!.trim(),
-    triggers: texts('select[name="trigger"] option'),
-    conditions: texts('select[name="condition"] option'),
-    actions: texts('.check span'),
-  };
-  const render = () => {
-    const rule = read();
-    const code = toCode(rule);
-    codeEl.textContent = code;
-    drawPoster(canvas, toSentence(rule, words, lang === 'ar' ? '، ' : ', '), code, rule.actions.length, root.dataset.glyphs!);
-  };
-  form.addEventListener('change', render);
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'ark-rule.png';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    });
-  });
-  // Draw once the chapter is near, not on load.
-  new IntersectionObserver((entries, obs) => {
-    if (entries.some((e) => e.isIntersecting)) { render(); obs.disconnect(); }
-  }, { rootMargin: '400px' }).observe(canvas);
-}
-
-/* ---------- 07 Proof: keep the site offline, only when asked ---------- */
+/* ---------- Footer: keep the site offline, only when asked ---------- */
 
 const offlineBtn = $<HTMLButtonElement>('[data-offline]');
 const offlineStatus = $('[data-offline-status]');

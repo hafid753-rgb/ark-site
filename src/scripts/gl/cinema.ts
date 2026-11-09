@@ -92,7 +92,6 @@ export function create(ctx: SceneCtx): Chapter {
     scene,
     camera,
     glyph: 0,
-    lens: 0,
     fall: 0,
     update(f) {
       const offset = f.p * 0.85 + (ctx.reduced ? 0 : f.time * 0.006);

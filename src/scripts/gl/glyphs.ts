@@ -20,10 +20,13 @@ export interface GlyphSet {
   cellH: number;
 }
 
-/** Draws the letters of the page's word (plus a space and a dot) into an atlas. */
+// Strokes for edges and outlines: they let silhouettes read as shapes, while the word's letters fill surfaces.
+const STROKES = ['-', '|', '/', '\\', '_', ':', '=', '#'];
+
+/** Draws the letters of the page's word, plus a space, a dot and a few strokes, into an atlas. */
 export function buildGlyphs(word: string, font: string, rtl: boolean): GlyphSet {
-  const unique = [...new Set([...word.replace(/\s/g, '')])].slice(0, MAX_GLYPHS - 2);
-  const chars = [' ', '·', ...unique];
+  const unique = [...new Set([...word.replace(/\s/g, '')])].slice(0, MAX_GLYPHS - 2 - STROKES.length);
+  const chars = [' ', '·', ...STROKES, ...unique];
   const cellW = rtl ? 36 : 30;
   const cellH = 48;
   const rows = Math.ceil(chars.length / ATLAS_COLS);
@@ -109,7 +112,7 @@ export function cellMaterial(set: GlyphSet) {
           float d = dot(da, da) + dot(db, db);
           if (d < bestD) { bestD = d; best = g; }
         }
-        if (hi < 0.025) best = 0;
+        if (hi < 0.05) best = 0; // a quieter background makes the shapes easier to read
         float peak = max(max(col.r, max(col.g, col.b)), 1e-4);
         vec3 tint = col / peak * clamp(hi * 1.5 + 0.2, 0.0, 1.0);
         // Exact in 8 bits: the reader rounds back to the integer index.
@@ -121,11 +124,14 @@ export function cellMaterial(set: GlyphSet) {
   });
 }
 
+export const MAX_PANELS = 8;
+
 /**
- * Pass 2: real image, glyph image, the liquid-glass lens and the chapter fade.
- * The glass optics (rounded-rect bevel, two-surface refraction, dispersion, Fresnel, highlights,
- * rim) are adapted from LiquidGlass by @ybouane, MIT License: see THIRD_PARTY_NOTICES.md.
- * Here they run inside the glyph composite, refracting the live scene rather than a page capture.
+ * Pass 2: the scene (letters and/or real), the chapter fade, and liquid glass on top:
+ * headline text from a mask, and rounded panels where the page asks for them.
+ * The glass optics (bevel height field, two-surface refraction, dispersion, Fresnel, highlights,
+ * inner rim) are adapted from LiquidGlass by @ybouane, MIT License: see THIRD_PARTY_NOTICES.md.
+ * Here they bend the live scene rather than a capture of the page.
  */
 export function compositeMaterial(set: GlyphSet) {
   return new THREE.ShaderMaterial({
@@ -133,33 +139,40 @@ export function compositeMaterial(set: GlyphSet) {
       tScene: { value: null },
       tCells: { value: null },
       tAtlas: { value: set.texture },
+      tText: { value: null },
       uCells: { value: new THREE.Vector2(1, 1) },
       uRes: { value: new THREE.Vector2(1, 1) },
       uGrid: { value: new THREE.Vector2(...set.grid) },
       uCount: { value: set.chars.length },
       uGlyphMix: { value: 0 },
-      uLensMode: { value: 0 },
-      uLens: { value: new THREE.Vector4(-999, -999, 1, 1) },
-      uRadius: { value: 12 },
-      uBevel: { value: 30 },
       uPx: { value: 1 },
-      uGrow: { value: 0 },
       uFade: { value: 1 },
       uFall: { value: 0 },
       uTime: { value: 0 },
+      uText: { value: 0 },
+      uTextTexel: { value: new THREE.Vector2(1, 1) },
+      uPanels: { value: 0 },
+      uPanel: { value: Array.from({ length: MAX_PANELS }, () => new THREE.Vector4()) },
+      uPanelInfo: { value: Array.from({ length: MAX_PANELS }, () => new THREE.Vector4()) },
+      uSeam: { value: new THREE.Vector3(-1e4, 0, 1) },
+      uScrim: { value: new THREE.Vector2(1, 0) },
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
-      uniform sampler2D tScene, tCells, tAtlas;
-      uniform vec2 uCells, uRes, uGrid;
-      uniform float uCount, uGlyphMix, uLensMode, uRadius, uBevel, uPx, uGrow, uFade, uFall, uTime;
-      uniform vec4 uLens;
+      uniform sampler2D tScene, tCells, tAtlas, tText;
+      uniform vec2 uCells, uRes, uGrid, uTextTexel;
+      uniform float uCount, uGlyphMix, uPx, uFade, uFall, uTime, uText;
+      uniform int uPanels;
+      uniform vec4 uPanel[${MAX_PANELS}];     // centre xy, half size zw (drawing-buffer px, y up)
+      uniform vec4 uPanelInfo[${MAX_PANELS}]; // x radius px, y blue tint
+      uniform vec3 uSeam;                     // where two chapters meet: y px, strength, half height px
+      uniform vec2 uScrim;                    // text side: (1,0) left, (-1,0) right, (0,1) bottom
       varying vec2 vUv;
+      const vec3 BLUE = vec3(0.022, 0.305, 1.0); // #2997ff, linear
       float hash(float n) { return fract(sin(n) * 43758.5453); }
       float rr(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
-      float bevel(float d) { d = clamp(d, 0.0, uBevel); return sqrt(d * (2.0 * uBevel - d)); }
 
-      // The letter drawn at pixel p (with the crumble applied).
+      // The letter drawn at pixel p (with the crumble), leaning a little toward blue.
       vec3 glyphAt(vec2 p) {
         vec2 cellPx = uRes / uCells;
         vec2 cell = floor(p / cellPx);
@@ -174,61 +187,113 @@ export function compositeMaterial(set: GlyphSet) {
         vec2 g = vec2(mod(idx, uGrid.x), floor(idx / uGrid.x));
         vec2 lc = clamp(local, 0.04, 0.96); // stay inside the letter's own atlas cell
         vec2 auv = vec2((g.x + lc.x) / uGrid.x, (uGrid.y - 1.0 - g.y + lc.y) / uGrid.y);
-        return cd.gba * texture2D(tAtlas, auv).r * 1.35 * (1.0 - uFall * 0.35);
+        vec3 c = cd.gba * texture2D(tAtlas, auv).r * 1.35 * (1.0 - uFall * 0.35);
+        // Subtle blue: a slow drift across the field, and an occasional letter that is fully blue.
+        float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+        float drift = 0.5 + 0.5 * sin(cell.x * 0.045 - cell.y * 0.06 + uTime * 0.35);
+        float spark = step(0.94, hash(cell.x * 12.9898 + cell.y * 78.233));
+        return mix(c, BLUE * l * 3.0, 0.1 + 0.16 * drift + 0.55 * spark);
       }
       vec3 realAt(vec2 p) { return texture2D(tScene, p / uRes).rgb; }
+      // The scene as the eye gets it: letters and/or real, vignette, chapter fade.
+      vec3 baseAt(vec2 p) {
+        vec3 c = uGlyphMix > 0.0 ? mix(realAt(p), glyphAt(p), uGlyphMix) : realAt(p);
+        vec2 n = p / uRes, v = n - 0.5;
+        // The scene dims on the text side so words stay readable; the glass on top is not dimmed.
+        float t = uScrim.y > 0.5 ? n.y : (uScrim.x > 0.0 ? n.x : 1.0 - n.x);
+        float scrim = uScrim.y > 0.5 ? mix(0.1, 1.0, smoothstep(0.0, 0.64, t)) : mix(0.22, 1.0, smoothstep(0.0, 0.56, t));
+        return c * (1.0 - dot(v, v) * 0.55) * uFade * scrim;
+      }
+      vec3 spectral(vec2 p, vec2 ca) { return vec3(baseAt(p + ca).r, baseAt(p).g, baseAt(p - ca).b); }
+
+      // Light on glass with surface normal N.
+      vec3 sheen(vec3 N) {
+        vec3 V = vec3(0.0, 0.0, 1.0);
+        float fres = pow(1.0 - abs(N.z), 3.0);
+        float spec = pow(max(dot(N, normalize(normalize(vec3(-0.4, 0.7, 1.0)) + V)), 0.0), 80.0)
+                   + pow(max(dot(N, normalize(normalize(vec3(0.3, -0.5, 1.0)) + V)), 0.0), 50.0) * 0.3;
+        return vec3(spec * 0.7 + fres * 0.35);
+      }
+
+      // Headline glass: height from a blurred copy of the text mask, so each letter is a rounded slab.
+      vec4 textGlass(vec2 p) {
+        if (uText < 0.5) return vec4(0.0);
+        vec2 uv = p / uRes;
+        vec2 m = textureLod(tText, uv, 0.0).rg; // explicit level: the mask has mipmaps for the bevel
+        float cov = max(m.r, m.g);
+        if (cov < 0.004) return vec4(0.0);
+        vec2 e = uTextTexel * 1.5;
+        float lod = 1.4;
+        float hR = dot(textureLod(tText, uv + vec2(e.x, 0.0), lod).rg, vec2(1.0)), hL = dot(textureLod(tText, uv - vec2(e.x, 0.0), lod).rg, vec2(1.0));
+        float hU = dot(textureLod(tText, uv + vec2(0.0, e.y), lod).rg, vec2(1.0)), hD = dot(textureLod(tText, uv - vec2(0.0, e.y), lod).rg, vec2(1.0));
+        vec2 grad = vec2(hR - hL, hU - hD);
+        vec3 N = normalize(vec3(-grad * 1.6, 1.0));
+        // Refraction pulls the view inward from the rims; dispersion fringes them.
+        vec2 at = p + grad * 9.0 * uPx;
+        vec3 seen = spectral(at, N.xy * 2.5 * uPx);
+        // A bit of white for clarity (blue for the figures), then the light on the glass.
+        float blue = m.g / max(cov, 1e-3);
+        vec3 tint = mix(vec3(1.0), BLUE * 1.6 + 0.15, blue);
+        vec3 col = mix(seen, tint, mix(0.64, 0.7, blue)) + sheen(N);
+        float rim = clamp(1.0 - textureLod(tText, uv, lod).r - textureLod(tText, uv, lod).g, 0.0, 1.0);
+        col += rim * 0.18;
+        return vec4(col, cov);
+      }
+      vec3 underPanels(vec2 p) {
+        vec4 t = textGlass(p);
+        return mix(baseAt(p), t.rgb, t.a);
+      }
 
       void main() {
         vec2 p = vUv * uRes;
-        vec3 outside = mix(realAt(p), glyphAt(p), uGlyphMix);
-        vec3 col = outside;
 
-        if (uLensMode > 0.5) {
-          vec2 q = p - uLens.xy, half_ = uLens.zw;
-          float r = min(uRadius, min(half_.x, half_.y));
-          float sdf = rr(q, half_, r);
-          if (sdf < 0.5 * uPx) {
-            float inside = -sdf;
-            float mask = 1.0 - smoothstep(-1.5 * uPx, 0.5 * uPx, sdf);
-            float edge = smoothstep(min(min(half_.x, half_.y), 400.0 * uPx) * 0.35, 0.0, inside);
-            // Surface normal from the bevel's height field.
-            float e = 2.0 * uPx;
-            float hR = bevel(-rr(q + vec2(e, 0.0), half_, r)), hL = bevel(-rr(q - vec2(e, 0.0), half_, r));
-            float hU = bevel(-rr(q + vec2(0.0, e), half_, r)), hD = bevel(-rr(q - vec2(0.0, e), half_, r));
-            vec2 grad = vec2(hR - hL, hU - hD) / (2.0 * e);
-            vec3 N = normalize(vec3(-grad, 1.0));
-            float depth = smoothstep(0.0, uBevel, inside);
-            // Biconvex refraction, plus a gentle magnifier that fades as the glass grows.
-            float thick = bevel(inside) / uBevel;
-            vec2 refr = grad * (1.0 / 3.0) * (2.0 + thick * 0.5) * 0.69 * 30.0 * uPx;
-            refr -= q / max(half_, vec2(1.0)) * 0.69 * 6.0 * uPx * depth * (1.0 - uGrow);
-            vec2 b = p + refr;
-            vec2 ca = N.xy * 0.12 * 36.0 * (edge * 0.7 + 0.3) * uPx;
-            vec3 seen = uLensMode > 1.5
-              ? glyphAt(b)
-              : vec3(realAt(b + ca).r, realAt(b).g, realAt(b - ca).b);
-            // Light on the glass: Fresnel, highlights from the top left, a thin inner rim.
-            float fres = pow(1.0 - abs(N.z), 4.0);
-            vec3 V = vec3(0.0, 0.0, 1.0);
-            float spec = pow(max(dot(N, normalize(normalize(vec3(-0.4, 0.7, 1.0)) + V)), 0.0), 90.0)
-                       + pow(max(dot(N, normalize(normalize(vec3(0.3, -0.5, 1.0)) + V)), 0.0), 50.0) * 0.3
-                       + pow(max(dot(N, normalize(normalize(vec3(0.0, 0.9, 0.4)) + V)), 0.0), 120.0) * 0.6;
-            float stroke = smoothstep(-2.5 * uPx, -1.5 * uPx, sdf) * (1.0 - smoothstep(-1.0 * uPx, 0.0, sdf));
-            stroke *= 0.4 + 0.6 * (0.5 + 0.5 * q.y / half_.y);
-            float rim = edge * 0.06 + smoothstep(5.0 * uPx, 0.0, inside) * 0.05;
-            vec3 glass = seen + vec3(spec * 0.55 + rim + stroke * 0.3 + (N.y * 0.5 + 0.5) * fres * 0.08);
-            glass = mix(glass, vec3(1.0), fres * 0.2);
-            col = mix(outside, glass, mask);
-          } else {
-            // A soft shadow under the glass.
-            float d = max(sdf - 1.0, 0.0) / (12.0 * uPx);
-            col *= 1.0 - (exp(-d * d) * 0.65 + exp(-d * 2.5) * 0.35) * 0.35;
+        // Where two chapters meet, the seam passes like a faint glass rod.
+        vec2 q = p;
+        float rod = 0.0;
+        if (uSeam.y > 0.001) {
+          float d = (p.y - uSeam.x) / uSeam.z;
+          if (abs(d) < 1.0) {
+            float h = sqrt(1.0 - d * d);
+            rod = uSeam.y * h;
+            q.y += (-d / max(h, 0.25)) * 16.0 * uPx * uSeam.y;
           }
         }
+        vec3 col = rod > 0.0 ? spectral(q, vec2(0.0, 1.5 * uPx * uSeam.y)) + rod * 0.035 : baseAt(p);
 
-        vec2 v = vUv - 0.5;
-        col *= 1.0 - dot(v, v) * 0.55;
-        gl_FragColor = vec4(col * uFade, 1.0);
+        vec4 t = textGlass(p);
+        col = mix(col, t.rgb, t.a);
+
+        // Glass panels: the header, buttons and chips.
+        for (int i = 0; i < ${MAX_PANELS}; i++) {
+          if (i >= uPanels) break;
+          vec4 P = uPanel[i];
+          vec2 lp = p - P.xy;
+          if (abs(lp.x) > P.z + 2.0 || abs(lp.y) > P.w + 2.0) continue;
+          float r = min(uPanelInfo[i].x, min(P.z, P.w));
+          float sdf = rr(lp, P.zw, r);
+          if (sdf > 0.5 * uPx) continue;
+          float inside = -sdf;
+          float mask = 1.0 - smoothstep(-1.5 * uPx, 0.5 * uPx, sdf);
+          float bev = min(min(P.z, P.w) * 0.45, 14.0 * uPx); // a rim, not a dome: the middle stays flat and clear
+          float e2 = 1.5 * uPx;
+          #define H(o) sqrt(clamp(-rr(lp + o, P.zw, r), 0.0, bev) * (2.0 * bev - clamp(-rr(lp + o, P.zw, r), 0.0, bev)))
+          vec2 grad = vec2(H(vec2(e2, 0.0)) - H(vec2(-e2, 0.0)), H(vec2(0.0, e2)) - H(vec2(0.0, -e2))) / (2.0 * e2);
+          vec3 N = normalize(vec3(-grad, 1.0));
+          vec2 at = p + grad * (1.0 / 3.0) * 2.2 * 0.69 * 30.0 * uPx * 0.5;
+          // Frosted a little: four nearby looks averaged with a sharp, fringed one, so busy letters calm down behind it.
+          float fr = 5.0 * uPx;
+          vec3 frost = (underPanels(at + vec2(fr, fr)) + underPanels(at + vec2(-fr, fr)) + underPanels(at + vec2(fr, -fr)) + underPanels(at - vec2(fr, fr))) * 0.25;
+          vec3 seen = mix(underPanels(at), frost, 0.6);
+          // Dispersion from the surface angle rather than three more looks: warm on one rim, cool on the other.
+          seen += vec3(0.05, 0.0, -0.05) * dot(N.xy, normalize(vec2(1.0, 0.3))) * length(N.xy) * 4.0;
+          float blue = uPanelInfo[i].y;
+          vec3 glass = mix(seen * 0.7, mix(vec3(1.0), vec3(0.0, 0.17, 0.77), blue), mix(0.06, 0.85, blue)) + sheen(N) * 0.6;
+          float stroke = smoothstep(-2.5 * uPx, -1.5 * uPx, sdf) * (1.0 - smoothstep(-1.0 * uPx, 0.0, sdf));
+          glass += stroke * (0.25 + 0.2 * (0.5 + 0.5 * lp.y / P.w)) + smoothstep(6.0 * uPx, 0.0, inside) * 0.05;
+          col = mix(col, glass, mask);
+        }
+
+        gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }

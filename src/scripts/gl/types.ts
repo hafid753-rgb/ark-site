@@ -11,8 +11,6 @@ export interface FrameInfo {
   W: number;
   H: number;
   mode?: string;
-  /** How far the liquid glass has flooded the screen: 0 = letters, 1 = everything in 3D. */
-  real?: number;
 }
 
 export interface Chapter {
@@ -22,11 +20,8 @@ export interface Chapter {
   glyph: number;
   /** Exposure for the letters (default 1): dim scenes can lift it so faint things still get letters. */
   gain?: number;
-  /** 0 = no lens, 1 = the real thing inside the window, 2 = letters inside the window. */
-  lens: 0 | 1 | 2;
   /** 0..1: the letters pour away (rented things losing their server). */
   fall: number;
-  focus?: THREE.Vector3;
   anchors?: THREE.Vector3[];
   anchorAlpha?: number;
   feed?: THREE.Camera | null;
@@ -40,6 +35,4 @@ export interface SceneCtx {
   glyphs: GlyphSet;
   rtl: boolean;
   reduced: boolean;
-  /** The lens rectangle in drawing-buffer pixels, for materials that cut themselves away under it. */
-  lens: THREE.Vector4;
 }

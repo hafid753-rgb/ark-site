@@ -15,19 +15,8 @@ export function create(ctx: SceneCtx): Chapter {
   scene.add(key);
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
 
-  // X-ray: the shell cuts itself away under the lens, so the letters show the inside.
-  const xray = (m: THREE.MeshStandardMaterial) => {
-    m.onBeforeCompile = (shader) => {
-      shader.uniforms.uLens = { value: ctx.lens };
-      shader.fragmentShader = 'uniform vec4 uLens;\n' + shader.fragmentShader.replace(
-        'void main() {',
-        'void main() {\n  vec2 lq = abs(gl_FragCoord.xy - uLens.xy) - uLens.zw;\n  if (max(lq.x, lq.y) < 0.0) discard;',
-      );
-    };
-    return m;
-  };
-  const shellMat = xray(new THREE.MeshStandardMaterial({ color: 0x3a3835, metalness: 0.7, roughness: 0.34, transparent: true }));
-  const baseMat = xray(new THREE.MeshStandardMaterial({ color: 0x2a2826, metalness: 0.6, roughness: 0.4, transparent: true }));
+  const shellMat = new THREE.MeshStandardMaterial({ color: 0x3a3835, metalness: 0.7, roughness: 0.34, transparent: true });
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0x2a2826, metalness: 0.6, roughness: 0.4, transparent: true });
   const chrome = new THREE.MeshStandardMaterial({ color: 0xe9e5dd, metalness: 1, roughness: 0.18 });
   const pcb = new THREE.MeshStandardMaterial({ color: 0x15201a, roughness: 0.6 });
   const chip = new THREE.MeshStandardMaterial({ color: 0x1e1e1e, roughness: 0.35, metalness: 0.3 });
@@ -144,14 +133,12 @@ export function create(ctx: SceneCtx): Chapter {
   device.add(sand);
 
   const anchors = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
-  const focus = new THREE.Vector3();
   const ch: Chapter = {
     scene,
     camera,
-    glyph: 0,
-    lens: 2,
+    glyph: 1, // drawn in letters, like the chapters around it
+    gain: 1.8, // dark metal: lift it so the machine still gets letters
     fall: 0,
-    focus,
     anchors,
     anchorAlpha: 0,
     update(f) {
@@ -189,7 +176,6 @@ export function create(ctx: SceneCtx): Chapter {
       storage.localToWorld(anchors[2].set(0, 0.1, 0));
       cover.localToWorld(anchors[3].set(1.2, 0.35, 1.2));
       ch.anchorAlpha = smooth(0.6, 0.7, f.p);
-      device.localToWorld(focus.set(0, 0.2 + open * 0.8, 0));
     },
   };
   return ch;

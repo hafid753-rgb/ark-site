@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildGlyphs, cellMaterial, compositeMaterial, fullscreen } from './glyphs';
-import { approach, clamp01, smooth } from './util';
+import { buildGlyphs, cellMaterial, compositeMaterial, fullscreen, MAX_PANELS } from './glyphs';
+import { clamp01, smooth } from './util';
 import type { Chapter, SceneCtx } from './types';
 
 type Factory = (ctx: SceneCtx) => Chapter;
@@ -17,7 +17,6 @@ const SCENES: Record<string, () => Promise<{ create: Factory }>> = {
 export async function startStage() {
   const root = document.documentElement;
   const canvas = document.getElementById('stage') as HTMLCanvasElement;
-  const lensEl = document.querySelector<HTMLElement>('.lens')!;
   const markers = [...document.querySelectorAll<HTMLElement>('.marker')];
   const feedCanvas = document.querySelector<HTMLCanvasElement>('[data-feed]');
   const rtl = root.dir === 'rtl';
@@ -46,8 +45,9 @@ export async function startStage() {
   const cellQuad = fullscreen(cellMat);
   const compQuad = fullscreen(compMat);
   const quadCam = new THREE.OrthographicCamera();
-  const lensPx = new THREE.Vector4(-9999, -9999, 1, 1);
-  const ctx: SceneCtx = { renderer, env, glyphs, rtl, reduced, lens: lensPx };
+  const empty = new THREE.Scene();
+  empty.background = new THREE.Color(0x000000);
+  const ctx: SceneCtx = { renderer, env, glyphs, rtl, reduced };
 
   // Scenes load as you approach them, then stay.
   const made = new Map<string, Chapter>();
@@ -74,6 +74,93 @@ export async function startStage() {
       return { el, top: r.top + scrollY, h: r.height };
     });
   };
+  // ---------- Liquid glass ----------
+  // Panels: elements marked data-glass become glass at their place on screen; the page keeps their
+  // content and hit area. Blue ones: data-glass="blue", a chosen place, a switch that is on.
+  const panels = [...document.querySelectorAll<HTMLElement>('[data-glass]')];
+  const radii = new Map<HTMLElement, number>();
+  const blueOf = (el: HTMLElement) =>
+    el.dataset.glass === 'blue' || el.matches('.place:has(input:checked)') || (el.matches('.switch') && el.getAttribute('aria-pressed') === 'true') ? 1 : 0;
+  const placePanels = () => {
+    const u = compMat.uniforms;
+    let n = 0;
+    for (const el of panels) {
+      if (n >= MAX_PANELS) break;
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) continue;
+      if (!radii.has(el)) radii.set(el, parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0);
+      u.uPanel.value[n].set((r.left + r.width / 2) * pr, (H - r.top - r.height / 2) * pr, (r.width / 2) * pr, (r.height / 2) * pr);
+      u.uPanelInfo.value[n].set(Math.min(radii.get(el)!, r.height / 2) * pr, blueOf(el), 0, 0);
+      n++;
+    }
+    u.uPanels.value = n;
+  };
+
+  // Headlines: drawn into a mask (red = white glass, green = blue glass for the timeline figures)
+  // whenever something moves, then turned into glass by the composite. Each word keeps its own
+  // scroll-driven opacity and blur, so the focus pull still plays, in glass.
+  const textEls = [...document.querySelectorAll<HTMLElement>('main :is(h1, h2, .closing-line) .w, main .year')];
+  const mask = document.createElement('canvas');
+  const mctx = mask.getContext('2d')!;
+  const canFilter = 'filter' in mctx;
+  const textTex = new THREE.CanvasTexture(mask);
+  textTex.generateMipmaps = true;
+  textTex.minFilter = THREE.LinearMipmapLinearFilter;
+  let ms = 1, lastSig = '';
+  function sizeText() {
+    ms = W * H > 900000 ? 1 : Math.min(pr, 2); // big screens: CSS pixels are enough for headline sizes
+    mask.width = Math.max(1, Math.round(W * ms));
+    mask.height = Math.max(1, Math.round(H * ms));
+    compMat.uniforms.uTextTexel.value.set(1 / mask.width, 1 / mask.height);
+    lastSig = '';
+    radii.clear();
+  }
+  const range = document.createRange();
+  const drawText = () => {
+    const items: { el: HTMLElement; r: DOMRect; st: CSSStyleDeclaration }[] = [];
+    let sig = `${W}x${H}`;
+    for (const el of textEls) {
+      let r: DOMRect;
+      if (el.classList.contains('w')) r = el.getBoundingClientRect();
+      else { range.selectNodeContents(el); r = range.getBoundingClientRect(); }
+      if (r.width < 1 || r.bottom < -40 || r.top > H + 40) continue;
+      const st = getComputedStyle(el);
+      const o = parseFloat(st.opacity);
+      if (o < 0.02) continue;
+      items.push({ el, r, st });
+      sig += `|${r.left.toFixed(1)},${r.top.toFixed(1)},${o.toFixed(2)},${st.filter}`;
+    }
+    if (sig === lastSig) return;
+    lastSig = sig;
+    mctx.setTransform(ms, 0, 0, ms, 0, 0);
+    mctx.filter = 'none';
+    mctx.globalAlpha = 1;
+    mctx.fillStyle = '#000'; // coverage lives in the colour channels, so the mask is drawn on black
+    mctx.fillRect(0, 0, W, H);
+    for (const { el, r, st } of items) {
+      const holder = el.classList.contains('w') ? (el.parentElement as HTMLElement) : el;
+      const hs = el.classList.contains('w') ? getComputedStyle(holder) : st;
+      mctx.font = `${hs.fontWeight} ${hs.fontSize} ${hs.fontFamily}`;
+      if ('letterSpacing' in mctx) (mctx as unknown as { letterSpacing: string }).letterSpacing = hs.letterSpacing === 'normal' ? '0px' : hs.letterSpacing;
+      if (canFilter) mctx.filter = st.filter && st.filter !== 'none' ? st.filter : 'none';
+      mctx.globalAlpha = parseFloat(st.opacity);
+      mctx.fillStyle = el.classList.contains('year') ? '#00ff00' : '#ff0000';
+      const m = mctx.measureText(el.textContent!);
+      const asc = m.fontBoundingBoxAscent ?? parseFloat(hs.fontSize) * 0.8;
+      const desc = m.fontBoundingBoxDescent ?? parseFloat(hs.fontSize) * 0.2;
+      const y = r.top + (r.height - asc - desc) / 2 + asc;
+      const rtlText = /[؀-ۿ]/.test(el.textContent!);
+      mctx.direction = rtlText ? 'rtl' : 'ltr';
+      mctx.textAlign = rtlText ? 'right' : 'left';
+      mctx.textBaseline = 'alphabetic';
+      mctx.fillText(el.textContent!, rtlText ? r.right : r.left, y);
+    }
+    textTex.needsUpdate = true;
+  };
+  compMat.uniforms.tText.value = textTex;
+  compMat.uniforms.uText.value = 1;
+  let glassOn = false;
+
   const resize = () => {
     W = innerWidth;
     H = innerHeight;
@@ -82,75 +169,20 @@ export async function startStage() {
     renderer.setSize(W, H, false);
     const bw = Math.max(1, Math.floor(W * pr)), bh = Math.max(1, Math.floor(H * pr));
     sceneRT.setSize(bw, bh);
-    const cols = Math.floor(W / (rtl ? 11 : 9)), rows = Math.floor(H / (rtl ? 17 : 15));
+    const cols = Math.floor(W / (rtl ? 10 : 8)), rows = Math.floor(H / (rtl ? 16 : 14));
     cellRT.setSize(cols, rows);
     cellMat.uniforms.uCells.value.set(cols, rows);
     compMat.uniforms.uCells.value.set(cols, rows);
     compMat.uniforms.uRes.value.set(bw, bh);
     compMat.uniforms.uPx.value = pr;
+    compMat.uniforms.uScrim.value.set(rtl ? -1 : 1, W < 900 ? 1 : 0); // matches the page's 899px breakpoint
+    sizeText();
     measure();
   };
   resize();
   const ro = new ResizeObserver(() => measure());
   ro.observe(document.body);
   addEventListener('resize', resize);
-
-  // The lens: follows the mouse; on touch screens it is dragged.
-  const lens = { x: W * 0.7, y: H * 0.45, tx: W * 0.7, ty: H * 0.45, moved: false, drag: false };
-  const onMove = (e: PointerEvent) => {
-    if (e.pointerType !== 'mouse') return;
-    lens.tx = e.clientX;
-    lens.ty = e.clientY;
-    lens.moved = true;
-  };
-  addEventListener('pointermove', onMove, { passive: true });
-  lensEl.classList.toggle('touch', touch);
-  const drag = (e: PointerEvent) => {
-    if (!lens.drag) return;
-    lens.tx = lens.x = e.clientX;
-    lens.ty = lens.y = e.clientY;
-    lens.moved = true;
-  };
-  lensEl.addEventListener('pointerdown', (e) => { lens.drag = true; lensEl.setPointerCapture(e.pointerId); drag(e); });
-  lensEl.addEventListener('pointermove', drag);
-  lensEl.addEventListener('pointerup', () => (lens.drag = false));
-  lensEl.addEventListener('pointercancel', () => (lens.drag = false));
-
-  // Hold the glass and it floods the screen: everything shows in 3D. Press again for the letters.
-  // `grow` is a spring, so the glass swells, overshoots a little and settles like a drop of liquid.
-  const glass = { real: false, grow: 0, vel: 0, hold: 0, holding: false, sx: 0, sy: 0, timer: 0, armed: false };
-  let floodable = false; // only the opening scene floods to 3D; further down stays in letters
-  const hints = [...document.querySelectorAll<HTMLElement>('[data-hint-real]')];
-  const setReal = (real: boolean, buzz = true) => {
-    glass.real = real;
-    document.documentElement.dataset.view = real ? 'real' : 'letters';
-    hints.forEach((h) => (h.textContent = real ? h.dataset.hintReal! : (touch && h.dataset.hintTouch) || h.dataset.hint!));
-    if (buzz) navigator.vibrate?.(8);
-  };
-  const busy = (t: EventTarget | null) => (t as Element | null)?.closest?.('a, button, input, select, label, summary, .phone, .bar, .rail');
-  addEventListener('pointerdown', (e) => {
-    if (e.button !== 0 || !floodable || busy(e.target)) return;
-    glass.sx = e.clientX;
-    glass.sy = e.clientY;
-    if (glass.real) { glass.armed = true; return; }
-    if (touch && e.target !== lensEl) return; // on touch screens, only the glass itself is held
-    glass.holding = true;
-    clearTimeout(glass.timer);
-    glass.timer = window.setTimeout(() => { glass.holding = false; setReal(true); }, 480);
-  });
-  addEventListener('pointermove', (e) => {
-    if (Math.hypot(e.clientX - glass.sx, e.clientY - glass.sy) < 12) return;
-    glass.armed = false;
-    if (glass.holding) { glass.holding = false; clearTimeout(glass.timer); }
-  }, { passive: true });
-  const release = () => {
-    clearTimeout(glass.timer);
-    glass.holding = false;
-    if (glass.armed && glass.real) setReal(false);
-    glass.armed = false;
-  };
-  addEventListener('pointerup', release);
-  addEventListener('pointercancel', () => { glass.armed = false; release(); });
 
   // Clicking a room in the 3D house toggles its light (the scene decides what was hit).
   let active: Chapter | undefined;
@@ -231,13 +263,25 @@ export async function startStage() {
     }
     const ch = name ? get(name) : undefined;
     active = ch;
-    floodable = span?.el.id === 'top';
-    // Leaving the opening scene puts the letters back at once (even before the next scene loads).
-    if (!floodable && (glass.real || glass.grow !== 0)) { if (glass.real) setReal(false, false); glass.grow = glass.vel = 0; }
+    const u = compMat.uniforms;
+    placePanels();
+    drawText();
+    u.uTime.value = time;
+    if (!glassOn) { glassOn = true; root.dataset.glassOn = ''; }
+    if (frames % 30 === 0) radii.clear(); // pick up shapes that change with state (the header turns into a pill)
+
     if (!ch || !span) {
-      lensEl.classList.remove('on');
+      // No scene here, but the glass (header, headlines, buttons) still needs drawing.
       showMarkers(undefined, 0);
-      if (!blank) { renderer.setRenderTarget(null); renderer.clear(); blank = true; }
+      // A real (empty) render, not a clear: a multisampled target only updates its texture on render.
+      if (!blank) { renderer.setRenderTarget(sceneRT); renderer.render(empty, quadCam); blank = true; }
+      u.tScene.value = sceneRT.texture;
+      u.uGlyphMix.value = 0;
+      u.uFade.value = 1;
+      u.uFall.value = 0;
+      u.uSeam.value.set(-1e4, 0, 1);
+      renderer.setRenderTarget(null);
+      renderer.render(compQuad, quadCam);
       return;
     }
     blank = false;
@@ -245,54 +289,20 @@ export async function startStage() {
     const p = clamp01((center - span.top) / span.h);
     const edge = 0.3 * H;
     const fadeIn = span.el.id === 'top' ? 1 : smooth(0, edge, center - span.top);
-    const fade = Math.min(fadeIn, smooth(0, edge, span.top + span.h - center));
-    ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night, real: Math.min(1, Math.max(0, glass.grow)) });
+    const fadeOut = smooth(0, edge, span.top + span.h - center);
+    const fade = Math.min(fadeIn, fadeOut);
+    ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night });
     // Projections below need this frame's camera matrices, not last render's.
     ch.camera.updateMatrixWorld();
-
-    // Lens placement: the pointer once it has moved, otherwise the scene's subject.
-    if (reduced) { glass.grow = glass.real ? 1 : 0; glass.vel = 0; }
-    else {
-      glass.vel += ((glass.real ? 1 : 0) - glass.grow) * 70 * dt - glass.vel * 12 * dt;
-      glass.grow += glass.vel * dt;
-    }
-    glass.hold = approach(glass.hold, glass.holding ? 1 : 0, dt, glass.holding ? 2.4 : 10);
-    const flooded = glass.real && glass.grow > 0.995;
-    const lensOn = ch.lens !== 0 && (fade > 0.6 || glass.grow > 0.01);
-    const lw = (touch ? 64 : 80) * (1 + glass.hold * 0.14), lh = lw / 2;
-    if (!lens.moved && ch.focus) {
-      const v = ch.focus.clone().project(ch.camera);
-      const x = ((v.x + 1) / 2) * W, y = ((1 - v.y) / 2) * H;
-      if (Number.isFinite(x) && Number.isFinite(y)) { lens.tx = x; lens.ty = y; }
-    }
-    if (!lens.drag) {
-      lens.x = approach(lens.x, lens.tx, dt, 9);
-      lens.y = approach(lens.y, lens.ty, dt, 9);
-    }
-    lensEl.classList.toggle('on', lensOn && !glass.real);
-    lensEl.style.width = `${lw * 2}px`;
-    lensEl.style.height = `${lh * 2}px`;
-    lensEl.style.transform = `translate(${lens.x - lw}px, ${lens.y - lh}px)`;
-    // The glass's size: the small lens, swelling to cover the screen as `grow` reaches 1.
-    const g = glass.grow;
-    const reach = 0.4 * Math.max(W, H);
-    const fx = Math.max(lens.x, W - lens.x) + reach, fy = Math.max(lens.y, H - lens.y) + reach;
-    const k = g >= 0 ? g : 0;
-    const wob = Math.max(-0.12, Math.min(0.12, glass.vel * 0.05)) * (1 - Math.min(1, Math.abs(g)));
-    const gw = (lw + (fx - lw) * k) * (g < 0 ? 1 + g * 2 : 1) * (1 + wob);
-    const gh = (lh + (fy - lh) * k) * (g < 0 ? 1 + g * 2 : 1) * (1 - wob);
-    const u = compMat.uniforms;
-    u.uRadius.value = Math.min(gw, gh) * 0.6 * pr;
-    u.uBevel.value = Math.min(30, lh * 0.8) * pr;
-    u.uGrow.value = Math.min(1, k);
-    // The x-ray (device chapter) needs the shell cut away under the small lens only.
-    if (lensOn && ch.lens === 2 && g < 0.01) lensPx.set(lens.x * pr, (H - lens.y) * pr, gw * pr, gh * pr);
-    else lensPx.set(-9999, -9999, 1, 1);
     showMarkers(ch, (ch.anchorAlpha ?? 0) * (fade > 0.6 ? 1 : 0));
+
+    // The seam to the neighbouring chapter, as a faint glass rod while it crosses the screen.
+    const seamY = fadeIn < fadeOut ? span.top - scrollY : span.top + span.h - scrollY;
+    u.uSeam.value.set((H - seamY) * pr, fade < 1 ? (1 - fade) * 0.9 : 0, 0.14 * H * pr);
 
     renderer.setRenderTarget(sceneRT);
     renderer.render(ch.scene, ch.camera);
-    const glyphOn = (ch.glyph > 0 || ch.lens !== 0) && !flooded;
+    const glyphOn = ch.glyph > 0;
     if (glyphOn) {
       cellMat.uniforms.tScene.value = sceneRT.texture;
       cellMat.uniforms.uGain.value = ch.gain ?? 1;
@@ -302,12 +312,8 @@ export async function startStage() {
     u.tScene.value = sceneRT.texture;
     u.tCells.value = cellRT.texture;
     u.uGlyphMix.value = glyphOn ? ch.glyph : 0;
-    // Once the glass grows it shows the real scene everywhere it reaches, whatever the chapter.
-    u.uLensMode.value = !lensOn || flooded ? 0 : g > 0.01 ? 1 : ch.lens;
-    u.uLens.value.set(lens.x * pr, (H - lens.y) * pr, gw * pr, gh * pr);
     u.uFade.value = fade;
     u.uFall.value = ch.fall;
-    u.uTime.value = time;
     renderer.setRenderTarget(null);
     renderer.render(compQuad, quadCam);
 
@@ -334,12 +340,12 @@ export async function startStage() {
   return {
     stop() {
       cancelAnimationFrame(raf);
-      removeEventListener('pointermove', onMove);
       removeEventListener('click', onClick);
       removeEventListener('resize', resize);
       ro.disconnect();
-      lensEl.classList.remove('on');
       showMarkers(undefined, 0);
+      delete root.dataset.glassOn;
+      textTex.dispose();
       renderer.dispose();
     },
   };

@@ -18,7 +18,7 @@ const chapters = [
   { k: t.offline.kicker, h: t.offline.title, p: t.offline.after },
   { k: t.control.kicker, h: t.control.title, p: t.control.body },
   { k: t.cinema.kicker, h: t.cinema.title, p: t.cinema.body },
-  { k: t.tailored.kicker, h: t.tailored.title, p: t.tailored.body },
+  { k: t.setup.kicker, h: t.setup.title, p: t.setup.body },
 ];
 ---
 <!doctype html>
@@ -66,14 +66,10 @@ const chapters = [
           )}
           {i === 1 && <ul>{t.yours.parts.map((p) => <li><strong>{p.name}</strong> {p.text}</li>)}</ul>}
           {i === 4 && <ul>{t.cinema.apps.map((a) => <li><strong>{a.name}</strong> {a.text}</li>)}</ul>}
+          {i === 5 && t.setup.places.map((pl) => <><h3>{pl.name}</h3><ul>{pl.items.map((it) => <li>{it}</li>)}</ul></>)}
         </section>
       ))}
 
-      <section>
-        <p class="k">{t.proof.kicker}</p>
-        <h2>{t.proof.editionNote}</h2>
-        <p class="muted">{t.footer.privacy}</p>
-      </section>
 
       <section>
         <h2>{t.start.title}</h2>
@@ -82,6 +78,7 @@ const chapters = [
 
       <footer>
         <p>{t.footer.tagline}</p>
+        <p>{t.footer.privacy}</p>
         <p dir="ltr">{coordinates}</p>
       </footer>
     </main>

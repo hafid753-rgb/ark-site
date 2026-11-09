@@ -151,7 +151,7 @@ main, .bar, .foot { position: relative; z-index: 1; }
   display: inline-flex; align-items: center; gap: 12px;
   height: 44px; padding-inline: 8px 18px; border-radius: var(--r-control);
   border: 1px solid var(--line); background: rgb(245 245 247 / 0.06); cursor: pointer; font-size: 15px; font-weight: 500;
-  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+  transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
 .knob { width: 44px; height: 28px; border-radius: 14px; background: #39393d; position: relative; transition: background-color var(--mid) var(--ease); }
 .knob::after { content: ''; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 24px; height: 24px; border-radius: 12px; background: #fff; transition: transform var(--mid) var(--ease); }
@@ -218,40 +218,28 @@ span.row-main { cursor: default; }
 .app-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(#1f1f21, #0c0c0d); border: 1px solid var(--line-strong); }
 .app-icon svg { width: 22px; height: 22px; fill: #d9d9de; }
 
-/* 06 Tailored */
-.rule { display: grid; gap: 16px; margin-top: 40px; max-width: 34rem; }
-.rule-line { display: grid; gap: 8px; border: 0; margin: 0; padding: 0; }
-.rule-line > span, .rule-line legend { font: 400 13px/20px var(--mono); color: var(--muted); padding: 0; }
-select {
-  height: 48px; padding-inline: 16px; border-radius: 12px;
-  background: var(--raised); border: 1px solid var(--line); color: var(--text); cursor: pointer; font-size: 16px;
+/* 06 Your setup: pick a place, see what Ark does there. Radio buttons + :has, no script needed. */
+.places { border: 0; margin: 40px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.places legend { margin-block-end: 14px; padding: 0; }
+.place {
+  position: relative; display: inline-flex; align-items: center; height: 44px; padding-inline: 20px;
+  border-radius: var(--r-control); border: 1px solid var(--line-strong); background: rgb(245 245 247 / 0.06);
+  font-size: 16px; cursor: pointer; transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.check { position: relative; }
-.check input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-.check span { display: inline-flex; align-items: center; height: 38px; padding-inline: 14px; border-radius: var(--r-control); border: 1px solid var(--line); background: rgb(245 245 247 / 0.06); font-size: 14px; transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease); }
-.check input:checked + span { background: var(--blue-wash); border-color: rgb(41 151 255 / 0.55); color: var(--text); }
-.check input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 3px; }
-.code { margin: 28px 0 0; display: grid; gap: 8px; max-width: 34rem; }
-.code pre { margin: 0; padding: 18px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; line-height: 1.7; color: var(--text-2); white-space: pre-wrap; min-height: 96px; }
-.poster { margin: 0; display: grid; gap: 14px; }
-.poster canvas { width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: var(--r-card); border: 1px solid var(--line); background: #000; }
-.poster figcaption { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
-
-/* 07 Proof */
-.stats { margin: 64px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
-@media (min-width: 900px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.stats div { display: grid; gap: 10px; padding-block-start: 20px; border-block-start: 1px solid var(--line-strong); }
-.stats dd { margin: 0; font-size: clamp(44px, 5vw, 72px); line-height: 1; letter-spacing: -0.04em; word-spacing: -0.3em; }
-.stats div:not(:last-child) dd { color: var(--blue); }
-.stats dt { font-size: 14px; color: var(--text-2); }
-:root[dir='rtl'] .stats dd[dir='ltr'] { text-align: right; }
-.proof-grid { display: grid; gap: 40px; margin-block: 56px 40px; align-items: start; }
-@media (min-width: 900px) { .proof-grid { grid-template-columns: 300px 1fr; } }
-.rings { width: min(100%, 300px); aspect-ratio: 1; }
-.ledger-box summary { cursor: pointer; font-size: 15px; padding-block: 8px; }
-.ledger { list-style: none; margin: 8px 0 0; padding: 0; max-height: 320px; overflow: auto; font-size: 12px; line-height: 1.6; color: var(--text-2); }
-.ledger li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; padding-block: 5px; border-block-end: 1px solid var(--line); }
-.ledger li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.place input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.place:has(input:checked) { background: var(--blue-fill); border-color: transparent; color: #fff; }
+.place:has(input:focus-visible) { outline: 2px solid var(--blue); outline-offset: 3px; }
+.place-panels { margin-block-start: 36px; max-width: 40rem; }
+.place-items { list-style: none; margin: 0; padding: 0; display: none; }
+.place-items li { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding-block: 16px; border-block-start: 1px solid var(--line); color: var(--text-2); font-size: 18px; }
+.place-items li:last-child { border-block-end: 1px solid var(--line); }
+.place-items .num { color: var(--blue); }
+.setup:has([value='home']:checked) [data-place='home'],
+.setup:has([value='building']:checked) [data-place='building'],
+.setup:has([value='office']:checked) [data-place='office'],
+.setup:has([value='store']:checked) [data-place='store'] { display: grid; }
+@supports not selector(:has(*)) { .place-items { display: grid; gap: 0; margin-block-end: 24px; } }
+.setup .actions { margin-block-start: 36px; }
 
 /* Start */
 #start .words { max-width: 14ch; }
@@ -272,9 +260,12 @@ select {
 .credits summary { cursor: pointer; }
 .credits ul { margin: 12px 0 0; padding-inline-start: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
 .coords { letter-spacing: 0.02em; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.link { background: none; border: 0; padding: 0; color: var(--text-2); font: inherit; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 4px; cursor: pointer; }
+.link:hover { color: var(--text); }
 
 /* Visibility per mode. Text mode (default, also without JS) shows the art. */
-#stage, .lens, .scrim, .full-only { display: none; }
+#stage, .scrim, .full-only { display: none; }
 .text-only { display: block; }
 
 @media (scripting: enabled) {
@@ -315,15 +306,21 @@ select {
     background: var(--blue-fill); color: #fff; opacity: 0; pointer-events: none;
     transition: opacity var(--mid) var(--ease);
   }
-  :root:not([data-mode='text']) .lens {
-    display: block; position: fixed; left: 0; top: 0; z-index: 2;
-    border-radius: 999px; /* the glass itself is drawn by the stage; this is its handle */
-    opacity: 0; pointer-events: none; touch-action: none; cursor: grab;
-    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
-    transition: opacity var(--mid) var(--ease);
+  /* Liquid glass. Once the stage is drawing it (data-glass-on), headlines become glass that bends the
+     scene behind them, and [data-glass] elements become glass panels. The page keeps the words (for
+     reading aloud, selecting and finding) and the hit areas; only their paint moves to the stage. */
+  :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line, .year),
+  :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line) .w { color: transparent; text-shadow: none; }
+  :root[data-glass-on]:not([data-mode='text']) .scrim { display: none; } /* the stage dims the scene itself, under the glass */
+  :root[data-glass-on]:not([data-mode='text']) [data-glass] {
+    background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
-  :root:not([data-mode='text']) .lens.on { opacity: 1; }
-  :root:not([data-mode='text']) .lens.on.touch { pointer-events: auto; }
+  :root[data-glass-on]:not([data-mode='text']) .bar {
+    inset-inline: 12px; inset-block-start: 10px; height: 52px; border-radius: 26px; border: 0; padding-inline: 18px;
+  }
+  /* Glass answers touch a little: it swells under the pointer and gives when pressed. */
+  :root[data-glass-on]:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:hover { transform: scale(1.03); }
+  :root[data-glass-on]:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:active { transform: scale(0.97); }
 
   /* The chapter rail: where you are, quietly. */
   :root:not([data-mode='text']) .rail {
