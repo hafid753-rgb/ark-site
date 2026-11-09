@@ -18,7 +18,7 @@ Status: first full build, on branch `claude/ark-site-v1`, draft pull request #1.
 
 ## Quick start
 
-Needs Node 22.
+Needs Node 22.23.4 or newer (Astro 7.4's minimum).
 
 ```bash
 npm install
@@ -52,12 +52,12 @@ Each chapter is a `<section>` in `src/components/Page.astro`. Its text lives in 
 
 | Chapter | What the visitor sees | Built in |
 |---|---|---|
-| **Hero** | "Nothing rented. Everything yours." The Ark mark in chrome, assembling from its two halves over rings like the Eye of the Sahara. Everything is drawn in the letters of the word *sovereignty*; a blue window shows the real chrome underneath. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
-| **01 Rented** | Four dated, sourced facts about things people paid for and lost. Each one's object (a hub, a bulb, a screen of purchases, a receipt that says BUY) pours away like sand, letter by letter, as its fact scrolls past. A small house that stays intact closes the chapter: *Unless it lives in your house.* | `gl/rented.ts` |
-| **02 Yours** | Grains of sand gather into the Ark home server (sand becomes silicon), then the machine opens into four labelled parts. The window works as an x-ray: the shell cuts away under it and the inside is drawn in letters. | `gl/device.ts` |
+| **Hero** | *Nothing rented. Everything yours*. The Ark mark in chrome, assembling from its two halves over rings like the Eye of the Sahara. Everything is drawn in the letters of the word *sovereignty*; a blue window shows the real chrome underneath. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
+| **01 Rented** | Four dated, sourced facts about things people paid for and lost. Each one's object (a hub, a bulb, a screen of purchases, a receipt that says BUY) pours away like sand, letter by letter, as its fact scrolls past. A small house that stays intact closes the chapter: *Unless it lives in your house*. | `gl/rented.ts` |
+| **02 Yours** | Grains of sand gather into the small machine Ark runs on (sand becomes silicon), then the machine opens into four labelled parts. The window works as an x-ray: the shell cuts away under it and the inside is drawn in letters. | `gl/device.ts` |
 | **03 Offline** | A courtyard house at night under clouds, with blue threads running from its roof mast up into the cloud. *Turn the lights on* (a simulated trip to a server abroad, labelled as simulated), *then cut the cloud and try again*. The threads fall, the clouds clear to stars and a moon, and the house answers instantly. That time is **measured** on the visitor's device. | `gl/night.ts`, `gl/house.ts`, `scripts/main.ts` |
-| **04 Control** | The same house seen from above with its roof off, beside a working Ark Home phone mock. It has rooms, AC with temperature, a gate that **asks before opening**, scenes, a live courtyard camera drawn in letters, and its own EN / FR / ع switch. Tapping a room in the 3D house works too. The first time the chapter comes into view, "Arrive home" runs by itself. | `gl/night.ts`, Page phone markup, `scripts/main.ts` |
-| **05 Cinema** | "Your home cinema. Offline." A ribbon of generated covers (films, albums, books with invented titles in Latin and Arabic script) flowing along a dune-shaped curve, with Sharkfin, Sharkwave and Sharkink. | `gl/cinema.ts` |
+| **04 Control** | The same house seen from above with its roof off, beside a working Ark Home phone mock. It has rooms, AC with temperature, a gate that **asks before opening**, scenes, a live courtyard camera drawn in letters, and its own EN / FR / ع switch. Tapping a room in the 3D house works too. The first time the chapter comes into view, "Arrive home" runs by itself, unless the visitor has already used the phone or the cloud demo. | `gl/night.ts`, Page phone markup, `scripts/main.ts` |
+| **05 Cinema** | *Your home cinema. Offline*. A ribbon of generated covers (films, albums, books with invented titles in Latin and Arabic script) flowing along a dune-shaped curve, with Sharkfin, Sharkwave and Sharkink. | `gl/cinema.ts` |
 | **06 Yours to shape** | A sentence builder using native selects and chips: *When I arrive home, if it is after dark, then open the gate…*. It shows "what the house reads" as pseudo-code and draws a unique ring poster from the rule, **on the device, never uploaded**, ready to download. | `scripts/rule.ts`, `scripts/poster.ts` |
 | **07 Proof** | A live record of every request the page has made, read from the browser's own timing API. Counters for other companies, cookies and trackers stay at 0, alongside the bytes downloaded from Ark and a ring chart. Two buttons: keep the site on this device (offline copy, only when asked), and download the one-file edition. | `scripts/ledger.ts`, `scripts/ledger-core.ts`, `public/sw.js`, `src/pages/edition/[lang].astro` |
 | **Start** | Three offers (Ark Home, Cinema, Installation) and contact. | Page markup |
@@ -82,10 +82,10 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
   - **Device chapter:** it does the opposite (letters inside, real outside). The shell's material cuts itself away under the window so you see inside.
   - **Input:** it follows the mouse; on touch screens it is dragged.
 - **Crumbling.** The "pour away" effect shifts each column of character cells downward at its own speed and scrambles the letters as they fall. It costs almost nothing.
-- **Phone camera feed.** The courtyard is rendered from a second camera into a tiny target and run through the same glyph pass. It is read back about 6 times a second and drawn into the phone's canvas from the same atlas.
+- **Phone camera feed.** The courtyard is rendered from a second camera into a tiny target and run through the same glyph pass. It refreshes every 150 ms, only while the phone is on screen, and is drawn into the phone's canvas from the same atlas.
 - **Comfort and speed:**
   - resolution adapts to the frame rate;
-  - nothing renders when no chapter needs it, or when the tab is hidden;
+  - nothing is drawn while no chapter needs a scene, and browsers pause the loop in hidden tabs;
   - device pixel ratio is capped;
   - `prefers-reduced-motion` freezes scene time and turns off the text focus effect.
 - **Fallbacks:** no WebGL 2, or an error while starting the stage, switches to text mode instead of breaking.
@@ -96,14 +96,14 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
 
 The house is modelled in code (`gl/house.ts`) as a Sahel courtyard house:
 - **Walls and roof:** thick plaster walls with softly bevelled edges, a back block of living room, bedroom and kitchen facing a tiled courtyard, and a roof terrace whose parapets have **stepped crenellations**, as in the old Adrar towns.
-- **Openings:** recessed windows with frames, sills and open wooden shutters; doors with frames and handles; a lamp over each door.
+- **Openings:** recessed windows with frames, sills and open wooden shutters; doors with frames; a lamp over each door.
 - **Outside:** an outside stair to the terrace, a stair house, a water tank on legs, solar panels, an AC unit with a fan that spins when the AC is on, and a mast with a dish (the cloud threads start here).
 - **Courtyard and interiors:** courtyard walls with crenellations, a two-leaf barred steel gate that swings open, a pedestrian door, a date palm, planters, and a shade sail over floor seating with cushions and a striped rug. Inside: low seating along the walls with cushions and a rug, a TV, a bed and wardrobe, kitchen counters and a fridge.
 - **Generated textures:** the tile and rug patterns are drawn in code, nothing downloaded. They use terracotta, cream, indigo and red, in the spirit of hand-painted walls rather than copying any motif.
 - **Light:** moonlight casts shadows. Each room has its own warm light; its windows glow when the room's light is on and spill light onto the courtyard.
-- **Efficiency:** static parts are merged into one mesh per material, so the whole house is a few dozen draw calls. Moving or tappable parts stay separate: gate leaves, fan, window glass per room, the roof layer that hides in the top-down view, and one floor per room for tapping.
+- **Efficiency:** static parts are merged into one mesh per material, so the many small pieces (crenellations, stair steps, palm fronds) draw as a few meshes. Moving or tappable parts stay separate: gate leaves, fan, window glass per room, the roof layer that hides in the top-down view, and one floor per room for tapping.
 
-**Why not `ARK.glb`** (the model the Ark Home app renders): it is an office interior exported from Sweet Home 3D, with office chairs, toilets, cabinets and stairs. It contains a third-party "MamaGreen" logo texture, and it would publish a real floor plan on a public site.
+**Why not `ARK.glb`** (the model the Ark Home app renders): it is an office interior exported from Sweet Home 3D, with office chairs, toilets, cabinets and stairs. It contains a third-party "MamaGreen" logo, and it would publish a real floor plan on a public site.
 
 ---
 
@@ -189,8 +189,8 @@ Brands are not named on the page; the facts are described generically and linked
 | **unslop** (Damir Sokolovsky) | An AI design-review skill, CC BY 4.0 | Used as the design rulebook: one accent, no cards or glows, sentence case, no trailing periods, 4px grid, one easing curve. Credited in the footer. |
 | **ponytail** (Dietrich Gebert) | MIT "write less code" rules for agents | Used as the engineering rulebook: native scrolling and controls, no animation or smooth-scroll libraries, one stylesheet, reuse of three.js add-ons, tests for non-trivial logic. Credited in the footer. |
 | **shaders** (shaders.com) | MIT library of 200+ WebGPU effects | **Not used in the end.** It needs WebGPU (Safari 26+, Chrome 113+, partial Firefox), so older iPhones would need a second path for every effect. All effects are written once in WebGL 2. It can be added later as an extra layer on WebGPU devices if wanted. |
-| **designeer.xyz** | Curated directory of design-engineering resources | Inspiration only. The site blocks automated reading, so nothing was taken from it. |
-| **Studio Hosqo** (Gumroad) | Free packs: 40 gradient maps, 20 glass-distortion textures, a displacement map, a MacBook mockup. Paid: Gradient Maps Vol. 1/2, Mixed Texture Pack, Mockup Pack 1. | **Not added yet.** Free Gumroad products still need a checkout with your email, which wasn't done on your behalf. Only Mockup Pack 1 states commercial use. To add them, download the packs and export the gradients as small PNG strips. Natural uses are colour grading per scene, the lens refraction and the crumble. |
+| **designeer.xyz** | Curated directory of design-engineering resources | Inspiration only. It answered 403 Forbidden even with its host allowed, so nothing was read or taken from it. |
+| **Studio Hosqo** (Gumroad) | Free packs: 40 gradient maps, 20 glass-distortion textures, a displacement map, a MacBook mockup. Paid (US$5 each): Gradient Maps Vol. 1/2, Mixed Texture Pack, Mockup Pack 1. | **Not added yet.** Free Gumroad products still need a checkout with your email, which wasn't done on your behalf. Only Mockup Pack 1 states commercial use. To add them, download the packs and export what's needed as PNGs (the glass and displacement packs are Photoshop files), for example the gradients as small PNG strips. Natural uses are colour grading per scene, the lens refraction and the crumble. |
 | **reactdrop.dev** | Couldn't be reached | Dropped at the owner's request. |
 | IBM Plex fonts | SIL Open Font License | Self-hosted through `@fontsource`. |
 | three.js | MIT | The 3D engine and its add-ons (RoundedBoxGeometry, MeshSurfaceSampler, RoomEnvironment, BufferGeometryUtils). |
@@ -285,7 +285,7 @@ In the test browser, the *Proof* chapter reported roughly 320–360 KB downloade
    - Sources were gathered on bricked devices, revocable "purchases", local-first software, the Open Home Foundation's principles, digital sovereignty, Chinguetti's family libraries, the Richat Structure, Oualata's painted houses and Saharan star navigation.
    - Award winners were studied (Igloo Inc, Site of the Year 2024; abeto's *Messenger*).
    - A first "gallery in six rooms" concept was revised into this eight-scene story after the owner asked for something edgier, subtle on Mauritania, and Jellyfin / Home Assistant never mentioned.
-2. **Environment.** To read designeer.xyz, the Studio Hosqo store and reactdrop.dev, a personal cloud environment named `arkhome-swift` was created that allows only those hosts. The Gumroad store could then be read; the other two could not.
+2. **Environment.** To read designeer.xyz, the Studio Hosqo store and reactdrop.dev, a personal cloud environment named `arkhome-swift` was created, adding only those hosts to its network allowlist. The Gumroad store could then be read; the other two could not.
 3. **First build.**
    - Astro static site, copy in three languages, the logo rebuilt from the icon.
    - Text mode as the default layout, so no-JS visitors get a document, and the cinematic layout only when scripting is on.
