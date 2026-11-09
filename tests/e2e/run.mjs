@@ -48,6 +48,7 @@ try {
   {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     await instant(page);
+    page.setDefaultTimeout(120000); // clicks wait for steady frames, which software GL draws about once a second
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => 'glassOn' in document.documentElement.dataset, null, { timeout: 20000 });
     check(!(await page.$('.lens')), 'the ascii-to-3D lens is gone');

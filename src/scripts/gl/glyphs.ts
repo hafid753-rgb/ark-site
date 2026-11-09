@@ -156,6 +156,7 @@ export function compositeMaterial(set: GlyphSet) {
       uPanelInfo: { value: Array.from({ length: MAX_PANELS }, () => new THREE.Vector4()) },
       uSeam: { value: new THREE.Vector3(-1e4, 0, 1) },
       uScrim: { value: new THREE.Vector2(1, 0) },
+      uScroll: { value: 0 },
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
@@ -167,6 +168,7 @@ export function compositeMaterial(set: GlyphSet) {
       uniform vec4 uPanelInfo[${MAX_PANELS}]; // x radius px, y blue tint
       uniform vec3 uSeam;                     // where two chapters meet: y px, strength, half height px
       uniform vec2 uScrim;                    // text side: (1,0) left, (-1,0) right, (0,1) bottom
+      uniform float uScroll;                  // page scroll, drawing-buffer px
       varying vec2 vUv;
       const vec3 BLUE = vec3(0.022, 0.305, 1.0); // #2997ff, linear
       float hash(float n) { return fract(sin(n) * 43758.5453); }
@@ -195,9 +197,43 @@ export function compositeMaterial(set: GlyphSet) {
         return mix(c, BLUE * l * 3.0, 0.1 + 0.16 * drift + 0.55 * spark);
       }
       vec3 realAt(vec2 p) { return texture2D(tScene, p / uRes).rgb; }
+
+      // Pixel mosaics in the background: a few small clusters of square tiles in blues (baby blue, cyan,
+      // Apple blue, a deeper blue), drifting slowly and twinkling. Kept sparse on purpose.
+      float hash2(vec2 v) { return fract(sin(dot(v, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 v) {
+        vec2 i = floor(v), f = fract(v);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
+      }
+      vec3 mosaic(vec2 p) {
+        float size = 11.0 * uPx;
+        vec2 q = p + vec2(0.0, uScroll * 0.5); // half the page's scroll: a quiet parallax
+        vec2 tile = floor(q / size);
+        vec2 in_ = fract(q / size);
+        // Square tiles with a hairline gap, like a mosaic.
+        float body = step(0.09, in_.x) * step(0.09, in_.y) * step(in_.x, 0.91) * step(in_.y, 0.91);
+        // Where the clusters are: low-frequency noise, slowly drifting; only its peaks become mosaic.
+        float n = noise(tile * 0.085 + vec2(uTime * 0.025, -uTime * 0.015));
+        float density = smoothstep(0.8, 0.93, n);
+        float h = hash2(tile);
+        if (h > density * 0.6) return vec3(0.0);
+        float pick = hash2(tile + 17.0);
+        vec3 col = pick < 0.3 ? vec3(0.25, 0.62, 0.87)      // baby blue  #89cff0
+                 : pick < 0.55 ? vec3(0.13, 0.64, 1.0)      // cyan       #64d2ff
+                 : pick < 0.85 ? vec3(0.022, 0.305, 1.0)    // Apple blue #2997ff
+                 : vec3(0.0, 0.165, 0.77);                  // deep blue  #0071e3
+        float twinkle = 0.65 + 0.35 * sin(uTime * 1.2 + h * 40.0);
+        // Mostly on the scene's side of the screen, away from the words.
+        vec2 sn = p / uRes;
+        float side = uScrim.y > 0.5 ? sn.y : (uScrim.x > 0.0 ? sn.x : 1.0 - sn.x);
+        return col * body * twinkle * 0.28 * smoothstep(0.4, 0.7, side);
+      }
       // The scene as the eye gets it: letters and/or real, vignette, chapter fade.
       vec3 baseAt(vec2 p) {
         vec3 c = uGlyphMix > 0.0 ? mix(realAt(p), glyphAt(p), uGlyphMix) : realAt(p);
+        // Mosaic only where the scene is dark, so it stays in the background and never sits on things.
+        c += mosaic(p) * (1.0 - smoothstep(0.02, 0.12, dot(c, vec3(0.2126, 0.7152, 0.0722))));
         vec2 n = p / uRes, v = n - 0.5;
         // The scene dims on the text side so words stay readable; the glass on top is not dimmed.
         float t = uScrim.y > 0.5 ? n.y : (uScrim.x > 0.0 ? n.x : 1.0 - n.x);

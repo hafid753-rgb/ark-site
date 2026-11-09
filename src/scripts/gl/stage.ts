@@ -267,6 +267,7 @@ export async function startStage() {
     placePanels();
     drawText();
     u.uTime.value = time;
+    u.uScroll.value = scrollY * pr;
     if (!glassOn) { glassOn = true; root.dataset.glassOn = ''; }
     if (frames % 30 === 0) radii.clear(); // pick up shapes that change with state (the header turns into a pill)
 

@@ -84,6 +84,7 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
 - **The glass ripples (hero).** One shader on a plane behind the mark. The mark's silhouette is the union of two convex blocks; taking the mitred distance to each block (the furthest of its edge lines) and the nearer of the two gives offsets that keep the steps and the chamfer sharp at every size. Bands of that distance flow outward over time, with a slow liquid wobble. Each band is shaded as a rounded glass tube: Fresnel rims, a highlight from the top left, and dispersion (red, green and blue see the tube slightly wider or narrower, so its edges fringe). Letters need more light than eyes, so the ribbons are wide and bright and the outer ones fade early, keeping the headline side readable. Each chapter can set its own letter exposure (`gain`); the hero uses 2.2.
 - **Readable letters.** Besides the page's word, the atlas has strokes (`- | / \\ _ : = #`), so edges and outlines are drawn as lines and silhouettes read as shapes. Very dim cells stay empty for a quieter background. Cells are 8 × 14 px (10 × 16 in Arabic).
 - **A little blue.** Letters lean slightly toward Apple blue in a slow drift across the screen, and about one in sixteen is fully blue.
+- **Pixel mosaics.** A few small clusters of square tiles in four blues (baby blue `#89cff0`, cyan `#64d2ff`, Apple blue `#2997ff`, deep blue `#0071e3`) sit in the background. They drift slowly, twinkle, and scroll at half the page's speed. They appear only where the scene is dark, so they never cover objects or letters, and mostly on the scene's side of the screen, away from the words. They're kept sparse on purpose: a couple of clusters per screen.
 - **Crumbling.** The "pour away" effect shifts each column of character cells downward at its own speed and scrambles the letters as they fall. It costs almost nothing.
 - **Phone camera feed.** The courtyard is rendered from a second camera into a tiny target and run through the same glyph pass. It refreshes every 150 ms, only while the phone is on screen, and is drawn into the phone's canvas from the same atlas.
 - **Comfort and speed:**
@@ -333,6 +334,7 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
    - The timeline now covers 2018 to 2026 and the four services, with eight objects; no GDP or bank statistics.
    - Sections 06 (rule builder) and 07 (proof) became *Build your own setup*; the offline copy and one-file edition moved to quiet footer links.
    - Section 02 is drawn in letters.
+10. **Pixel mosaics:** "pixel mosaics in shades of blue, baby blue, cyan and Apple blue for background elements, but not a lot". A first pass covered too much and sat behind the words, so the second has fewer, smaller clusters on the scene side only.
    - Found on the way: clearing a multisampled render target doesn't update its texture, so sections without a scene showed a stale cinema frame (now an empty render); and the page's scrim had been dimming the glass (now inside the compositor).
 
 ---
