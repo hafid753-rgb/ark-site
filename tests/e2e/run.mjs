@@ -1,0 +1,86 @@
+// End-to-end checks against the built site (run `npm run build` first).
+// Uses the system Playwright: node tests/e2e/run.mjs
+import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
+
+const { chromium } = createRequire(import.meta.url)('playwright');
+const PORT = 4329;
+const BASE = `http://127.0.0.1:${PORT}`;
+const server = spawn('npx', ['astro', 'preview', '--host', '127.0.0.1', '--port', String(PORT)], { stdio: 'ignore' });
+let failures = 0;
+const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) failures++; };
+
+try {
+  for (let i = 0; i < 150; i++) {
+    try { if ((await fetch(BASE)).ok) break; } catch {}
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--ignore-gpu-blocklist'] });
+
+  for (const [path, lang, dir] of [['/', 'en', 'ltr'], ['/fr/', 'fr', 'ltr'], ['/ar/', 'ar', 'rtl']]) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const errors = [], foreign = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    page.on('request', (r) => { const u = new URL(r.url()); if (u.protocol.startsWith('http') && u.host !== `127.0.0.1:${PORT}`) foreign.push(r.url()); });
+    await page.goto(BASE + path, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2500);
+    for (const id of ['#rented', '#yours', '#offline', '#control', '#cinema', '#tailored', '#proof']) {
+      await page.evaluate((id) => document.querySelector(id).scrollIntoView(), id);
+      await page.waitForTimeout(500);
+    }
+    check(await page.evaluate(() => document.documentElement.lang) === lang && await page.evaluate(() => document.documentElement.dir) === dir, `${path} lang=${lang} dir=${dir}`);
+    check(await page.evaluate(() => document.documentElement.dataset.mode) === 'full', `${path} starts in full mode with WebGL`);
+    check(errors.length === 0, `${path} no console errors ${errors.join(' | ')}`);
+    check(foreign.length === 0, `${path} no requests to other companies ${foreign.join(' ')}`);
+    await page.close();
+  }
+
+  // Interactions on the English page.
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await ctx.newPage();
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await page.locator('#offline').scrollIntoViewIfNeeded();
+  await page.click('[data-lights]');
+  await page.waitForFunction(() => /simulated/.test(document.querySelector('[data-status]').textContent), null, { timeout: 4000 });
+  check(true, 'cloud round trip is labelled simulated');
+  await page.click('[data-cut]');
+  await page.click('[data-lights]');
+  await page.waitForFunction(() => document.querySelector('[data-status]').dataset.tone === 'local', null, { timeout: 2000 });
+  check(/measured/.test(await page.textContent('[data-status]')), 'offline answer is measured on the device');
+
+  await page.locator('#control').scrollIntoViewIfNeeded();
+  await page.click('[data-gate]');
+  check(await page.isVisible('[data-sheet]'), 'opening the gate asks first');
+  await page.click('[data-sheet-ok]');
+  check((await page.textContent('[data-gate-state]')).trim() === 'Open', 'gate opens after confirming');
+
+  await page.click('[data-mode-toggle]');
+  check(await page.evaluate(() => document.documentElement.dataset.mode === 'text' && getComputedStyle(document.getElementById('stage')).display === 'none'), 'text mode hides the 3D stage');
+  await page.click('[data-mode-toggle]');
+
+  // Offline copy, only when asked.
+  check(!(await page.evaluate(() => navigator.serviceWorker.getRegistration())), 'nothing is installed before the visitor asks');
+  await page.locator('#proof').scrollIntoViewIfNeeded();
+  await page.click('[data-offline]');
+  await page.waitForFunction(() => document.querySelector('[data-offline]').dataset.saved === 'true', null, { timeout: 30000 });
+  await ctx.setOffline(true);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  check(await page.isVisible('h1'), 'the saved copy opens with the network off');
+  await ctx.setOffline(false);
+  await ctx.close();
+
+  // Without JavaScript the story still reads.
+  const nojs = await browser.newContext({ javaScriptEnabled: false });
+  const p2 = await nojs.newPage();
+  await p2.goto(BASE + '/', { waitUntil: 'networkidle' });
+  check(await p2.isVisible('pre.art') && await p2.isVisible('h1') && !(await p2.isVisible('#stage')), 'without JavaScript: text layout, no stage');
+  const edition = await (await fetch(BASE + '/edition/en/')).text();
+  check(!/<script|<link[^>]+stylesheet|src=/i.test(edition), 'one-file edition has no scripts or external files');
+  await nojs.close();
+  await browser.close();
+} finally {
+  server.kill();
+}
+console.log(failures ? `\n${failures} failed` : '\nall passed');
+process.exit(failures ? 1 : 0);
