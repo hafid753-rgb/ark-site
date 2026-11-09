@@ -1,11 +1,10 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { easeOut, lerp, markGeometries, smooth } from './util';
 import type { Chapter, SceneCtx } from './types';
 
 const DEG = Math.PI / 180;
 
-/** The mark, in chrome, assembling from its two halves, with glass copies of itself radiating behind. */
+/** The mark, in chrome, assembling from its two halves, with its outline rippling outward in glass. */
 export function create(ctx: SceneCtx): Chapter {
   const scene = new THREE.Scene();
   scene.environment = ctx.env;
@@ -20,53 +19,63 @@ export function create(ctx: SceneCtx): Chapter {
   mark.add(upper, lower);
   scene.add(mark);
 
-  // Behind it, the mark again and again in liquid glass, radiating outward in rings:
-  // born small at the centre, growing as they travel, gone at the edge.
-  const glassMark = mergeGeometries(markGeometries(0.32));
-  glassMark.computeVertexNormals();
-  // Glass lit by what it reflects: bright Fresnel edges, a clear coat and a thin-film shimmer,
-  // the body mostly see-through. Reads as glass in 3D and outlines each mark in letters,
-  // without the cost of a transmission pass.
-  const liquid = new THREE.MeshPhysicalMaterial({
-    color: 0x0c1424, // almost no body colour: glass on black is mostly what it reflects
-    metalness: 0,
-    roughness: 0.05,
-    ior: 1.6,
-    specularIntensity: 1,
-    iridescence: 0.45,
-    iridescenceIOR: 1.4,
-    iridescenceThicknessMinimum: 120,
-    iridescenceThicknessMaximum: 280,
-    clearcoat: 1,
-    clearcoatRoughness: 0.02,
-    envMapIntensity: 7,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-  });
-  const RINGS = 6, PER = 9, INNER = 2.2, STEP = 1.7;
-  const field = new THREE.InstancedMesh(glassMark, liquid, RINGS * PER);
-  field.frustumCulled = false;
-  scene.add(field);
-  const dummy = new THREE.Object3D();
-  const radiate = (t: number) => {
-    for (let k = 0; k < RINGS; k++) {
-      const life = (k + t * 0.09) % RINGS / RINGS; // 0 at the centre, 1 at the edge
-      const r = INNER + life * RINGS * STEP;
-      const size = r * 0.072 * smooth(0, 0.12, life) * (1 - smooth(0.78, 1, life));
-      for (let j = 0; j < PER; j++) {
-        const a = ((j + (k % 2) * 0.5) / PER) * Math.PI * 2 + t * 0.03;
-        dummy.position.set(Math.cos(a) * r, Math.sin(a) * r * 0.92, -3.5 - life * 2.5);
-        // Each one points outward, and tilts a little so the glass catches the light.
-        dummy.rotation.set(Math.sin(t * 0.5 + j + k) * 0.35, Math.cos(t * 0.4 + j * 1.7) * 0.35, a - Math.PI / 2, 'ZXY');
-        dummy.scale.setScalar(Math.max(size, 1e-4));
-        dummy.updateMatrix();
-        field.setMatrixAt(k * PER + j, dummy.matrix);
-      }
-    }
-    field.instanceMatrix.needsUpdate = true;
-  };
+  // Behind it, the mark's own outline again and again, rippling outward like water around it,
+  // each ripple a ribbon of liquid glass. The outline is the union of the mark's two convex blocks;
+  // "mitred" distance to each block keeps the steps and the chamfer crisp at every size.
+  const ripples = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 40),
+    new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uLetters: { value: 1 } },
+      vertexShader: /* glsl */ `varying vec2 vPos; void main() { vPos = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      fragmentShader: /* glsl */ `
+        uniform float uTime, uLetters; // uLetters: 1 while drawn in letters, 0 once flooded to 3D
+        varying vec2 vPos;
+        // The mark's two blocks, centred on the window (y up), clockwise.
+        const vec2 A[5] = vec2[5](vec2(-1.0, 1.5), vec2(1.17, 1.5), vec2(2.0, 0.67), vec2(2.0, -0.5), vec2(-1.0, -0.5));
+        const vec2 B[5] = vec2[5](vec2(-2.0, 0.5), vec2(1.0, 0.5), vec2(1.0, -1.5), vec2(-1.17, -1.5), vec2(-2.0, -0.67));
+        // Mitred distance to a convex polygon, and the outward direction of the edge that decides it.
+        float block(vec2 p, vec2 v[5], out vec2 n) {
+          float d = -1e9;
+          for (int i = 0; i < 5; i++) {
+            vec2 e = normalize(v[(i + 1) % 5] - v[i]);
+            vec2 m = vec2(-e.y, e.x);
+            float s = dot(p - v[i], m);
+            if (s > d) { d = s; n = m; }
+          }
+          return d;
+        }
+        // Across one glass ribbon: u from -1 to 1. Returns the light it throws back.
+        float glassAt(float u, vec2 g) {
+          float h = sqrt(max(1.0 - u * u, 0.0));
+          vec3 N = normalize(vec3(g * (-u / max(h, 0.12)) * 0.8, 1.0));
+          float fres = pow(1.0 - N.z, 2.2);
+          float spec = pow(max(dot(N, normalize(vec3(-0.45, 0.65, 1.6))), 0.0), 70.0);
+          float inside = 1.0 - smoothstep(0.85, 1.0, abs(u));
+          return (0.05 + fres * 0.85 + spec * 1.6) * inside;
+        }
+        void main() {
+          vec2 na, nb;
+          float da = block(vPos, A, na), db = block(vPos, B, nb);
+          float d = min(da, db);
+          vec2 g = da < db ? na : nb;
+          // A slow liquid wobble, then ripples flowing outward.
+          d += 0.05 * sin(vPos.x * 1.3 + uTime * 0.6) * sin(vPos.y * 1.1 - uTime * 0.45);
+          float t = d / 0.62 - uTime * 0.16;
+          // Letters need wider, brighter ribbons than eyes do.
+          float u = (fract(t) - 0.5) / mix(0.17, 0.26, uLetters);
+          // Dispersion: each colour sees the ribbon a little wider or narrower.
+          vec3 col = vec3(glassAt(u * 1.07, g), glassAt(u, g), glassAt(u * 0.93, g));
+          col *= vec3(0.86, 0.93, 1.0);
+          // In letters the outer ripples fade sooner, so the words beside them stay easy to read.
+          float fade = smoothstep(0.15, 0.6, d) * (1.0 - smoothstep(mix(5.5, 3.2, uLetters), mix(9.5, 6.0, uLetters), d));
+          gl_FragColor = vec4(col * fade * mix(0.55, 1.6, uLetters), 1.0);
+        }
+      `,
+      depthWrite: false,
+    }),
+  );
+  ripples.position.z = -0.9;
+  mark.add(ripples);
 
   const focus = new THREE.Vector3();
   let born = -1;
@@ -74,7 +83,7 @@ export function create(ctx: SceneCtx): Chapter {
     scene,
     camera,
     glyph: 1,
-    gain: 2.6, // the glass field is faint; letters need more light than eyes
+    gain: 2.2, // the glass ripples are faint; letters need more light than eyes
     lens: 1,
     fall: 0,
     focus,
@@ -99,8 +108,9 @@ export function create(ctx: SceneCtx): Chapter {
       camera.aspect = f.aspect;
       camera.position.set(0, 0, lerp(dist, 0.5, through * through));
       camera.updateProjectionMatrix();
-      field.position.set(mark.position.x, mark.position.y, 0);
-      radiate(f.time);
+      const ru = (ripples.material as THREE.ShaderMaterial).uniforms;
+      ru.uTime.value = f.time;
+      ru.uLetters.value = 1 - (f.real ?? 0);
       // Rest the lens on solid metal (the upper bar), not on the empty window.
       mark.updateMatrixWorld();
       mark.localToWorld(focus.set(0.4, 1.0, 0.3));
