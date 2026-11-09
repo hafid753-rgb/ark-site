@@ -48,6 +48,14 @@ try {
     check(await page.evaluate(() => document.documentElement.dataset.view) === 'real', 'holding the glass turns everything 3D');
     await page.mouse.click(900, 400);
     check(await page.evaluate(() => document.documentElement.dataset.view) === 'letters', 'pressing again brings the letters back');
+    await page.mouse.down();
+    await page.waitForTimeout(900);
+    await page.mouse.up();
+    await page.evaluate(() => document.querySelector('#rented').scrollIntoView());
+    // Smooth scrolling takes a moment to land; then the letters must be back.
+    await page.waitForFunction(() => document.querySelector('#rented').getBoundingClientRect().top < 10, null, { timeout: 15000 });
+    await page.waitForTimeout(500);
+    check(await page.evaluate(() => document.documentElement.dataset.view) === 'letters', 'scrolling down stays in letters');
     await page.close();
   }
 

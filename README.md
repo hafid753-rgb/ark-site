@@ -52,7 +52,7 @@ Each chapter is a `<section>` in `src/components/Page.astro`. Its text lives in 
 
 | Chapter | What the visitor sees | Built in |
 |---|---|---|
-| **Hero** | *Nothing rented. Everything yours*. The Ark mark in chrome, assembling from its two halves over rings like the Eye of the Sahara. Everything is drawn in the letters of the word *sovereignty*; a small piece of liquid glass shows the real chrome underneath. **Hold the glass** and it floods the screen: everything shows in 3D. **Press anywhere** and the letters come back. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
+| **Hero** | *Nothing rented. Everything yours*. The Ark mark in chrome, assembling from its two halves. Behind it, the mark again and again in liquid glass, radiating outward in rings: each copy is born small near the centre, grows and tilts as it travels, and disappears at the edge. Everything is drawn in the letters of the word *sovereignty*; a small piece of liquid glass shows the real chrome underneath. **Hold the glass** and it floods the screen: everything shows in 3D. **Press anywhere** and the letters come back. Only this opening scene floods; further down stays in letters. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
 | **01 Elsewhere** | *A country going digital, on tools made for somewhere else*. A sourced timeline: the 2018 cable cut that took Mauritania offline, the 2022 national digital agenda, 800+ procedures online in 2026, and a global payment platform that still doesn't serve Mauritanian businesses. Each fact has an object: a cut submarine cable, a telecom mast, a phone of public services, a foreign checkout that says *Not supported*. What depends on somewhere else (the cable, the checkout) pours away like sand as it scrolls past; what's being built here stays. It closes on *Ark is made here, and it runs in your house*. | `gl/rented.ts` |
 | **02 Yours** | Grains of sand gather into the small machine Ark runs on (sand becomes silicon), then the machine opens into four labelled parts. The window works as an x-ray: the shell cuts away under it and the inside is drawn in letters. | `gl/device.ts` |
 | **03 Offline** | A courtyard house at night under clouds, with blue threads running from its roof mast up into the cloud. *Turn the lights on* (a simulated trip to a server abroad, labelled as simulated), *then cut the cloud and try again*. The threads fall, the clouds clear to stars and a moon, and the house answers instantly. That time is **measured** on the visitor's device. | `gl/night.ts`, `gl/house.ts`, `scripts/main.ts` |
@@ -79,10 +79,11 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
   The letters are the page's word: *sovereignty* in English, *souveraineté* in French, and *السيادة التقنية* in Arabic. In Arabic the scenes are literally drawn in Arabic letters.
 - **The liquid-glass lens.** A small 2:1 piece of glass (160 × 80 px, 128 × 64 on phones), the shape of the mark's window.
   - **Optics:** a rounded-rectangle bevel with two-surface refraction, colour fringing at the edges, Fresnel, highlights from the top left, a thin inner rim and a soft shadow. The maths is adapted from [LiquidGlass](https://github.com/ybouane/liquidglass) (MIT) and runs inside the glyph composite, so it bends the live 3D scene rather than a screenshot of the page.
-  - **Hero and Elsewhere:** it shows the real object inside a scene drawn in letters.
+  - **Hero:** it shows the real object inside a scene drawn in letters.
   - **Device chapter:** it does the opposite (letters inside, real outside). The shell's material cuts itself away under the glass so you see inside.
-  - **Hold to flood:** holding the glass for half a second (anywhere on desktop, since the glass sits under the cursor; on the glass itself on touch screens) makes it swell and spread over the whole screen on a spring, so it overshoots and settles like liquid. Everything shows in 3D, and the letter pass is skipped while flooded. A press anywhere shrinks it back with a small wobble. The state carries across chapters, and the hint text changes to say how to go back. Reduced motion snaps between the two states.
+  - **Hold to flood:** holding the glass for half a second (anywhere on desktop, since the glass sits under the cursor; on the glass itself on touch screens) makes it swell and spread over the whole screen on a spring, so it overshoots and settles like liquid. Everything shows in 3D, and the letter pass is skipped while flooded. A press anywhere shrinks it back with a small wobble. It works in the opening scene only: scrolling on puts the letters back at once, even before the next scene has loaded, so the rest of the site stays in letters. The hint text changes to say how to go back. Reduced motion snaps between the two states.
   - **Input:** it follows the mouse; on touch screens it is dragged.
+- **The glass field (hero).** 54 copies of the mark in one instanced mesh (6 rings of 9). The material is reflection-only glass: no body colour, clear coat, a thin-film shimmer, additive blending so the bodies are see-through. That reads as glass on black without the cost of a transmission pass. Letters need more light than eyes, so each chapter can set its own letter exposure (`gain`); the hero uses 2.6 so the faint glass still gets letters.
 - **Crumbling.** The "pour away" effect shifts each column of character cells downward at its own speed and scrambles the letters as they fall. It costs almost nothing.
 - **Phone camera feed.** The courtyard is rendered from a second camera into a tiny target and run through the same glyph pass. It refreshes every 150 ms, only while the phone is on screen, and is drawn into the phone's canvas from the same atlas.
 - **Comfort and speed:**
@@ -130,7 +131,7 @@ The direction came from the owner's requests: a cool, edgy site, not literally a
   - A quiet chapter rail on the edge shows where you are and hides over the hero.
 - **Motion:** one easing curve (`cubic-bezier(0.22, 1, 0.36, 1)`); only colour, opacity, transform and filter animate.
 - **Mauritania, subtly:** nothing is labelled.
-  - **Rings:** the concentric rings abstracted from the Eye of the Sahara (Richat Structure).
+  - **Rings:** the concentric rings of the Eye of the Sahara (Richat Structure), echoed by the rings of glass marks in the hero and drawn in the rule poster.
   - **Sand to silicon:** sand becoming the hardware.
   - **Stars:** the cleared sky over the house; Saharan caravans steered by the stars.
   - **The house:** Adrar-style crenellations, the date palm, and courtyard living with floor seating.
@@ -264,9 +265,9 @@ About 4,000 lines of source in total.
   - text mode hiding the stage;
   - nothing installed before the visitor asks, then the offline copy opening with the network off;
   - no-JS rendering, and the one-file edition having no scripts or external files;
-  - holding the glass turning everything 3D, and a press bringing the letters back.
+  - holding the glass turning everything 3D, a press bringing the letters back, and scrolling down staying in letters.
 
-  **All 23 checks pass.** Earlier runs failed for two reasons, both in the test, not the site. Astro 7's preview writes a lock file, and killing `npx` left the server running, so later runs couldn't start their own. The runner now starts it with `--ignore-lock` in its own process group and stops the whole group. Also, the selector `[data-cut]` matched the demo's container, which carries a `data-cut` label, before the button; it is now `button[data-cut]`.
+  **All 24 checks pass.** Earlier runs failed for two reasons, both in the test, not the site. Astro 7's preview writes a lock file, and killing `npx` left the server running, so later runs couldn't start their own. The runner now starts it with `--ignore-lock` in its own process group and stops the whole group. Also, the selector `[data-cut]` matched the demo's container, which carries a `data-cut` label, before the button; it is now `button[data-cut]`.
 - **Glass on a phone:** checked on an emulated iPhone 13 with real touch events. Holding the glass floods the screen, and a tap brings the letters back.
 - **Visual review:** every chapter was screenshotted in headless Chromium at desktop (1440 × 900), phone (390 × 844) and in Arabic, and reviewed after each change. Those runs showed no console errors and **no third-party requests**.
 

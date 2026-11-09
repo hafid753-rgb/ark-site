@@ -119,17 +119,17 @@ export async function startStage() {
   // Hold the glass and it floods the screen: everything shows in 3D. Press again for the letters.
   // `grow` is a spring, so the glass swells, overshoots a little and settles like a drop of liquid.
   const glass = { real: false, grow: 0, vel: 0, hold: 0, holding: false, sx: 0, sy: 0, timer: 0, armed: false };
-  let lensChapter = false; // does the current chapter have letters to trade for 3D?
+  let floodable = false; // only the opening scene floods to 3D; further down stays in letters
   const hints = [...document.querySelectorAll<HTMLElement>('[data-hint-real]')];
-  const setReal = (real: boolean) => {
+  const setReal = (real: boolean, buzz = true) => {
     glass.real = real;
     document.documentElement.dataset.view = real ? 'real' : 'letters';
     hints.forEach((h) => (h.textContent = real ? h.dataset.hintReal! : (touch && h.dataset.hintTouch) || h.dataset.hint!));
-    navigator.vibrate?.(8);
+    if (buzz) navigator.vibrate?.(8);
   };
   const busy = (t: EventTarget | null) => (t as Element | null)?.closest?.('a, button, input, select, label, summary, .phone, .bar, .rail');
   addEventListener('pointerdown', (e) => {
-    if (e.button !== 0 || !lensChapter || busy(e.target)) return;
+    if (e.button !== 0 || !floodable || busy(e.target)) return;
     glass.sx = e.clientX;
     glass.sy = e.clientY;
     if (glass.real) { glass.armed = true; return; }
@@ -180,7 +180,7 @@ export async function startStage() {
     renderer.render(cellQuad, quadCam);
     renderer.readRenderTargetPixels(feedCellRT, 0, 0, feedCols, feedRows, feedPixels);
     cellMat.uniforms.uCells.value.copy(compMat.uniforms.uCells.value);
-    cellMat.uniforms.uGain.value = 1;
+    cellMat.uniforms.uGain.value = ch.gain ?? 1;
     const cw = feedCanvas.width / feedCols, chh = feedCanvas.height / feedRows;
     feedCtx.globalCompositeOperation = 'source-over';
     feedCtx.globalAlpha = 1;
@@ -231,6 +231,9 @@ export async function startStage() {
     }
     const ch = name ? get(name) : undefined;
     active = ch;
+    floodable = span?.el.id === 'top';
+    // Leaving the opening scene puts the letters back at once (even before the next scene loads).
+    if (!floodable && (glass.real || glass.grow !== 0)) { if (glass.real) setReal(false, false); glass.grow = glass.vel = 0; }
     if (!ch || !span) {
       lensEl.classList.remove('on');
       showMarkers(undefined, 0);
@@ -243,12 +246,11 @@ export async function startStage() {
     const edge = 0.3 * H;
     const fadeIn = span.el.id === 'top' ? 1 : smooth(0, edge, center - span.top);
     const fade = Math.min(fadeIn, smooth(0, edge, span.top + span.h - center));
-    ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night });
+    ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night, real: Math.min(1, Math.max(0, glass.grow)) });
     // Projections below need this frame's camera matrices, not last render's.
     ch.camera.updateMatrixWorld();
 
     // Lens placement: the pointer once it has moved, otherwise the scene's subject.
-    lensChapter = ch.lens !== 0;
     if (reduced) { glass.grow = glass.real ? 1 : 0; glass.vel = 0; }
     else {
       glass.vel += ((glass.real ? 1 : 0) - glass.grow) * 70 * dt - glass.vel * 12 * dt;
@@ -256,7 +258,7 @@ export async function startStage() {
     }
     glass.hold = approach(glass.hold, glass.holding ? 1 : 0, dt, glass.holding ? 2.4 : 10);
     const flooded = glass.real && glass.grow > 0.995;
-    const lensOn = lensChapter && (fade > 0.6 || glass.grow > 0.01);
+    const lensOn = ch.lens !== 0 && (fade > 0.6 || glass.grow > 0.01);
     const lw = (touch ? 64 : 80) * (1 + glass.hold * 0.14), lh = lw / 2;
     if (!lens.moved && ch.focus) {
       const v = ch.focus.clone().project(ch.camera);
@@ -293,6 +295,7 @@ export async function startStage() {
     const glyphOn = (ch.glyph > 0 || ch.lens !== 0) && !flooded;
     if (glyphOn) {
       cellMat.uniforms.tScene.value = sceneRT.texture;
+      cellMat.uniforms.uGain.value = ch.gain ?? 1;
       renderer.setRenderTarget(cellRT);
       renderer.render(cellQuad, quadCam);
     }

@@ -178,9 +178,8 @@ export function create(ctx: SceneCtx): Chapter {
     scene,
     camera,
     glyph: 1,
-    lens: 1,
+    lens: 0,
     fall: 0,
-    focus: new THREE.Vector3(),
     update(f) {
       if (!marks.length) marks = [...f.el.querySelectorAll<HTMLElement>('.fact, .closing')];
       // Which fact is closest to the middle of the screen, and how far past it we are.
@@ -217,7 +216,6 @@ export function create(ctx: SceneCtx): Chapter {
       const wide = f.aspect > 1.05;
       const side = ctx.rtl ? -1 : 1;
       holder.position.set(wide ? 2.6 * side : 0, wide ? -0.3 : 1.6, 0);
-      ch.focus!.copy(holder.position).add(new THREE.Vector3(0, 0.3, 0));
       camera.aspect = f.aspect;
       camera.position.set(0, 0.6, wide ? 12 : 17);
       camera.lookAt(0, 0.3, 0);

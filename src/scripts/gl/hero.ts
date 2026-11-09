@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { easeOut, lerp, markGeometries, smooth } from './util';
 import type { Chapter, SceneCtx } from './types';
 
 const DEG = Math.PI / 180;
 
-/** The mark, in chrome, assembling from its two halves over a field of rings. */
+/** The mark, in chrome, assembling from its two halves, with glass copies of itself radiating behind. */
 export function create(ctx: SceneCtx): Chapter {
   const scene = new THREE.Scene();
   scene.environment = ctx.env;
@@ -19,31 +20,53 @@ export function create(ctx: SceneCtx): Chapter {
   mark.add(upper, lower);
   scene.add(mark);
 
-  // Concentric rings, irregular like the ones in the Adrar, slowly breathing outward.
-  const rings = new THREE.Mesh(
-    new THREE.PlaneGeometry(40, 40),
-    new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 } },
-      vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-      fragmentShader: /* glsl */ `
-        uniform float uTime;
-        varying vec2 vUv;
-        void main() {
-          vec2 p = (vUv - 0.5) * 2.0;
-          float r = length(p * vec2(1.0, 1.1));
-          float a = atan(p.y, p.x);
-          float wob = 0.035 * sin(3.0 * a + 1.3) + 0.02 * sin(5.0 * a + 0.4) + 0.012 * sin(9.0 * a + uTime * 0.15);
-          float band = abs(fract(r * (1.0 + wob) * 13.0 - uTime * 0.04) - 0.5);
-          float line = smoothstep(0.14, 0.02, band);
-          float mask = smoothstep(0.62, 0.12, r) * smoothstep(0.05, 0.12, r);
-          gl_FragColor = vec4(vec3(0.62, 0.62, 0.66) * line * mask * 0.42, 1.0);
-        }
-      `,
-      depthWrite: false,
-    }),
-  );
-  rings.position.z = -7;
-  scene.add(rings);
+  // Behind it, the mark again and again in liquid glass, radiating outward in rings:
+  // born small at the centre, growing as they travel, gone at the edge.
+  const glassMark = mergeGeometries(markGeometries(0.32));
+  glassMark.computeVertexNormals();
+  // Glass lit by what it reflects: bright Fresnel edges, a clear coat and a thin-film shimmer,
+  // the body mostly see-through. Reads as glass in 3D and outlines each mark in letters,
+  // without the cost of a transmission pass.
+  const liquid = new THREE.MeshPhysicalMaterial({
+    color: 0x0c1424, // almost no body colour: glass on black is mostly what it reflects
+    metalness: 0,
+    roughness: 0.05,
+    ior: 1.6,
+    specularIntensity: 1,
+    iridescence: 0.45,
+    iridescenceIOR: 1.4,
+    iridescenceThicknessMinimum: 120,
+    iridescenceThicknessMaximum: 280,
+    clearcoat: 1,
+    clearcoatRoughness: 0.02,
+    envMapIntensity: 7,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const RINGS = 6, PER = 9, INNER = 2.2, STEP = 1.7;
+  const field = new THREE.InstancedMesh(glassMark, liquid, RINGS * PER);
+  field.frustumCulled = false;
+  scene.add(field);
+  const dummy = new THREE.Object3D();
+  const radiate = (t: number) => {
+    for (let k = 0; k < RINGS; k++) {
+      const life = (k + t * 0.09) % RINGS / RINGS; // 0 at the centre, 1 at the edge
+      const r = INNER + life * RINGS * STEP;
+      const size = r * 0.072 * smooth(0, 0.12, life) * (1 - smooth(0.78, 1, life));
+      for (let j = 0; j < PER; j++) {
+        const a = ((j + (k % 2) * 0.5) / PER) * Math.PI * 2 + t * 0.03;
+        dummy.position.set(Math.cos(a) * r, Math.sin(a) * r * 0.92, -3.5 - life * 2.5);
+        // Each one points outward, and tilts a little so the glass catches the light.
+        dummy.rotation.set(Math.sin(t * 0.5 + j + k) * 0.35, Math.cos(t * 0.4 + j * 1.7) * 0.35, a - Math.PI / 2, 'ZXY');
+        dummy.scale.setScalar(Math.max(size, 1e-4));
+        dummy.updateMatrix();
+        field.setMatrixAt(k * PER + j, dummy.matrix);
+      }
+    }
+    field.instanceMatrix.needsUpdate = true;
+  };
 
   const focus = new THREE.Vector3();
   let born = -1;
@@ -51,6 +74,7 @@ export function create(ctx: SceneCtx): Chapter {
     scene,
     camera,
     glyph: 1,
+    gain: 2.6, // the glass field is faint; letters need more light than eyes
     lens: 1,
     fall: 0,
     focus,
@@ -75,8 +99,8 @@ export function create(ctx: SceneCtx): Chapter {
       camera.aspect = f.aspect;
       camera.position.set(0, 0, lerp(dist, 0.5, through * through));
       camera.updateProjectionMatrix();
-      rings.position.set(mark.position.x, mark.position.y, -7);
-      (rings.material as THREE.ShaderMaterial).uniforms.uTime.value = f.time;
+      field.position.set(mark.position.x, mark.position.y, 0);
+      radiate(f.time);
       // Rest the lens on solid metal (the upper bar), not on the empty window.
       mark.updateMatrixWorld();
       mark.localToWorld(focus.set(0.4, 1.0, 0.3));
