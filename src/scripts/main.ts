@@ -43,6 +43,26 @@ async function setMode(mode: 'full' | 'text') {
 toggle?.addEventListener('click', () => setMode(root.dataset.mode === 'text' ? 'full' : 'text'));
 setMode(canGL && !saveData ? 'full' : 'text');
 
+/* ---------- Theme: the story's own day and night, or night throughout ---------- */
+
+const themeBtn = $<HTMLButtonElement>('[data-theme-toggle]');
+const setTheme = (dark: boolean, save = true) => {
+  if (dark) root.dataset.theme = 'dark';
+  else delete root.dataset.theme;
+  if (themeBtn) {
+    const label = dark ? themeBtn.dataset.light! : themeBtn.dataset.dark!;
+    themeBtn.setAttribute('aria-pressed', String(dark));
+    themeBtn.setAttribute('aria-label', label);
+    themeBtn.title = label;
+  }
+  // A per-visitor convenience only; the page works the same without it.
+  if (save) try { localStorage.setItem('ark-theme', dark ? 'dark' : 'story'); } catch { /* private mode */ }
+};
+let savedTheme: string | null = null;
+try { savedTheme = localStorage.getItem('ark-theme'); } catch { /* private mode */ }
+setTheme(savedTheme === 'dark', false);
+themeBtn?.addEventListener('click', () => setTheme(root.dataset.theme !== 'dark'));
+
 /* ---------- Gentle reveal ---------- */
 
 // Only used where CSS scroll timelines are missing; there the focus pull plays once.

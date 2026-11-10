@@ -60,7 +60,8 @@ const chapters = [
           {c.p && <p class="muted">{c.p}</p>}
           {i === 0 && (
             <>
-              <ol>{t.rented.facts.map((f) => <li><span class="year">{f.year}</span>{f.text} <a href={f.source} rel="noreferrer">{t.rented.source}</a></li>)}</ol>
+              <ol>{t.rented.facts.map((f) => <li><span class="year">{f.year}</span>{f.text} {f.source && <a href={f.source} rel="noreferrer">{t.rented.source}</a>}</li>)}</ol>
+              <p>{t.rented.lead}</p>
               <p><strong>{t.rented.closing}</strong></p>
             </>
           )}

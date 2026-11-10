@@ -38,8 +38,8 @@ const chapters = [
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{t.meta.title}</title>
     <meta name="description" content={t.meta.description} />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f6faff" />
     <meta name="referrer" content="no-referrer" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -54,7 +54,6 @@ const chapters = [
   <body>
     <a class="skip" href="#main">{t.nav.skip}</a>
     <canvas id="stage" aria-hidden="true"></canvas>
-    <div class="scrim full-only" aria-hidden="true"></div>
 
     <header class="bar" data-glass>
       <a class="brand" href={pathFor(lang)} aria-label="Ark"><Mark size={30} /><span>Ark</span></a>
@@ -64,6 +63,9 @@ const chapters = [
             <a href={pathFor(l)} hreflang={l} lang={l} aria-current={l === lang ? 'page' : undefined} title={langLabels[l]}>{langNames[l]}</a>
           ))}
         </nav>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label={t.nav.dark} title={t.nav.dark} data-dark={t.nav.dark} data-light={t.nav.light}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5" /><path d="M12 3.75a8.25 8.25 0 0 1 0 16.5z" fill="currentColor" /></svg>
+        </button>
         <button class="mode-toggle" type="button" data-mode-toggle aria-pressed="false" data-on={t.nav.fullMode} data-off={t.nav.textMode}>{t.nav.textMode}</button>
         <a class="btn primary small" href="#start">{t.nav.talk}</a>
       </div>
@@ -98,11 +100,14 @@ const chapters = [
               <li class="step fact">
                 <p class:list={["year reveal", isFigure(f.year) ? "mono" : "word"]}>{/^\d{4}$/.test(f.year) ? <time datetime={f.year}>{f.year}</time> : <bdi dir="ltr">{f.year}</bdi>}</p>
                 <p class="reveal">{f.text}</p>
-                <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
+                {f.source && <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>}
               </li>
             ))}
           </ol>
-          <div class="step closing"><Words as="p" class="closing-line" text={t.rented.closing} /></div>
+          <div class="step closing">
+            <p class="body reveal">{t.rented.lead}</p>
+            <Words as="p" class="closing-line" text={t.rented.closing} />
+          </div>
         </div>
       </section>
 
@@ -126,7 +131,7 @@ const chapters = [
         </div>
       </section>
 
-      <section class="chapter interactive" id="offline" data-scene="night" data-night="cloud">
+      <section class="chapter interactive" id="offline" data-scene="night" data-night="cloud" data-sky="night">
         <div class="wrap">
           <div class="pinned">
             <p class="kicker reveal"><span class="kn">{kick(t.offline.kicker).n}</span> {kick(t.offline.kicker).label}</p>
@@ -143,7 +148,7 @@ const chapters = [
         </div>
       </section>
 
-      <section class="chapter interactive" id="control" data-scene="night" data-night="cutaway">
+      <section class="chapter interactive" id="control" data-scene="night" data-night="cutaway" data-sky="night">
         <div class="wrap split">
           <header class="head">
             <p class="kicker reveal"><span class="kn">{kick(t.control.kicker).n}</span> {kick(t.control.kicker).label}</p>
@@ -201,7 +206,7 @@ const chapters = [
         </div>
       </section>
 
-      <section class="chapter interactive" id="cinema" data-scene="cinema" data-kinds={JSON.stringify(t.cinema.kinds)}>
+      <section class="chapter interactive" id="cinema" data-scene="cinema" data-sky="night" data-kinds={JSON.stringify(t.cinema.kinds)}>
         <div class="wrap">
           <div class="pinned">
             <p class="kicker reveal"><span class="kn">{kick(t.cinema.kicker).n}</span> {kick(t.cinema.kicker).label}</p>
@@ -223,7 +228,7 @@ const chapters = [
         </div>
       </section>
 
-      <section class="chapter plain setup" id="setup">
+      <section class="chapter interactive setup" id="setup" data-scene="places">
         <div class="wrap">
           <header class="head">
             <p class="kicker reveal"><span class="kn">{kick(t.setup.kicker).n}</span> {kick(t.setup.kicker).label}</p>

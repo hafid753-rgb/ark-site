@@ -18,7 +18,7 @@ const en = {
     description:
       "Ark makes your home's technology yours: a system installed in your house, an app to control it, and an offline home cinema for movies, music and books.",
   },
-  nav: { skip: 'Skip to content', language: 'Language', chapters: 'Chapters', textMode: 'Text mode', fullMode: 'Full mode', talk: 'Talk to us' },
+  nav: { skip: 'Skip to content', language: 'Language', chapters: 'Chapters', textMode: 'Text mode', fullMode: 'Full mode', talk: 'Talk to us' , theme: 'Theme', dark: 'Dark', light: 'Light' },
   hero: {
     ledger: 'Requests from this page to other companies',
     title: 'Nothing rented. Everything yours',
@@ -31,15 +31,17 @@ const en = {
     title: 'A country going digital, on tools made for somewhere else',
     facts: [
       { year: '2018', text: 'The only submarine cable linking Mauritania to the internet was cut. The whole country was offline for almost two days.', source: sources.cable },
-      { year: '2022', text: 'Mauritania adopted a national digital transformation agenda: public services online, and broadband for more of the country.', source: sources.agenda },
-      { year: '2025', text: 'Criminal records can now be requested online, through Houwiyeti, the national identity app that already handles civil-status documents.', source: sources.records },
+      { year: '2022', text: 'The answer was to build. Mauritania adopted a national digital transformation agenda: public services online, and broadband for more of the country.', source: sources.agenda },
+      { year: '2025', text: 'It is becoming practical. Criminal records can be requested online through Houwiyeti, the national identity app.', source: sources.records },
       { year: '2026', text: 'More than 800 administrative procedures are now gathered on one online platform.', source: sources.procedures },
-      { year: '15 GB', text: "Google Drive is free up to 15 GB. Past that, a family's photos and papers cost a subscription every month, kept on servers abroad.", source: sources.drive },
-      { year: '$7.99', text: "Netflix's standard plan costs US$7.99 a month in Mauritania, charged in dollars.", source: sources.netflix },
-      { year: '$3.29', text: 'Spotify Premium is priced in dollars too: US$3.29 a month for one person.', source: sources.spotify },
-      { year: '2021', text: "Alexa learned Arabic in 2021: Gulf Arabic, built for Saudi Arabia and the UAE. Hassaniya isn't one of its languages.", source: sources.alexa },
-    ],
+      { year: 'At home', text: 'The country is building its own. At home, digital life is still rented from far away.' },
+      { year: '15 GB', text: "A family's photos and papers sit on Google Drive: free up to 15 GB, then a subscription every month, on servers abroad.", source: sources.drive },
+      { year: '$7.99', text: 'An evening film comes from Netflix: US$7.99 a month for the standard plan, billed in dollars. Stop paying and the library is gone.', source: sources.netflix },
+      { year: '$3.29', text: 'Music comes from Spotify Premium: US$3.29 a month, in dollars too.', source: sources.spotify },
+      { year: '2021', text: "And the smart speaker? Alexa learned Arabic in 2021: Gulf Arabic, for Saudi Arabia and the UAE. Hassaniya isn't one of its languages.", source: sources.alexa },
+    ] as { year: string; text: string; source?: string }[],
     source: 'Source',
+    lead: 'Progress should reach the light switch, too',
     closing: 'Ark is made here, and it runs in your house',
   },
   yours: {
@@ -56,7 +58,7 @@ const en = {
   offline: {
     kicker: '03 Offline',
     title: 'Cut the cloud. See what happens',
-    body: 'Turn the lights on. Then cut the cloud and try again.',
+    body: 'Remember 2018? Try it on this house. Turn the lights on, then cut the cloud and try again.',
     lights: 'Lights',
     on: 'On',
     off: 'Off',
@@ -98,7 +100,7 @@ const en = {
     ],
   },
   start: {
-    title: 'Start with your home',
+    title: 'Start with your place',
     offers: [
       { name: 'Ark Home', text: 'The app that runs your whole house' },
       { name: 'Cinema', text: 'Sharkfin, Sharkwave and Sharkink: your movies, music and books, offline' },
@@ -126,6 +128,7 @@ const en = {
     '3D: three.js, MIT License',
     'Glyph rendering after ascii3d by Alec Jacobson, with his support',
     'Liquid glass after LiquidGlass by @ybouane, MIT License',
+    'Fluted glass seams after the shaders library by Shader Effects Inc., MIT License',
     'Design review: unslop by Damir Sokolovsky, CC BY 4.0',
     'Built the ponytail way: the least code that does the job (Dietrich Gebert, MIT)',
   ],
@@ -161,7 +164,7 @@ const fr: Copy = {
     description:
       'Ark rend la technologie de votre maison vraiment à vous : un système installé chez vous, une app pour le piloter, et un home cinéma hors ligne pour vos films, votre musique et vos livres.',
   },
-  nav: { skip: 'Aller au contenu', language: 'Langue', chapters: 'Chapitres', textMode: 'Mode texte', fullMode: 'Mode complet', talk: 'Nous contacter' },
+  nav: { skip: 'Aller au contenu', language: 'Langue', chapters: 'Chapitres', textMode: 'Mode texte', fullMode: 'Mode complet', talk: 'Nous contacter' , theme: 'Thème', dark: 'Sombre', light: 'Clair' },
   hero: {
     ledger: "Requêtes de cette page vers d'autres entreprises",
     title: 'Rien de loué. Tout est à vous',
@@ -174,15 +177,17 @@ const fr: Copy = {
     title: 'Un pays qui passe au numérique, avec des outils faits pour ailleurs',
     facts: [
       { year: '2018', text: 'Le seul câble sous-marin reliant la Mauritanie à Internet a été coupé. Le pays entier est resté hors ligne près de deux jours.', source: sources.cable },
-      { year: '2022', text: 'La Mauritanie adopte un agenda national de transformation numérique : des services publics en ligne, et le haut débit pour une plus grande partie du pays.', source: sources.agenda },
-      { year: '2025', text: "Le casier judiciaire se demande désormais en ligne, avec Houwiyeti, l'application d'identité nationale qui gère déjà les actes d'état civil.", source: sources.records },
+      { year: '2022', text: 'La réponse : construire. La Mauritanie adopte un agenda national de transformation numérique, avec des services publics en ligne et le haut débit pour une plus grande partie du pays.', source: sources.agenda },
+      { year: '2025', text: "Cela devient concret. Le casier judiciaire se demande en ligne avec Houwiyeti, l'application d'identité nationale.", source: sources.records },
       { year: '2026', text: 'Plus de 800 démarches administratives sont désormais réunies sur une seule plateforme en ligne.', source: sources.procedures },
-      { year: '15 Go', text: "Google Drive est gratuit jusqu'à 15 Go. Au-delà, les photos et les papiers d'une famille coûtent un abonnement chaque mois, stockés sur des serveurs à l'étranger.", source: sources.drive },
-      { year: '7,99 $', text: "L'offre standard de Netflix coûte 7,99 $ US par mois en Mauritanie, facturés en dollars.", source: sources.netflix },
-      { year: '3,29 $', text: 'Spotify Premium est lui aussi facturé en dollars : 3,29 $ US par mois pour une personne.', source: sources.spotify },
-      { year: '2021', text: "Alexa a appris l'arabe en 2021 : l'arabe du Golfe, pensé pour l'Arabie saoudite et les Émirats. Le hassaniya ne fait pas partie de ses langues.", source: sources.alexa },
-    ],
+      { year: 'À la maison', text: "Le pays construit ses propres outils. À la maison, la vie numérique se loue encore très loin d'ici." },
+      { year: '15 Go', text: "Les photos et les papiers de la famille sont sur Google Drive : gratuit jusqu'à 15 Go, puis un abonnement chaque mois, sur des serveurs à l'étranger.", source: sources.drive },
+      { year: '7,99 $', text: "Le film du soir vient de Netflix : 7,99 $ US par mois pour l'offre standard, facturés en dollars. Sans paiement, plus de bibliothèque.", source: sources.netflix },
+      { year: '3,29 $', text: 'La musique vient de Spotify Premium : 3,29 $ US par mois, en dollars aussi.', source: sources.spotify },
+      { year: '2021', text: "Et l'enceinte connectée ? Alexa a appris l'arabe en 2021 : l'arabe du Golfe, pour l'Arabie saoudite et les Émirats. Le hassaniya ne fait pas partie de ses langues.", source: sources.alexa },
+    ] as { year: string; text: string; source?: string }[],
     source: 'Source',
+    lead: "Le progrès doit aussi arriver jusqu'à l'interrupteur",
     closing: 'Ark est conçu ici, et il tourne chez vous',
   },
   yours: {
@@ -199,7 +204,7 @@ const fr: Copy = {
   offline: {
     kicker: '03 Hors ligne',
     title: 'Coupez le cloud. Regardez ce qui se passe',
-    body: 'Allumez les lumières. Puis coupez le cloud et réessayez.',
+    body: 'Vous vous souvenez de 2018 ? Essayez sur cette maison. Allumez les lumières, puis coupez le cloud et réessayez.',
     lights: 'Lumières',
     on: 'Allumées',
     off: 'Éteintes',
@@ -241,7 +246,7 @@ const fr: Copy = {
     ],
   },
   start: {
-    title: 'Commencez par votre maison',
+    title: 'Commencez par chez vous',
     offers: [
       { name: 'Ark Home', text: "L'app qui pilote toute la maison." },
       { name: 'Cinéma', text: 'Sharkfin, Sharkwave et Sharkink : vos films, votre musique et vos livres, hors ligne' },
@@ -269,6 +274,7 @@ const fr: Copy = {
     '3D : three.js, licence MIT',
     "Rendu en caractères d'après ascii3d d'Alec Jacobson, avec son soutien",
     'Verre liquide d’après LiquidGlass de @ybouane, licence MIT',
+    'Verre cannelé d’après la bibliothèque shaders de Shader Effects Inc., licence MIT',
     'Revue de design : unslop de Damir Sokolovsky, CC BY 4.0',
     'Construit à la manière ponytail : le moins de code possible (Dietrich Gebert, MIT)',
   ],
@@ -301,7 +307,7 @@ const ar: Copy = {
     description:
       'تجعل Ark تقنيات بيتك ملكًا لك فعلًا: نظام مُثبَّت في منزلك، وتطبيق للتحكّم فيه، وسينما منزلية تعمل دون إنترنت لأفلامك وموسيقاك وكتبك.',
   },
-  nav: { skip: 'تخطَّ إلى المحتوى', language: 'اللغة', chapters: 'الفصول', textMode: 'وضع النص', fullMode: 'الوضع الكامل', talk: 'تواصل معنا' },
+  nav: { skip: 'تخطَّ إلى المحتوى', language: 'اللغة', chapters: 'الفصول', textMode: 'وضع النص', fullMode: 'الوضع الكامل', talk: 'تواصل معنا' , theme: 'المظهر', dark: 'داكن', light: 'فاتح' },
   hero: {
     ledger: 'طلبات هذه الصفحة إلى شركات أخرى',
     title: 'لا شيء مُستأجَر. كلّ شيء لك',
@@ -314,15 +320,17 @@ const ar: Copy = {
     title: 'الرقمنة تتقدّم في موريتانيا، بأدوات صُنعت لمكان آخر',
     facts: [
       { year: '2018', text: 'قُطع الكابل البحري الوحيد الذي يربط موريتانيا بالإنترنت، فبقيت البلاد كلّها دون اتصال قرابة يومين.', source: sources.cable },
-      { year: '2022', text: 'اعتمدت موريتانيا أجندة وطنية للرقمنة والتحوّل الرقمي: خدمات عمومية عبر الإنترنت، وإنترنت عالي السرعة لمزيد من مناطق البلاد.', source: sources.agenda },
-      { year: '2025', text: 'صار طلب السجلّ العدلي ممكنًا عبر الإنترنت، من خلال «هويتي»، تطبيق الهوية الوطنية الذي يقدّم أصلًا وثائق الحالة المدنية.', source: sources.records },
+      { year: '2022', text: 'وكان الجواب هو البناء: اعتمدت موريتانيا أجندة وطنية للرقمنة والتحوّل الرقمي، بخدمات عمومية عبر الإنترنت وإنترنت عالي السرعة لمزيد من مناطق البلاد.', source: sources.agenda },
+      { year: '2025', text: 'وبدأ ذلك يصير واقعًا: صار طلب السجلّ العدلي ممكنًا عبر الإنترنت من خلال «هويتي»، تطبيق الهوية الوطنية.', source: sources.records },
       { year: '2026', text: 'أصبح أكثر من 800 إجراء إداري مجمّعًا على منصّة إلكترونية واحدة.', source: sources.procedures },
-      { year: '15 GB', text: 'Google Drive مجاني حتى 15 غيغابايت. بعدها تصبح صور العائلة ووثائقها اشتراكًا يُدفع كلّ شهر، محفوظًا على خوادم في الخارج.', source: sources.drive },
-      { year: '$7.99', text: 'تكلّف باقة Netflix القياسية 7.99 دولار أمريكي شهريًا في موريتانيا، تُدفع بالدولار.', source: sources.netflix },
-      { year: '$3.29', text: 'وSpotify Premium مسعّر بالدولار أيضًا: 3.29 دولار شهريًا للفرد.', source: sources.spotify },
-      { year: '2021', text: 'تعلّمت Alexa العربية عام 2021: لهجة الخليج، لأجل السعودية والإمارات. والحسّانية ليست من لغاتها.', source: sources.alexa },
-    ],
+      { year: 'في البيت', text: 'البلاد تبني أدواتها. أمّا في البيت، فما زالت الحياة الرقمية مستأجَرة من مكان بعيد.' },
+      { year: '15 GB', text: 'صور العائلة ووثائقها على Google Drive: مجانًا حتى 15 غيغابايت، ثم اشتراك يُدفع كلّ شهر، على خوادم في الخارج.', source: sources.drive },
+      { year: '$7.99', text: 'فيلم المساء يأتي من Netflix: 7.99 دولار أمريكي شهريًا للباقة القياسية، تُدفع بالدولار. وإذا توقّف الدفع اختفت المكتبة.', source: sources.netflix },
+      { year: '$3.29', text: 'والموسيقى من Spotify Premium: 3.29 دولار شهريًا، بالدولار أيضًا.', source: sources.spotify },
+      { year: '2021', text: 'والمساعد الصوتي؟ تعلّمت Alexa العربية عام 2021: لهجة الخليج، لأجل السعودية والإمارات. والحسّانية ليست من لغاتها.', source: sources.alexa },
+    ] as { year: string; text: string; source?: string }[],
     source: 'المصدر',
+    lead: 'التقدّم يجب أن يصل إلى مفتاح الضوء أيضًا',
     closing: 'Ark صُنع هنا، ويعمل في بيتك',
   },
   yours: {
@@ -339,7 +347,7 @@ const ar: Copy = {
   offline: {
     kicker: '03 دون إنترنت',
     title: 'اقطع السحابة، وانظر ماذا يحدث',
-    body: 'شغّل الأضواء. ثم اقطع السحابة وجرّب مرة أخرى.',
+    body: 'أتذكر 2018؟ جرّب ذلك على هذا البيت. أشعل الأضواء، ثم اقطع السحابة وجرّب من جديد.',
     lights: 'الأضواء',
     on: 'مُضاءة',
     off: 'مُطفأة',
@@ -381,7 +389,7 @@ const ar: Copy = {
     ],
   },
   start: {
-    title: 'ابدأ ببيتك',
+    title: 'ابدأ من مكانك',
     offers: [
       { name: 'Ark Home', text: 'التطبيق الذي يدير بيتك كلّه' },
       { name: 'السينما', text: 'Sharkfin وSharkwave وSharkink: أفلامك وموسيقاك وكتبك، دون إنترنت' },
@@ -409,6 +417,7 @@ const ar: Copy = {
     'الأبعاد الثلاثية: three.js، برخصة MIT',
     'الرسم بالحروف مستوحى من ascii3d لأليك جاكوبسون، وبدعم منه',
     'الزجاج السائل مستوحى من LiquidGlass لـ ‎@ybouane، برخصة MIT',
+    'الزجاج المضلّع مستوحى من مكتبة shaders لشركة Shader Effects Inc.، برخصة MIT',
     'مراجعة التصميم: unslop لدامير سوكولوفسكي، CC BY 4.0',
     'بُني على طريقة ponytail: أقلّ قدر من الشيفرة يؤدي المهمّة (ديتريش غيبرت، MIT)',
   ],

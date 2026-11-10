@@ -1,19 +1,20 @@
-/* Ark — one stylesheet. 4px grid, one neutral ramp, Apple blue as the only
-   accent, one easing curve. Text mode is the default layout; the cinematic
-   layout applies only when scripting is on and text mode is off. */
+/* Ark — one stylesheet. 4px grid, one neutral ramp per time of day, Apple blue as
+   the only accent, one easing curve. Text mode is the default layout; the cinematic
+   layout applies only when scripting is on and text mode is off.
+
+   Day and night: --night runs from 0 (day) to 1 (night). The stage moves it with the
+   story (the house chapters and the cinema happen at night); the theme button pins it
+   to 1. Every colour below is a blend of its day and night value. */
 
 :root {
-  --bg: #000;
-  --surface: #0d0d0e;
-  --raised: #1c1c1e;
-  --line: rgb(245 245 247 / 0.1);
-  --line-strong: rgb(245 245 247 / 0.2);
-  --text: #f5f5f7;
-  --text-2: #a1a1a6;
-  --muted: #86868b;
-  --blue: #2997ff;
-  --blue-fill: #0071e3;
-  --blue-wash: rgb(41 151 255 / 0.14);
+  --night: 0;
+  /* Fallback for browsers without color-mix: the night palette, as before. */
+  --bg: #000; --surface: #0d0d0e; --raised: #1c1c1e;
+  --line: rgb(245 245 247 / 0.1); --line-strong: rgb(245 245 247 / 0.2);
+  --text: #f5f5f7; --text-2: #a1a1a6; --muted: #86868b;
+  --blue: #2997ff; --blue-fill: #0071e3; --blue-wash: rgb(41 151 255 / 0.14);
+  --wash: rgb(245 245 247 / 0.07); --wash-strong: rgb(245 245 247 / 0.14);
+  --knob: #39393d; --shade: rgb(0 0 0 / 0.7); --veil: rgb(0 0 0 / 0.72);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --fast: 160ms;
   --mid: 240ms;
@@ -24,7 +25,7 @@
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
   --r-control: 980px;
   --r-card: 18px;
-  color-scheme: dark;
+  color-scheme: light;
   background: var(--bg);
   color: var(--text);
   font: 400 17px/1.6 var(--sans);
@@ -32,7 +33,33 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
-  scrollbar-color: #2c2c2e var(--bg);
+  scrollbar-color: var(--muted) var(--bg);
+}
+:root[data-theme='dark'] { --night: 1; color-scheme: dark; }
+@supports (color: color-mix(in srgb, red, blue)) {
+  /* Declared on .phone too: the phone mock is a night scene wherever it stands. */
+  :root, .phone {
+    /* Ink flips quickly around dusk, so text never sits grey on grey. */
+    --flip: clamp(0, (var(--night) - 0.34) * 6.25, 1);
+    --n: calc(var(--night) * 100%);
+    --f: calc(var(--flip) * 100%);
+    --bg: color-mix(in srgb, #f6faff, #000 var(--n));
+    --surface: color-mix(in srgb, #fff, #0d0d0e var(--n));
+    --raised: color-mix(in srgb, #e9f1f9, #1c1c1e var(--n));
+    --text: color-mix(in srgb, #0e2439, #f5f5f7 var(--f));
+    --text-2: color-mix(in srgb, #41566b, #a1a1a6 var(--f));
+    --muted: color-mix(in srgb, #5c7084, #86868b var(--f));
+    --blue: color-mix(in srgb, #0068d6, #2997ff var(--f));
+    --line: color-mix(in srgb, rgb(14 36 57 / 0.12), rgb(245 245 247 / 0.1) var(--f));
+    --line-strong: color-mix(in srgb, rgb(14 36 57 / 0.22), rgb(245 245 247 / 0.2) var(--f));
+    --wash: color-mix(in srgb, rgb(14 36 57 / 0.05), rgb(245 245 247 / 0.07) var(--f));
+    --wash-strong: color-mix(in srgb, rgb(14 36 57 / 0.1), rgb(245 245 247 / 0.14) var(--f));
+    --blue-wash: color-mix(in srgb, rgb(0 104 214 / 0.1), rgb(41 151 255 / 0.14) var(--f));
+    --knob: color-mix(in srgb, #c3d0dc, #39393d var(--f));
+    --shade: color-mix(in srgb, rgb(246 250 255 / 0.85), rgb(0 0 0 / 0.7) var(--f));
+    --veil: color-mix(in srgb, rgb(246 250 255 / 0.78), rgb(0 0 0 / 0.72) var(--n));
+  }
+  .phone { --night: 1; color: var(--text); }
 }
 :root[lang='ar'] { --sans: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif; }
 @media (prefers-reduced-motion: reduce) { :root { scroll-behavior: auto; } }
@@ -47,7 +74,7 @@ button, select, input { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.skip { position: fixed; inset-block-start: 8px; inset-inline-start: 8px; z-index: 30; padding: 8px 14px; background: var(--text); color: #000; border-radius: 8px; transform: translateY(-200%); }
+.skip { position: fixed; inset-block-start: 8px; inset-inline-start: 8px; z-index: 30; padding: 8px 14px; background: var(--text); color: var(--bg); border-radius: 8px; transform: translateY(-200%); }
 .skip:focus { transform: none; }
 
 /* Type */
@@ -79,18 +106,18 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   height: 44px; padding-inline: 22px; border-radius: var(--r-control);
-  background: rgb(245 245 247 / 0.08); border: 1px solid var(--line); color: var(--text);
+  background: var(--wash); border: 1px solid var(--line); color: var(--text);
   font-size: 15px; font-weight: 500; text-decoration: none; cursor: pointer; white-space: nowrap;
   transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.btn:hover { background: rgb(245 245 247 / 0.14); }
+.btn:hover { background: var(--wash-strong); }
 .btn:active { transform: scale(0.97); }
 .btn.primary { background: var(--blue-fill); border-color: transparent; color: #fff; }
 .btn.primary:hover { background: #0077ed; }
 .btn.small { height: 34px; padding-inline: 16px; font-size: 14px; }
 .chip {
   height: 32px; padding-inline: 14px; border-radius: var(--r-control); border: 1px solid var(--line);
-  background: rgb(245 245 247 / 0.06); font-size: 13px; cursor: pointer;
+  background: var(--wash); font-size: 13px; cursor: pointer;
   transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), color var(--fast) var(--ease);
 }
 .chip:hover { border-color: var(--line-strong); }
@@ -100,7 +127,7 @@ main, .bar, .foot { position: relative; z-index: 1; }
   position: fixed; inset-inline: 0; inset-block-start: 0; z-index: 10;
   height: 56px; padding-inline: var(--pad);
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  background: rgb(0 0 0 / 0.72); border-block-end: 1px solid var(--line);
+  background: var(--veil); border-block-end: 1px solid var(--line);
   -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 500; font-size: 18px; letter-spacing: -0.01em; }
@@ -111,6 +138,9 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .langs a[aria-current='page'] { color: var(--text); }
 .mode-toggle { height: 32px; padding-inline: 12px; border-radius: var(--r-control); border: 1px solid var(--line); background: transparent; color: var(--text-2); font-size: 13px; cursor: pointer; transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
 .mode-toggle:hover { color: var(--text); border-color: var(--line-strong); }
+.theme-toggle { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border-radius: 16px; border: 1px solid var(--line); background: transparent; color: var(--text-2); cursor: pointer; transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+.theme-toggle:hover, .theme-toggle[aria-pressed='true'] { color: var(--text); border-color: var(--line-strong); }
+.theme-toggle svg { width: 16px; height: 16px; }
 @media (max-width: 640px) {
   .bar .btn.small { display: none; }
 }
@@ -150,10 +180,10 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .switch {
   display: inline-flex; align-items: center; gap: 12px;
   height: 44px; padding-inline: 8px 18px; border-radius: var(--r-control);
-  border: 1px solid var(--line); background: rgb(245 245 247 / 0.06); cursor: pointer; font-size: 15px; font-weight: 500;
+  border: 1px solid var(--line); background: var(--wash); cursor: pointer; font-size: 15px; font-weight: 500;
   transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
-.knob { width: 44px; height: 28px; border-radius: 14px; background: #39393d; position: relative; transition: background-color var(--mid) var(--ease); }
+.knob { width: 44px; height: 28px; border-radius: 14px; background: var(--knob); position: relative; transition: background-color var(--mid) var(--ease); }
 .knob::after { content: ''; position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 24px; height: 24px; border-radius: 12px; background: #fff; transition: transform var(--mid) var(--ease); }
 .switch[aria-pressed='true'] .knob { background: var(--blue-fill); }
 .switch[aria-pressed='true'] .knob::after { transform: translateX(16px); }
@@ -215,15 +245,15 @@ span.row-main { cursor: default; }
 /* 05 Cinema */
 .apps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 14px; max-width: 32rem; }
 .apps li { display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: center; color: var(--text-2); font-size: 17px; }
-.app-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(#1f1f21, #0c0c0d); border: 1px solid var(--line-strong); }
-.app-icon svg { width: 22px; height: 22px; fill: #d9d9de; }
+.app-icon { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line-strong); }
+.app-icon svg { width: 22px; height: 22px; fill: var(--text); }
 
 /* 06 Your setup: pick a place, see what Ark does there. Radio buttons + :has, no script needed. */
 .places { border: 0; margin: 40px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
 .places legend { margin-block-end: 14px; padding: 0; }
 .place {
   position: relative; display: inline-flex; align-items: center; height: 44px; padding-inline: 20px;
-  border-radius: var(--r-control); border: 1px solid var(--line-strong); background: rgb(245 245 247 / 0.06);
+  border-radius: var(--r-control); border: 1px solid var(--line-strong); background: var(--wash);
   font-size: 16px; cursor: pointer; transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease), transform var(--fast) var(--ease);
 }
 .place input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
@@ -265,7 +295,7 @@ span.row-main { cursor: default; }
 .link:hover { color: var(--text); }
 
 /* Visibility per mode. Text mode (default, also without JS) shows the art. */
-#stage, .scrim, .full-only { display: none; }
+#stage, .full-only { display: none; }
 .text-only { display: block; }
 
 @media (scripting: enabled) {
@@ -273,15 +303,8 @@ span.row-main { cursor: default; }
   :root:not([data-mode='text']) .full-only { display: block; }
   :root:not([data-mode='text']) #stage { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
-  /* Keeps text legible over the scene without boxes. */
-  :root:not([data-mode='text']) .scrim {
-    display: block; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: linear-gradient(90deg, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.5) 32%, rgb(0 0 0 / 0) 56%);
-  }
-  :root[dir='rtl']:not([data-mode='text']) .scrim { background: linear-gradient(270deg, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.5) 32%, rgb(0 0 0 / 0) 56%); }
-
   /* Copy over a live scene: a soft shadow instead of a box. */
-  :root:not([data-mode='text']) .chapter[data-scene] :is(h1, h2, p, li, .w) { text-shadow: 0 2px 22px rgb(0 0 0 / 0.7); }
+  :root:not([data-mode='text']) .chapter[data-scene] :is(h1, h2, p, li, .w) { text-shadow: 0 1px 18px var(--shade); }
 
   /* Scroll-told chapters: each step holds the screen while the scene plays. */
   :root:not([data-mode='text']) .hero { min-height: 100svh; display: grid; align-items: center; padding-block: 120px 72px; }
@@ -296,6 +319,7 @@ span.row-main { cursor: default; }
   :root:not([data-mode='text']) #cinema .wrap { min-height: 230svh; }
   :root:not([data-mode='text']) .pinned { position: sticky; top: 120px; display: grid; gap: 20px; margin-block: 120px; }
   :root:not([data-mode='text']) #control .wrap { min-height: 170svh; align-items: start; padding-block: 120px; }
+  :root:not([data-mode='text']) #setup .wrap { min-height: 130svh; padding-block: 160px 120px; }
   :root:not([data-mode='text']) #control .head,
   :root:not([data-mode='text']) #control .phone { position: sticky; top: 96px; }
 
@@ -311,13 +335,13 @@ span.row-main { cursor: default; }
      reading aloud, selecting and finding) and the hit areas; only their paint moves to the stage. */
   :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line, .year),
   :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line) .w { color: transparent; text-shadow: none; }
-  :root[data-glass-on]:not([data-mode='text']) .scrim { display: none; } /* the stage dims the scene itself, under the glass */
   :root[data-glass-on]:not([data-mode='text']) [data-glass] {
     background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
   :root[data-glass-on]:not([data-mode='text']) .bar {
     inset-inline: 12px; inset-block-start: 10px; height: 52px; border-radius: 26px; border: 0; padding-inline: 18px;
   }
+  :root[data-glass-on]:not([data-mode='text']) .switch[data-glass][aria-pressed='true'] { color: #fff; }
   /* Glass answers touch a little: it swells under the pointer and gives when pressed. */
   :root[data-glass-on]:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:hover { transform: scale(1.03); }
   :root[data-glass-on]:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:active { transform: scale(0.97); }
@@ -327,7 +351,7 @@ span.row-main { cursor: default; }
     display: flex; flex-direction: column; gap: 6px; position: fixed; z-index: 5;
     inset-inline-end: 20px; top: 50%; transform: translateY(-50%);
   }
-  .rail a { display: flex; align-items: center; gap: 8px; justify-content: flex-end; text-decoration: none; font-size: 11px; color: rgb(134 134 139 / 0.6); height: 18px; transition: color var(--fast) var(--ease); }
+  .rail a { display: flex; align-items: center; gap: 8px; justify-content: flex-end; text-decoration: none; font-size: 11px; color: color-mix(in srgb, var(--muted) 60%, transparent); height: 18px; transition: color var(--fast) var(--ease); }
   .rail a::after { content: ''; width: 10px; height: 1px; background: currentColor; transition: width var(--mid) var(--ease); }
   .rail a > span { opacity: 0; transition: opacity var(--mid) var(--ease); }
   .rail a:hover { color: var(--text); }
@@ -341,14 +365,13 @@ span.row-main { cursor: default; }
   @media (min-width: 900px) {
     /* The scene owns the other half of the screen. */
     :root:not([data-mode='text']) .chapter[data-scene] .step,
-    :root:not([data-mode='text']) .chapter[data-scene] .pinned { max-width: min(36rem, 48%); }
+    :root:not([data-mode='text']) .chapter[data-scene] .pinned,
+    :root:not([data-mode='text']) #setup .wrap > * { max-width: min(36rem, 48%); }
     :root:not([data-mode='text']) .hero .wrap > * { max-width: min(46rem, 56%); }
   }
 
   @media (max-width: 899px) {
     /* Phones: the scene sits above, the text sits low on the screen. */
-    :root:not([data-mode='text']) .scrim { background: linear-gradient(0deg, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.62) 38%, rgb(0 0 0 / 0) 64%); }
-    :root[dir='rtl']:not([data-mode='text']) .scrim { background: linear-gradient(0deg, rgb(0 0 0 / 0.9) 0%, rgb(0 0 0 / 0.62) 38%, rgb(0 0 0 / 0) 64%); }
     :root:not([data-mode='text']) .hero { align-items: end; padding-block: 72px 56px; }
     :root:not([data-mode='text']) .step { justify-content: flex-end; padding-bottom: 48px; }
     :root:not([data-mode='text']) .pinned { position: sticky; top: auto; bottom: 16px; margin-block: auto 16px; }

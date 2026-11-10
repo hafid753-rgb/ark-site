@@ -235,9 +235,12 @@ export function create(ctx: SceneCtx): Chapter {
   house.add(door);
   house.rotation.set(0.25, -0.5, 0);
 
-  const things = [cable, mast, card, phone, drive, tv, phones, speaker, house];
+  // The bridge between the country's story and the home's: a house still hanging from the cloud.
+  const rentedHome = house.clone();
+  const things = [cable, mast, card, phone, rentedHome, drive, tv, phones, speaker, house];
   // Only what depends on somewhere else pours away; what is built here stays.
-  const pours = [true, false, false, false, true, true, true, true, false];
+  const pours = [true, false, false, false, false, true, true, true, true, false];
+  const clouded = [true, false, false, false, true, true, true, true, true, false];
   const holder = new THREE.Group();
   things.forEach((t) => holder.add(t));
   scene.add(holder);
@@ -285,7 +288,7 @@ export function create(ctx: SceneCtx): Chapter {
       t.rotation.y = flat ? 0.25 * side0 + Math.sin(f.time * 0.6) * 0.45 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
       t.position.y = Math.sin(f.time * 0.8) * 0.06;
 
-      cloud.visible = pours[i];
+      cloud.visible = clouded[i];
       cloud.position.set(0, 2.5, -0.5);
       cloud.rotation.y = f.time * 0.1;
       const top = new THREE.Vector3(0, 1.0, 0);
@@ -293,7 +296,7 @@ export function create(ctx: SceneCtx): Chapter {
       pos.setXYZ(0, top.x, top.y, top.z);
       pos.setXYZ(1, 0, 2.0, -0.4);
       pos.needsUpdate = true;
-      thread.visible = pours[i] && ch.fall < 0.02;
+      thread.visible = clouded[i] && ch.fall < 0.02;
 
       const wide = f.aspect > 1.05;
       const side = ctx.rtl ? -1 : 1;

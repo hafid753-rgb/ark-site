@@ -52,14 +52,16 @@ Each chapter is a `<section>` in `src/components/Page.astro`. Its text lives in 
 
 | Chapter | What the visitor sees | Built in |
 |---|---|---|
-| **Hero** | *Nothing rented. Everything yours*. The Ark mark in chrome, assembling from its two halves. Around it, the mark's own outline repeats outward like ripples, each ripple a ribbon of liquid glass flowing away from the mark, with the logo's steps and chamfer kept at every size. Everything is drawn in the letters of the word *sovereignty*. The headline itself is liquid glass. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
-| **01 Going digital** (الرقمنة) | *A country going digital, on tools made for somewhere else*. A sourced timeline of Mauritania's digitalization, then of the foreign services people are left with: the 2018 cable cut that took the country offline; the 2022 national digital transformation agenda; criminal records online through the Houwiyeti identity app in 2025; 800+ procedures on one platform in 2026; Google Drive free only to 15 GB, then a subscription on servers abroad; Netflix at US$7.99 and Spotify at US$3.29 a month, in dollars; Alexa speaking Gulf Arabic since 2021, not Hassaniya. Each fact has an object (cable, mast, identity card, phone, photo folder, screen, headphones, speaker). What depends on somewhere else pours away like sand as it scrolls past; what's being built here stays. It closes on *Ark is made here, and it runs in your house*. | `gl/rented.ts` |
+| **Hero** | *Nothing rented. Everything yours*. By day: a pale sky, the Ark mark and its rippling outline drawn in blue ink letters (the letters of *sovereignty*), and the headline in deep-blue liquid glass. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
+| **01 Going digital** (الرقمنة) | *A country going digital, on tools made for somewhere else*. One argument in three beats. **The country:** in 2018 the only submarine cable was cut and Mauritania went offline; the answer was to build (the 2022 national agenda, records online through Houwiyeti in 2025, 800+ procedures on one platform in 2026). **The home:** *the country is building its own; at home, digital life is still rented from far away* (photos on Google Drive, films from Netflix and music from Spotify billed in dollars, an Alexa that speaks Gulf Arabic, not Hassaniya). **The answer:** *progress should reach the light switch, too. Ark is made here, and it runs in your house*. Each fact has an object; the ones that hang from a cloud abroad pour away like sand as they scroll past. | `gl/rented.ts` |
 | **02 Yours** | Grains of sand gather into the small machine Ark runs on (sand becomes silicon), then the machine opens into four labelled parts. Drawn in letters, with extra letter exposure for the dark metal. | `gl/device.ts` |
 | **03 Offline** | A courtyard house at night under clouds, with blue threads running from its roof mast up into the cloud. *Turn the lights on* (a simulated trip to a server abroad, labelled as simulated), *then cut the cloud and try again*. The threads fall, the clouds clear to stars and a moon, and the house answers instantly. That time is **measured** on the visitor's device. | `gl/night.ts`, `gl/house.ts`, `scripts/main.ts` |
 | **04 Control** | The same house seen from above with its roof off, beside a working Ark Home phone mock. It has rooms, AC with temperature, a gate that **asks before opening**, scenes, a live courtyard camera drawn in letters, and its own EN / FR / ع switch. Tapping a room in the 3D house works too. The first time the chapter comes into view, "Arrive home" runs by itself, unless the visitor has already used the phone or the cloud demo. | `gl/night.ts`, Page phone markup, `scripts/main.ts` |
 | **05 Cinema** | *Your home cinema. Offline*. A ribbon of generated covers (films, albums, books with invented titles in Latin and Arabic script) flowing along a dune-shaped curve, with Sharkfin, Sharkwave and Sharkink. | `gl/cinema.ts` |
-| **06 Your setup** | *Build your own setup, tailored to you*. Choose a place (Home, Apartment building, Office, Store) and see what Ark does there, from entrance access and per-apartment meter readings to shop shutters and office file storage. Plain radio buttons and CSS `:has()`, so it works without JavaScript. | Page markup, `site.css` |
-| **Start** | Three offers (Ark Home, Cinema, Installation) and contact. | Page markup |
+| **06 Your setup** | Morning again. *Build your own setup, tailored to you*. Choose a place (Home, Apartment building, Office, Store): the list shows what Ark does there, and the place itself stands beside it, drawn in letters. Choosing another pours the old one away and the new one takes its place. Plain radio buttons and CSS `:has()`, so the list works without JavaScript. | `gl/places.ts`, Page markup, `site.css` |
+| **Start** | *Start with your place*: three offers (Ark Home, Cinema, Installation) and contact. | Page markup |
+
+**The arc.** The page is one day. It opens in daylight (the country, the argument, the machine), night falls as you reach the house (*Cut the cloud* recalls 2018: the cable is cut again, on purpose, and the house keeps working), stays dark for the phone and the cinema, and morning returns for *Build your own setup*. The hero's promise, *nothing rented*, is what chapter 01 sets up (everything at home is rented from abroad) and what chapters 02 to 05 answer one by one.
 
 ### Text mode
 A **Text mode** switch in the header turns off the 3D and shows the whole story as a calm document, light on mobile data. It is also what visitors without JavaScript or WebGL get, and it is chosen automatically when the browser asks to save data. The interactive parts (cloud demo, phone, setup picker) are plain HTML and still work in text mode.
@@ -76,11 +78,16 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
   2. The second pass draws that letter from an atlas, tinted with the scene's own colour.
 
   The letters are the page's word: *sovereignty* in English, *souveraineté* in French, and *السيادة التقنية* in Arabic. In Arabic the scenes are literally drawn in Arabic letters.
-- **Liquid glass** (`gl/glyphs.ts`, `gl/stage.ts`). The optics are adapted from LiquidGlass's fragment shader: a bevel height field, two-surface refraction, dispersion, Fresnel, highlights and an inner rim. They run inside the site's own compositor, so they bend the live scene instead of a screenshot of the page.
-  - **Headlines:** `h1`, `h2`, the closing line and the timeline figures are drawn into a mask whenever something moves (each word with its own scroll-driven opacity and blur, so the focus pull still plays). The mask's blurred copy gives each letter a rounded bevel. The glass bends what's behind and carries a white tint for clarity, blue for the timeline figures. The page keeps the real words (transparent) for selection, search and screen readers.
-  - **Panels:** elements marked `data-glass` (the floating header, buttons, the setup choices, the cloud-demo controls) become frosted glass panels at their exact place on screen; the page keeps their content and hit area. Blue ones: `data-glass="blue"`, a chosen place, a switch that is on. They swell a little on hover and give when pressed.
-  - **Transitions:** where one chapter meets the next, the seam crosses the screen like a faint glass rod, bending the scene a few pixels as it passes.
-  - **Scrim:** the darkening on the text side now happens inside the compositor, under the glass, so the glass isn't dimmed.
+- **Day and night** (`gl/stage.ts`, `site.css`). One number, `--night`, runs from 0 (day) to 1 (night). Chapters marked `data-sky="night"` (the two house chapters and the cinema) pull it to 1; it passes through 0.5 exactly at a chapter seam, where the scenes have faded out anyway. The stage writes it to the shaders and to the page, where every colour token is a `color-mix()` of its day and night value. Ink flips from dark to light quickly around dusk, so text never sits grey on grey. The header's theme button pins night everywhere (remembered per browser). The phone mock is always a night object. Browsers without `color-mix` get the night palette throughout.
+- **Three passes** (`gl/glyphs.ts`).
+  1. *Cells:* one texel per character cell picks the letter whose shape matches the scene there.
+  2. *Base:* the page's paper and everything on it. By day the paper is a pale sky and the scene is blue ink letters; by night the paper is black and letters (or the real 3D image, tone-mapped) give light. Mosaics and the text-side dimming live here. It renders to a mip-mapped target.
+  3. *Glass:* liquid glass over the base, then out to the screen. Because the base is a texture with mip levels, glass can read it sharp (refraction) or blurred (frost) for the price of a texture lookup. This replaced a single pass that recomputed letters for every glass sample, and made the night-house chapter about 70% faster in the software renderer used for testing.
+- **Liquid glass.** Optics adapted from LiquidGlass's fragment shader (bevel height field, two-surface refraction, dispersion, Fresnel, highlights, inner rim, shadow).
+  - **Headlines:** `h1`, `h2`, the closing line and the timeline figures are drawn into a mask whenever something moves (each word with its own scroll-driven opacity and blur, so the focus pull still plays). By day they are stained glass: deep ink blue that shows the sky and letters behind it, darker. By night they are clear glass with a little white for clarity. Figures are blue glass in both. The page keeps the real words (transparent) for selection, search and screen readers.
+  - **Panels:** elements marked `data-glass` (the floating header, buttons, the setup choices, the cloud-demo controls) are frosted glass with a soft shadow, white by day and smoky by night; blue ones are blue glass. They swell a little on hover and give when pressed.
+  - **Light:** the highlight on all glass leans toward the pointer.
+  - **Seams:** where one chapter meets the next, a band of fluted glass (vertical rounded bars that refract what's behind them) crosses the screen. The model follows the FlutedGlass effect in the shaders library, rewritten in GLSL.
 - **The glass ripples (hero).** One shader on a plane behind the mark. The mark's silhouette is the union of two convex blocks; taking the mitred distance to each block (the furthest of its edge lines) and the nearer of the two gives offsets that keep the steps and the chamfer sharp at every size. Bands of that distance flow outward over time, with a slow liquid wobble. Each band is shaded as a rounded glass tube: Fresnel rims, a highlight from the top left, and dispersion (red, green and blue see the tube slightly wider or narrower, so its edges fringe). Letters need more light than eyes, so the ribbons are wide and bright and the outer ones fade early, keeping the headline side readable. Each chapter can set its own letter exposure (`gain`); the hero uses 2.2.
 - **Readable letters.** Besides the page's word, the atlas has strokes (`- | / \\ _ : = #`), so edges and outlines are drawn as lines and silhouettes read as shapes. Very dim cells stay empty for a quieter background. Cells are 8 × 14 px (10 × 16 in Arabic).
 - **A little blue.** Letters lean slightly toward Apple blue in a slow drift across the screen, and about one in sixteen is fully blue.
@@ -115,15 +122,15 @@ The house is modelled in code (`gl/house.ts`) as a Sahel courtyard house:
 
 The direction came from the owner's requests: a cool, edgy site, not literally a gallery; Apple-blue accent; text that comes from blurred to sharp as you scroll; no "AI-looking" cards; Mauritanian identity subtle, never on the nose. It also follows the **unslop** review rules.
 
-- **Colour:** Apple's dark palette.
-  - Background `#000`, text `#f5f5f7`, secondary `#a1a1a6`, muted `#86868b`, hairlines at 10% white.
-  - **One accent:** Apple blue, `#2997ff` for text and highlights and `#0071e3` for filled buttons (white text passes contrast).
+- **Colour:** two palettes from one ramp, blended by time of day.
+  - **Day:** sky `#b0daff` easing to paper `#f6faff`, ink `#0e2439`, secondary `#41566b`, muted `#5c7084`, hairlines at 12% ink. **Night:** background `#000`, text `#f5f5f7`, secondary `#a1a1a6`, muted `#86868b`, hairlines at 10% white. The day sky is a tone shift inside one hue, kept to the scene; chrome stays neutral.
+  - **One accent:** Apple blue. As ink it is `#0068d6` by day (5.3:1 on the paper) and `#2997ff` by night; filled buttons are `#0071e3` with white text in both.
   - Blue is used rarely: primary buttons, chapter numbers, the big fact years, selection, glass buttons and timeline figures, markers, a subtle drift in the letters, the status light on the device, and the network threads.
   - Warm amber exists only as **light inside the 3D** (lit windows), never in the interface.
 - **Type:** IBM Plex Sans, IBM Plex Sans Arabic and IBM Plex Mono, self-hosted.
   - Huge editorial headlines (up to 124 px, tight tracking in Latin; Arabic keeps normal spacing and taller lines).
   - Weights 400/500, sentence case, and no final period on headlines (a unit test enforces this).
-- **No cards.** Text sits directly on the scene. Legibility comes from a quiet gradient scrim on the text side (bottom on phones) and a soft text shadow, not boxes.
+- **No cards.** Text sits directly on the scene. Legibility comes from thinning the letters and dimming the image on the text side (inside the compositor, under the glass) and a soft halo behind copy, not boxes.
 - **Focus pull.** Headline words, then paragraphs, come into focus as they scroll in and soften as they leave.
   - Pure CSS scroll timelines: no JavaScript cost.
   - Browsers without scroll timelines get a one-time version driven by an IntersectionObserver.
@@ -169,13 +176,13 @@ The direction came from the owner's requests: a cool, edgy site, not literally a
 
 ## Content and claims
 
-The eight facts in *Going digital*, with sources linked on the page:
+The eight sourced facts in *Going digital* (two bridge lines between them carry no claim and no source):
 - **2018:** the only submarine cable linking Mauritania to the internet (ACE) was cut near Nouakchott; the country was offline for almost 48 hours. [Fortune](https://fortune.com/2018/04/09/mauritania-cable-break-internet), citing Dyn's measurements.
 - **2022:** Mauritania adopted its *Agenda national de transformation numérique 2022–2025*. [UN-ESCWA's national plans repository](https://andp.unescwa.org/plans/1516).
 - **2025:** since March 2025, criminal records can be requested online through Houwiyeti, the national identity app, which already handles civil-status documents. [We Are Tech](https://www.wearetech.africa/en/fils-uk/news/public-management/mauritania-digitizes-criminal-record-access-launches-online-service), relaying the Ministry of Digital Transformation.
 - **2026:** more than 800 administrative procedures gathered on one online platform. [Managers.tn, 21 Feb 2026](https://managers.tn/2026/02/21/mauritanie-plus-de-800-demarches-administratives-desormais-centralisees-et-numerisees/).
 - **15 GB:** Google Drive is free up to 15 GB, then a monthly subscription. [Google One plans](https://one.google.com/about/plans). Whether Google One is sold in Mauritania could not be confirmed, so the copy doesn't claim a local price.
-- **$7.99:** Netflix's standard plan in Mauritania, in US dollars. [World Price Index](https://worldpriceindex.org/subscriptions/netflix), which collects Netflix's own regional pricing pages (observed June 2026).
+- **$7.99:** Netflix's standard plan in Mauritania, in US dollars. [World Price Index](https://worldpriceindex.org/subscriptions/netflix), which collects Netflix's own regional pricing pages (observed June 2026). **Check this one from Mauritania:** Netflix shows prices by the visitor's location, so it can't be confirmed from here, and other lookups returned different figures (the ChatGPT version says US$2.99 to US$9.99).
 - **$3.29:** Spotify Premium Individual on Spotify's own Mauritania page, in US dollars. [Spotify](https://www.spotify.com/mr-en/premium/).
 - **2021:** Alexa learned Arabic in the Gulf dialect, launched for Saudi Arabia and the UAE; Hassaniya is not among its languages. [Amazon Science](https://www.amazon.science/latest-news/how-alexa-learned-arabic).
 
@@ -201,7 +208,8 @@ Brands are not named on the page; the facts are described generically and linked
 | **unslop** (Damir Sokolovsky) | An AI design-review skill, CC BY 4.0 | Used as the design rulebook: one accent, no cards or glows, sentence case, no trailing periods, 4px grid, one easing curve. Credited in the footer. |
 | **ponytail** (Dietrich Gebert) | MIT "write less code" rules for agents | Used as the engineering rulebook: native scrolling and controls, no animation or smooth-scroll libraries, one stylesheet, reuse of three.js add-ons, tests for non-trivial logic. Credited in the footer. |
 | **LiquidGlass** (@ybouane) | MIT library that renders glass panels over HTML by screenshotting the page into its own WebGL context | **Its optics are used, its runtime isn't.** The glass maths (bevel, refraction, dispersion, Fresnel, highlights, rim) was ported into the site's own composite shader, so it refracts the live 3D scene with no page capture, no second WebGL context and no extra download. Notice in `THIRD_PARTY_NOTICES.md`; credited in the footer. The repo states "MIT" without a copyright name, so the notice names the author by handle. |
-| **shaders** (shaders.com) | MIT library of 200+ WebGPU effects | **Not used in the end.** It needs WebGPU (Safari 26+, Chrome 113+, partial Firefox), so older iPhones would need a second path for every effect. All effects are written once in WebGL 2. It can be added later as an extra layer on WebGPU devices if wanted. |
+| **shaders** (Shader Effects Inc.) | MIT library of 200+ WebGPU effects | **Used as a model, not bundled.** It targets WebGPU, so shipping it would need a second rendering path. Its `FlutedGlass` effect (repeating rounded bars that refract, with a highlight per bar) was rewritten in GLSL for the chapter seams. Notice in `THIRD_PARTY_NOTICES.md`; credited in the footer. |
+| **The ChatGPT version** (branch `claude/chatgpt-version`) | The owner's own edit of an earlier build | **Adopted:** the light sky look (now the story's daytime, with night kept for the house and cinema), the dark toggle, the Houwiyeti fact, and the line *progress should reach the light switch, too*. **Not adopted:** the service cards, real film and album covers, uppercase labels and bold weights, and hedging copy. Its Netflix price and Google One claim could not be confirmed, so the page keeps the cautious wording. |
 | **designeer.xyz** | Curated directory of design-engineering resources | Inspiration only. It answered 403 Forbidden even with its host allowed, so nothing was read or taken from it. |
 | **Studio Hosqo** (Gumroad) | Free packs: 40 gradient maps, 20 glass-distortion textures, a displacement map, a MacBook mockup. Paid (US$5 each): Gradient Maps Vol. 1/2, Mixed Texture Pack, Mockup Pack 1. | **Not added yet.** Free Gumroad products still need a checkout with your email, which wasn't done on your behalf. Only Mockup Pack 1 states commercial use. To add them, download the packs and export what's needed as PNGs (the glass and displacement packs are Photoshop files), for example the gradients as small PNG strips. Natural uses are colour grading per scene, the glass refraction and the crumble. |
 | **reactdrop.dev** | Couldn't be reached | Dropped at the owner's request. |
@@ -239,7 +247,7 @@ src/
     gl/
       stage.ts          renderer, chapters, glass panels and headline mask, seams, markers, camera feed, adaptive resolution
       glyphs.ts, glyph-math.ts  the GPU glyph renderer and the liquid-glass compositor
-      hero.ts, rented.ts, device.ts, night.ts, cinema.ts   the scenes
+      hero.ts, rented.ts, device.ts, night.ts, cinema.ts, places.ts   the scenes
       house.ts          the courtyard house
       util.ts, types.ts
 tests/
@@ -271,7 +279,7 @@ About 4,000 lines of source in total.
   - no-JS rendering, and the one-file edition having no scripts or external files;
   - the lens being gone, headlines painted as glass while the words stay in the page, and the setup picker switching places.
 
-  **All 26 checks passed** on the last run. In this headless browser the GPU is emulated in software (under one frame a second in the night-house chapters), so the runner scrolls instantly and gives clicks up to two minutes to see steady frames; one earlier run still timed out on a wait. The runner owns its preview server (`--ignore-lock`, its own process group).
+  **All 29 checks passed** on the last run. In this headless browser the GPU is emulated in software (under one frame a second in the night-house chapters), so the runner scrolls instantly and gives clicks up to two minutes to see steady frames; one earlier run still timed out on a wait. The runner owns its preview server (`--ignore-lock`, its own process group).
 - **Visual review:** every chapter was screenshotted in headless Chromium at desktop (1440 × 900), phone (390 × 844) and in Arabic, and reviewed after each change. Those runs showed no console errors and **no third-party requests**.
 
 ---
@@ -335,6 +343,13 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
    - Sections 06 (rule builder) and 07 (proof) became *Build your own setup*; the offline copy and one-file edition moved to quiet footer links.
    - Section 02 is drawn in letters.
 10. **Pixel mosaics:** "pixel mosaics in shades of blue, baby blue, cyan and Apple blue for background elements, but not a lot". A first pass covered too much and sat behind the words, so the second has fewer, smaller clusters on the scene side only.
+11. **Fourth round:** "look into the ChatGPT work and the previous work, create and improve; if the narrative doesn't make sense, make it make sense; use the tools from the repositories".
+   - **Story:** chapter 01 became one argument (the country builds its own; the home still rents; Ark answers), in chronological order with two bridge lines; *Cut the cloud* now recalls 2018; the page became one day, with night for the house and cinema.
+   - **Look:** ChatGPT's light sky merged with the glass: day and night palettes blended by the story, stained-glass headlines by day, frosted panels with shadows, a theme button.
+   - **Glass:** rebuilt as three passes, with real frost from mip levels, pointer-following light and fluted-glass seams; about 70% faster in the test renderer.
+   - **Setup:** the chosen place now stands beside the list, drawn in letters, and pours away when another is chosen.
+   - **From the repos:** LiquidGlass optics (extended with shadow and frost), the shaders library's FlutedGlass model, unslop's rules (sentence case, two weights, one accent, quiet chrome, no hue gradients on chrome, "let a few cells change slowly" from its glyph notes) and ponytail's (native controls, one stylesheet, one easing).
+   - **Fixed on the way:** glass headlines were misplaced on phones (the text mask's texture kept its first size when resolution adapted); mosaics no longer land on a real 3D image.
    - Found on the way: clearing a multisampled render target doesn't update its texture, so sections without a scene showed a stale cinema frame (now an empty render); and the page's scrim had been dimming the glass (now inside the compositor).
 
 ---
@@ -345,7 +360,7 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
   - All checks so far ran in headless Chromium with software rendering, which is slower than real GPUs.
   - Check frame rate, the camera-feed readback, and the scroll-driven focus pull: Safari 26 supports scroll timelines; older Safari gets the fallback.
 - **Accessibility:** structure, focus styles, reduced motion, text mode and labelled controls are in place; glass headlines keep their real words in the page. A full audit (screen reader pass, keyboard path through the phone mock and setup picker, contrast of glass text over busy scenes) is still to do.
-- **Speed on real devices:** the glass compositor is heavier than before. In the software renderer used here the night-house chapter dropped from about 2.3 to about 0.9 frames a second, but a software renderer runs branches a GPU skips, so this overstates the cost. Check on a mid-range phone; the adaptive resolution already lowers the render size when frames are slow.
+- **Speed on real devices:** still unmeasured on real hardware. In the software renderer used here, the night-house chapter runs at about 1.4 frames a second (2.3 before any glass, 0.85 with the first glass, 1.4 after the three-pass rebuild); a software renderer overstates the cost, and the adaptive resolution lowers the render size when frames are slow. Check on a mid-range phone.
 - **Before launch:** contact details, domain, share image and native review (see [Before going live](#before-going-live)).
 - **Optional:** add the Studio Hosqo free packs; add a WebGPU layer with the `shaders` library; a Mauritanian artist collaboration for the house patterns; real photography or footage if wanted later.
 
@@ -357,5 +372,6 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
 - **3D:** three.js, MIT
 - **Glyph rendering** after ascii3d by Alec Jacobson, with his support
 - **Liquid glass** after LiquidGlass by @ybouane, MIT
+- **Fluted glass seams** after the shaders library by Shader Effects Inc., MIT
 - **Design review:** unslop by Damir Sokolovsky, CC BY 4.0
 - **Engineering approach:** ponytail by Dietrich Gebert, MIT
