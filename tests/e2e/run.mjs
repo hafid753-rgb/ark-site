@@ -52,7 +52,7 @@ try {
     await page.goto(BASE + '/', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => 'glassOn' in document.documentElement.dataset, null, { timeout: 20000 });
     check(!(await page.$('.lens')), 'the ascii-to-3D lens is gone');
-    check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color === 'rgba(0, 0, 0, 0)'), 'the headline is painted as glass by the stage');
+    check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color !== 'rgba(0, 0, 0, 0)'), 'by day the headline is solid ink');
     check((await page.textContent('h1')).length > 0 && (await page.getAttribute('h1', 'aria-label')).length > 0, 'the headline words stay in the page for reading aloud');
     // Day and night: the story starts by day, the house chapters happen at night, and the button pins night.
     const night = () => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--night')));
@@ -64,6 +64,8 @@ try {
     await page.click('[data-theme-toggle]');
     await page.waitForFunction(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--night')) > 0.95, null, { timeout: 60000 });
     check(await page.evaluate(() => document.documentElement.dataset.theme) === 'dark', 'the theme button pins night everywhere');
+    check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color.replace(/\s/g, '').endsWith('0)')), 'at night the headline hands over to glass');
+    check((await page.$$('#rented .service')).length === 4, 'the four services stand together');
     await page.click('[data-theme-toggle]');
     // Build your own setup: choosing a place shows what Ark does there.
     await page.locator('#setup').scrollIntoViewIfNeeded();
@@ -94,6 +96,8 @@ try {
   await page.click('[data-sheet-ok]');
   check((await page.textContent('[data-gate-state]')).trim() === 'Open', 'gate opens after confirming');
 
+  await page.evaluate(() => scrollBy(0, -240)); // the header steps aside while reading down; scrolling up brings it back
+  await page.waitForSelector('.bar:not(.is-hidden)');
   await page.click('[data-mode-toggle]');
   check(await page.evaluate(() => document.documentElement.dataset.mode === 'text' && getComputedStyle(document.getElementById('stage')).display === 'none'), 'text mode hides the 3D stage');
   await page.click('[data-mode-toggle]');

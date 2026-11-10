@@ -166,9 +166,11 @@ export function baseMaterial(set: GlyphSet) {
       uScrim: { value: new THREE.Vector2(1, 0) },
       uScroll: { value: 0 },
       uNight: { value: 0 },
+      uSky: { value: 1 },
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
+      uniform float uSky; // 1 on the opening screen (vivid sky), easing to clean paper below
       uniform sampler2D tScene, tCells, tAtlas;
       uniform vec2 uCells, uRes, uGrid;
       uniform vec2 uScrim;    // text side: (1,0) left, (-1,0) right, (0,1) bottom
@@ -239,9 +241,10 @@ export function baseMaterial(set: GlyphSet) {
 
         // Paper: by day a pale sky, deeper toward the top, with slow lighter drifts; by night, black.
         float up = smoothstep(0.2, 1.0, vUv.y);
-        vec3 day = mix(vec3(0.965, 0.98, 1.0), vec3(0.69, 0.855, 1.0), up * up);
-        day += (noise(vUv * vec2(2.4, 1.6) + vec2(uTime * 0.012, 0.0)) - 0.5) * 0.05 * up;
-        vec3 paper = lin(mix(day, vec3(0.0), uNight));
+        vec3 white = vec3(0.992, 0.992, 0.996);
+        vec3 day = mix(white, vec3(0.3, 0.72, 1.0), up * up * uSky);
+        day += (noise(vUv * vec2(2.4, 1.6) + vec2(uTime * 0.012, 0.0)) - 0.5) * 0.05 * up * uSky;
+        vec3 paper = lin(mix(day, vec3(0.024, 0.075, 0.133), uNight)); // night is deep navy, not black
 
         float drift = 0.0, spark = 0.0;
         vec4 g = uGlyphMix > 0.0 ? glyphAt(p, drift, spark) : vec4(0.0);
@@ -350,7 +353,7 @@ export function glassMaterial() {
         vec2 soft = textureLod(tText, uv, lod).rg;
         // By day the light on the glass is kept low, so thin strokes stay ink-dark instead of going pale.
         col += sheen(N) * mix(mix(0.3, 0.12, blue), 1.0, nf) + clamp(1.0 - soft.r - soft.g, 0.0, 1.0) * mix(0.04, 0.18, nf);
-        return vec4(col, cov);
+        return vec4(col, cov * nf); // by day the page draws the headline itself, as solid ink
       }
 
       void main() {

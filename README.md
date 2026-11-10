@@ -279,7 +279,7 @@ About 4,000 lines of source in total.
   - no-JS rendering, and the one-file edition having no scripts or external files;
   - the lens being gone, headlines painted as glass while the words stay in the page, and the setup picker switching places.
 
-  **All 29 checks passed** on the last run. In this headless browser the GPU is emulated in software (under one frame a second in the night-house chapters), so the runner scrolls instantly and gives clicks up to two minutes to see steady frames; one earlier run still timed out on a wait. The runner owns its preview server (`--ignore-lock`, its own process group).
+  **All 31 checks passed** on the last run. In this headless browser the GPU is emulated in software (under one frame a second in the night-house chapters), so the runner scrolls instantly and gives clicks up to two minutes to see steady frames; one earlier run still timed out on a wait. The runner owns its preview server (`--ignore-lock`, its own process group).
 - **Visual review:** every chapter was screenshotted in headless Chromium at desktop (1440 × 900), phone (390 × 844) and in Arabic, and reviewed after each change. Those runs showed no console errors and **no third-party requests**.
 
 ---
@@ -352,6 +352,13 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
    - **Fixed on the way:** glass headlines were misplaced on phones (the text mask's texture kept its first size when resolution adapted); mosaics no longer land on a real 3D image.
    - Found on the way: clearing a multisampled render target doesn't update its texture, so sections without a scene showed a stale cinema frame (now an empty render); and the page's scrim had been dimming the glass (now inside the compositor).
 
+12. **Fifth round:** "study the ChatGPT version, I'm very fond of it; learn from both". What it does better, and what was taken from it:
+   - **Solid, bold headlines.** By day, headlines are weight 700, crisp dark ink drawn by the page itself. Liquid glass takes over only at night, where it reads well on dark. (The earlier day glass was soft and weaker.)
+   - **A vivid sky at the top only**, easing to clean white paper below; night is deep navy `#061322`, not black.
+   - **The four services as one group**: *Today: Global services. Local compromises*, four cards (Google Drive, Netflix, Spotify, Alexa) you can scan at once, while their objects take turns beside them.
+   - **Details:** uppercase chapter labels, a header that steps aside while reading down and returns on the way up, a labelled Dark button, the current language as a pill, a footer on its own surface, and real titles in the cinema (on generated covers; no artwork is copied).
+   - **Kept from this version:** night for the house and cinema, the setup scene, the story order, sourced figures only.
+   - These choices override some of the unslop rules used earlier (no cards, sentence-case labels, weights up to 600): the owner's preference wins.
 ---
 
 ## Known limitations and next steps

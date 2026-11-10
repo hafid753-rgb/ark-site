@@ -14,6 +14,7 @@
   --text: #f5f5f7; --text-2: #a1a1a6; --muted: #86868b;
   --blue: #2997ff; --blue-fill: #0071e3; --blue-wash: rgb(41 151 255 / 0.14);
   --wash: rgb(245 245 247 / 0.07); --wash-strong: rgb(245 245 247 / 0.14);
+  --card: rgb(180 215 245 / 0.08);
   --knob: #39393d; --shade: rgb(0 0 0 / 0.7); --veil: rgb(0 0 0 / 0.72);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --fast: 160ms;
@@ -43,9 +44,10 @@
     --flip: clamp(0, (var(--night) - 0.34) * 6.25, 1);
     --n: calc(var(--night) * 100%);
     --f: calc(var(--flip) * 100%);
-    --bg: color-mix(in srgb, #f6faff, #000 var(--n));
-    --surface: color-mix(in srgb, #fff, #0d0d0e var(--n));
-    --raised: color-mix(in srgb, #e9f1f9, #1c1c1e var(--n));
+    --bg: color-mix(in srgb, #fdfdfe, #061322 var(--n));
+    --surface: color-mix(in srgb, #f0f6fa, #0b1e32 var(--n));
+    --raised: color-mix(in srgb, #e5f0f7, #142b42 var(--n));
+    --card: color-mix(in srgb, rgb(255 255 255 / 0.72), rgb(180 215 245 / 0.08) var(--f));
     --text: color-mix(in srgb, #0e2439, #f5f5f7 var(--f));
     --text-2: color-mix(in srgb, #41566b, #a1a1a6 var(--f));
     --muted: color-mix(in srgb, #5c7084, #86868b var(--f));
@@ -78,8 +80,9 @@ button, select, input { font: inherit; color: inherit; }
 .skip:focus { transform: none; }
 
 /* Type */
-h1, h2, h3 { margin: 0; font-weight: 500; text-wrap: balance; }
-h1 { font-size: clamp(52px, min(8.4vw, 13.5vh), 124px); line-height: 0.94; letter-spacing: -0.045em; }
+h1, h2, h3, h4 { margin: 0; font-weight: 500; text-wrap: balance; }
+h1, h2, .closing-line { font-weight: 700; }
+h1 { font-size: clamp(52px, min(8.4vw, 13.5vh), 124px); line-height: 0.96; letter-spacing: -0.055em; }
 h2 { font-size: clamp(38px, 6.2vw, 84px); line-height: 0.98; letter-spacing: -0.035em; }
 h3 { font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; }
 :lang(ar) h1, :lang(ar) h2, :lang(ar) h3 { letter-spacing: 0; line-height: 1.22; }
@@ -88,7 +91,8 @@ p { margin: 0; text-wrap: pretty; }
 .body { font-size: clamp(18px, 1.4vw, 20px); line-height: 1.5; color: var(--text-2); max-width: 32rem; }
 .meta { font-size: 13px; line-height: 20px; color: var(--muted); }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.kicker { font: 400 13px/20px var(--mono); color: var(--muted); }
+.kicker { font: 400 13px/20px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+:lang(ar) .kicker { letter-spacing: 0; }
 .kn { color: var(--blue); }
 strong { font-weight: 500; color: var(--text); }
 .w { display: inline-block; }
@@ -135,10 +139,14 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .langs { display: flex; gap: 2px; }
 .langs a { min-width: 32px; height: 32px; padding-inline: 8px; display: grid; place-items: center; border-radius: 8px; text-decoration: none; font-size: 13px; color: var(--muted); transition: color var(--fast) var(--ease); }
 .langs a:hover { color: var(--text); }
-.langs a[aria-current='page'] { color: var(--text); }
+.langs a[aria-current='page'] { color: var(--text); background: var(--wash); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.bar { transition: transform var(--mid) var(--ease), opacity var(--fast) var(--ease); }
+.bar.is-hidden:not(:focus-within) { opacity: 0; pointer-events: none; transform: translateY(calc(-100% - 28px)); }
+@media (prefers-reduced-motion: reduce) { .bar { transition: none; } }
+@media (max-width: 640px) { .theme-toggle { width: 32px; padding: 0; justify-content: center; } .theme-toggle span { display: none; } }
 .mode-toggle { height: 32px; padding-inline: 12px; border-radius: var(--r-control); border: 1px solid var(--line); background: transparent; color: var(--text-2); font-size: 13px; cursor: pointer; transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
 .mode-toggle:hover { color: var(--text); border-color: var(--line-strong); }
-.theme-toggle { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; border-radius: 16px; border: 1px solid var(--line); background: transparent; color: var(--text-2); cursor: pointer; transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+.theme-toggle { height: 32px; padding: 0 12px 0 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border-radius: 16px; border: 1px solid var(--line); background: transparent; color: var(--text-2); cursor: pointer; transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
 .theme-toggle:hover, .theme-toggle[aria-pressed='true'] { color: var(--text); border-color: var(--line-strong); }
 .theme-toggle svg { width: 16px; height: 16px; }
 @media (max-width: 640px) {
@@ -163,6 +171,13 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .source { justify-self: start; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 4px; }
 .source:hover { color: var(--text); }
 .closing { margin-top: 96px; }
+/* Today: the four services, side by side. */
+.services { display: grid; gap: 16px; margin-top: 96px; }
+.services-title { font-size: clamp(26px, 2.6vw, 38px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 500; }
+:lang(ar) .services-title { letter-spacing: 0; line-height: 1.3; }
+.service-grid { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.service { display: grid; gap: 8px; align-content: start; padding: 20px; border-radius: 22px; background: var(--card); border: 1px solid var(--line-strong); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 12px 40px rgb(17 92 142 / 0.07); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); font-size: 15px; line-height: 1.5; color: var(--text-2); }
+.service h4 { font-size: 18px; font-weight: 700; color: var(--blue); }
 .closing-line { font-size: clamp(40px, 6.2vw, 84px); line-height: 0.98; letter-spacing: -0.035em; font-weight: 500; max-width: 12ch; }
 :lang(ar) .closing-line { letter-spacing: 0; line-height: 1.22; }
 .year.word { letter-spacing: -0.03em; }
@@ -283,7 +298,7 @@ span.row-main { cursor: default; }
 .contact h3 { font-size: 24px; }
 
 /* Footer */
-.foot { border-block-start: 1px solid var(--line); padding-block: 48px 64px; color: var(--text-2); font-size: 14px; }
+.foot { background: var(--surface); border-block-start: 1px solid var(--line); padding-block: 48px 64px; color: var(--text-2); font-size: 14px; }
 .foot .wrap { display: grid; gap: 16px; }
 .brand-line { display: flex; align-items: center; gap: 10px; color: var(--text); }
 .foot .langs a { min-width: 0; padding-inline: 10px; }
@@ -333,8 +348,14 @@ span.row-main { cursor: default; }
   /* Liquid glass. Once the stage is drawing it (data-glass-on), headlines become glass that bends the
      scene behind them, and [data-glass] elements become glass panels. The page keeps the words (for
      reading aloud, selecting and finding) and the hit areas; only their paint moves to the stage. */
+  /* By day headlines are solid ink, crisp, drawn by the page; at night they hand over to glass on the stage. */
   :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line, .year),
   :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line) .w { color: transparent; text-shadow: none; }
+  @supports (color: color-mix(in srgb, red, blue)) {
+    :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line),
+    :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line) .w { color: color-mix(in srgb, #10283d, transparent var(--f)); }
+    :root[data-glass-on]:not([data-mode='text']) .year { color: color-mix(in srgb, #0074be, transparent var(--f)); }
+  }
   :root[data-glass-on]:not([data-mode='text']) [data-glass] {
     background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
   }
@@ -367,6 +388,7 @@ span.row-main { cursor: default; }
     :root:not([data-mode='text']) .chapter[data-scene] .step,
     :root:not([data-mode='text']) .chapter[data-scene] .pinned,
     :root:not([data-mode='text']) #setup .wrap > * { max-width: min(36rem, 48%); }
+    :root:not([data-mode='text']) .chapter[data-scene] .step.services { max-width: min(40rem, 52%); }
     :root:not([data-mode='text']) .hero .wrap > * { max-width: min(46rem, 56%); }
   }
 

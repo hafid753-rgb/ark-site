@@ -318,6 +318,7 @@ export async function startStage() {
     ub.uTime.value = ug.uTime.value = time;
     ub.uNight.value = ug.uNight.value = night;
     ub.uScroll.value = scrollY * pr;
+    ub.uSky.value = 1 - 0.85 * smooth(0.25 * H, 1.1 * H, scrollY);
     ug.uLight.value.set(light.x + Math.sin(time * 0.21) * 0.12, light.y);
     // The seam to the neighbouring chapter, as a band of fluted glass while it crosses the screen.
     ug.uSeam.value.set((H - seamY) * pr, seamK * 0.9, 0.16 * H * pr);

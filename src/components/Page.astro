@@ -1,10 +1,12 @@
 ---
 import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/700.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/ibm-plex-sans-arabic/400.css';
 import '@fontsource/ibm-plex-sans-arabic/500.css';
+import '@fontsource/ibm-plex-sans-arabic/700.css';
 import '../styles/site.css';
 import Mark from './Mark.astro';
 import Words from './Words.astro';
@@ -63,8 +65,9 @@ const chapters = [
             <a href={pathFor(l)} hreflang={l} lang={l} aria-current={l === lang ? 'page' : undefined} title={langLabels[l]}>{langNames[l]}</a>
           ))}
         </nav>
-        <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label={t.nav.dark} title={t.nav.dark} data-dark={t.nav.dark} data-light={t.nav.light}>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" data-dark={t.nav.dark} data-light={t.nav.light}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5" /><path d="M12 3.75a8.25 8.25 0 0 1 0 16.5z" fill="currentColor" /></svg>
+          <span data-theme-label>{t.nav.dark}</span>
         </button>
         <button class="mode-toggle" type="button" data-mode-toggle aria-pressed="false" data-on={t.nav.fullMode} data-off={t.nav.textMode}>{t.nav.textMode}</button>
         <a class="btn primary small" href="#start">{t.nav.talk}</a>
@@ -100,10 +103,24 @@ const chapters = [
               <li class="step fact">
                 <p class:list={["year reveal", isFigure(f.year) ? "mono" : "word"]}>{/^\d{4}$/.test(f.year) ? <time datetime={f.year}>{f.year}</time> : <bdi dir="ltr">{f.year}</bdi>}</p>
                 <p class="reveal">{f.text}</p>
-                {f.source && <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>}
+                <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
               </li>
             ))}
           </ol>
+          <div class="step services">
+            <p class="year word reveal">{t.rented.services.label}</p>
+            <Words as="h3" class="services-title" text={t.rented.services.title} />
+            <p class="body reveal">{t.rented.services.body}</p>
+            <ul class="service-grid">
+              {t.rented.services.items.map((sv) => (
+                <li class="service reveal">
+                  <h4>{sv.name}</h4>
+                  <p>{sv.text}</p>
+                  <a class="source meta" href={sv.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div class="step closing">
             <p class="body reveal">{t.rented.lead}</p>
             <Words as="p" class="closing-line" text={t.rented.closing} />

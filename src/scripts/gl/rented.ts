@@ -236,13 +236,14 @@ export function create(ctx: SceneCtx): Chapter {
   house.rotation.set(0.25, -0.5, 0);
 
   // The bridge between the country's story and the home's: a house still hanging from the cloud.
-  const rentedHome = house.clone();
-  const things = [cable, mast, card, phone, rentedHome, drive, tv, phones, speaker, house];
+  const services = [drive, tv, phones, speaker];
+  const things = [cable, mast, card, phone, drive, house];
   // Only what depends on somewhere else pours away; what is built here stays.
-  const pours = [true, false, false, false, false, true, true, true, true, false];
-  const clouded = [true, false, false, false, true, true, true, true, true, false];
+  const pours = [true, false, false, false, true, false];
+  const clouded = [true, false, false, false, true, false];
+  const SERVICES = 4; // index of the step that groups the four services
   const holder = new THREE.Group();
-  things.forEach((t) => holder.add(t));
+  [...things, ...services.slice(1)].forEach((t) => holder.add(t));
   scene.add(holder);
 
   // The cloud each thing depends on, and the thread to it.
@@ -266,7 +267,7 @@ export function create(ctx: SceneCtx): Chapter {
     glyph: 1,
     fall: 0,
     update(f) {
-      if (!marks.length) marks = [...f.el.querySelectorAll<HTMLElement>('.fact, .closing')];
+      if (!marks.length) marks = [...f.el.querySelectorAll<HTMLElement>('.fact, .services, .closing')];
       // Which fact is closest to the middle of the screen, and how far past it we are.
       let i = 0, c = Infinity;
       marks.forEach((el, k) => {
@@ -280,8 +281,15 @@ export function create(ctx: SceneCtx): Chapter {
       const side0 = ctx.rtl ? 1 : -1;
       ch.fall = pours[i] ? smooth(0.06, 0.42, -c) : 0;
       const grow = smooth(0.62, 0.28, c);
-      things.forEach((t, k) => (t.visible = k === i));
-      const t = things[i];
+      [...things, ...services].forEach((t) => (t.visible = false));
+      let t = things[i];
+      if (i === SERVICES) {
+        // The four services take turns: each stands a few seconds, then pours away for the next.
+        const beat = ctx.reduced ? 0 : f.time / 3.6;
+        t = services[Math.floor(beat) % services.length];
+        ch.fall = Math.max(ch.fall, smooth(0.78, 1, beat % 1));
+      }
+      t.visible = true;
       t.scale.setScalar(0.6 + 0.4 * grow);
       // Flat things sway so they never turn edge-on; solid things turn slowly.
       const flat = t === phone || t === card || t === drive || t === tv;

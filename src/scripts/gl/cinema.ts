@@ -3,14 +3,14 @@ import { seeded } from './util';
 import type { Chapter, SceneCtx } from './types';
 
 type Kind = 'film' | 'album' | 'book';
-// A home library: invented titles, in the scripts a household here reads.
+// A home library: titles a household here might own. The covers are generated; no artwork is copied.
 const SHELF: [string, Kind][] = [
-  ['Harmattan', 'film'], ['Tidinit Sessions', 'album'], ['Notes on Sand', 'book'], ['Salt Road', 'film'],
-  ['Blue Hour', 'album'], ['Small Machines', 'book'], ['مدينة الريح', 'film'], ['Le Dernier Train', 'film'],
-  ['Desert Radio', 'album'], ['Atlas of Stars', 'book'], ['The Long Noon', 'film'], ['ليل طويل', 'album'],
-  ['Le Jardin d’hiver', 'book'], ['Night Shift', 'film'], ['Low Tide', 'album'], ['دفتر الملح', 'book'],
-  ['Second Sun', 'film'], ['Courtyard', 'album'], ['Ten Rooms', 'book'], ['Wind Theory', 'film'],
-  ['North Star', 'album'], ['The Quiet Year', 'book'], ['Open Door', 'film'], ['Signal', 'album'],
+  ['Timbuktu', 'film'], ['Abbey Road', 'album'], ['Le Petit Prince', 'book'], ['Interstellar', 'film'],
+  ['Discovery', 'album'], ['Dune', 'book'], ['ألف ليلة وليلة', 'book'], ['Spirited Away', 'film'],
+  ['Kind of Blue', 'album'], ['Nineteen Eighty-Four', 'book'], ['Casablanca', 'film'], ['أم كلثوم', 'album'],
+  ['The Hobbit', 'book'], ['Lawrence of Arabia', 'film'], ['Talking Timbuktu', 'album'], ['موسم الهجرة إلى الشمال', 'book'],
+  ['Heremakono', 'film'], ['Random Access Memories', 'album'], ['Les Misérables', 'book'], ['Seven Samurai', 'film'],
+  ['Thriller', 'album'], ['The Odyssey', 'book'], ['Bamako', 'film'], ['The Dark Side of the Moon', 'album'],
 ];
 const PALETTES = [
   ['#0f0e0d', '#e3a55a'], ['#e9e2d4', '#1f2a44'], ['#1f2a44', '#e9e2d4'], ['#b4472f', '#f2e6d0'],
@@ -165,7 +165,9 @@ function drawCovers(c: CanvasRenderingContext2D, kinds: Record<Kind, string>, sa
       c.strokeRect(cx - 40, cy - 70, 140, 70);
     }
     const isArabic = /[؀-ۿ]/.test(title);
-    c.font = `500 26px ${isArabic ? arabic : sans}`;
+    // Long titles shrink to fit the cover.
+    let size = 26;
+    do { c.font = `500 ${size}px ${isArabic ? arabic : sans}`; } while (c.measureText(title).width > CW - 40 && --size > 12);
     c.direction = isArabic ? 'rtl' : 'ltr';
     c.textAlign = isArabic ? 'right' : 'left';
     c.fillText(title, isArabic ? x0 + CW - 20 : x0 + 20, y0 + CH - 30);

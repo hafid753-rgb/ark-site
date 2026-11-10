@@ -52,8 +52,7 @@ const setTheme = (dark: boolean, save = true) => {
   if (themeBtn) {
     const label = dark ? themeBtn.dataset.light! : themeBtn.dataset.dark!;
     themeBtn.setAttribute('aria-pressed', String(dark));
-    themeBtn.setAttribute('aria-label', label);
-    themeBtn.title = label;
+    $('[data-theme-label]', themeBtn)!.textContent = label;
   }
   // A per-visitor convenience only; the page works the same without it.
   if (save) try { localStorage.setItem('ark-theme', dark ? 'dark' : 'story'); } catch { /* private mode */ }
@@ -62,6 +61,19 @@ let savedTheme: string | null = null;
 try { savedTheme = localStorage.getItem('ark-theme'); } catch { /* private mode */ }
 setTheme(savedTheme === 'dark', false);
 themeBtn?.addEventListener('click', () => setTheme(root.dataset.theme !== 'dark'));
+
+/* ---------- Header: steps aside while reading down, returns on the way up ---------- */
+
+const bar = $('.bar');
+if (bar) {
+  let lastY = scrollY;
+  addEventListener('scroll', () => {
+    const y = scrollY;
+    if (Math.abs(y - lastY) < 6) return;
+    bar.classList.toggle('is-hidden', y > lastY && y > 160);
+    lastY = y;
+  }, { passive: true });
+}
 
 /* ---------- Gentle reveal ---------- */
 
