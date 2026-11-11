@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildGlyphs, cellMaterial, baseMaterial, glassMaterial, fullscreen, MAX_PANELS } from './glyphs';
+import { buildGlyphs, cellMaterial, baseMaterial, glassMaterial, fullscreen } from './glyphs';
 import { approach, clamp01, lerp, smooth } from './util';
 import type { Chapter, SceneCtx } from './types';
 
@@ -79,96 +79,8 @@ export async function startStage() {
       return { el, top: r.top + scrollY, h: r.height };
     });
   };
-  // ---------- Liquid glass ----------
-  // Panels: elements marked data-glass become glass at their place on screen; the page keeps their
-  // content and hit area. Blue ones: data-glass="blue", a chosen place, a switch that is on.
-  const panels = [...document.querySelectorAll<HTMLElement>('[data-glass]')];
-  const radii = new Map<HTMLElement, number>();
-  const blueOf = (el: HTMLElement) =>
-    el.dataset.glass === 'blue' || el.matches('.place:has(input:checked)') || (el.matches('.switch') && el.getAttribute('aria-pressed') === 'true') ? 1 : 0;
-  const placePanels = () => {
-    const u = glassMat.uniforms;
-    let n = 0;
-    for (const el of panels) {
-      if (n >= MAX_PANELS) break;
-      const r = el.getBoundingClientRect();
-      if (r.width < 1 || r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) continue;
-      if (!radii.has(el)) radii.set(el, parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0);
-      u.uPanel.value[n].set((r.left + r.width / 2) * pr, (H - r.top - r.height / 2) * pr, (r.width / 2) * pr, (r.height / 2) * pr);
-      u.uPanelInfo.value[n].set(Math.min(radii.get(el)!, r.height / 2) * pr, blueOf(el), 0, 0);
-      n++;
-    }
-    u.uPanels.value = n;
-  };
-
-  // Headlines: drawn into a mask (red = white glass, green = blue glass for the timeline figures)
-  // whenever something moves, then turned into glass by the composite. Each word keeps its own
-  // scroll-driven opacity and blur, so the focus pull still plays, in glass.
-  const textEls = [...document.querySelectorAll<HTMLElement>('main :is(h1, h2, .closing-line) .w, main .year')];
-  const mask = document.createElement('canvas');
-  const mctx = mask.getContext('2d')!;
-  const canFilter = 'filter' in mctx;
-  const textTex = new THREE.CanvasTexture(mask);
-  textTex.generateMipmaps = true;
-  textTex.minFilter = THREE.LinearMipmapLinearFilter;
-  let ms = 1, lastSig = '';
-  function sizeText() {
-    ms = W * H > 900000 ? 1 : Math.min(dpr, 2); // big screens: CSS pixels are enough for headline sizes
-    const mw = Math.max(1, Math.round(W * ms)), mh = Math.max(1, Math.round(H * ms));
-    if (mw !== mask.width || mh !== mask.height) {
-      mask.width = mw;
-      mask.height = mh;
-      textTex.dispose(); // a texture's storage is fixed once uploaded: a new size needs a new one
-    }
-    glassMat.uniforms.uTextTexel.value.set(1 / mask.width, 1 / mask.height);
-    lastSig = '';
-    radii.clear();
-  }
-  const range = document.createRange();
-  const drawText = () => {
-    const items: { el: HTMLElement; r: DOMRect; st: CSSStyleDeclaration }[] = [];
-    let sig = `${W}x${H}`;
-    for (const el of textEls) {
-      let r: DOMRect;
-      if (el.classList.contains('w')) r = el.getBoundingClientRect();
-      else { range.selectNodeContents(el); r = range.getBoundingClientRect(); }
-      if (r.width < 1 || r.bottom < -40 || r.top > H + 40) continue;
-      const st = getComputedStyle(el);
-      const o = parseFloat(st.opacity);
-      if (o < 0.02) continue;
-      items.push({ el, r, st });
-      sig += `|${r.left.toFixed(1)},${r.top.toFixed(1)},${o.toFixed(2)},${st.filter}`;
-    }
-    if (sig === lastSig) return;
-    lastSig = sig;
-    mctx.setTransform(ms, 0, 0, ms, 0, 0);
-    mctx.filter = 'none';
-    mctx.globalAlpha = 1;
-    mctx.fillStyle = '#000'; // coverage lives in the colour channels, so the mask is drawn on black
-    mctx.fillRect(0, 0, W, H);
-    for (const { el, r, st } of items) {
-      const holder = el.classList.contains('w') ? (el.parentElement as HTMLElement) : el;
-      const hs = el.classList.contains('w') ? getComputedStyle(holder) : st;
-      mctx.font = `${hs.fontWeight} ${hs.fontSize} ${hs.fontFamily}`;
-      if ('letterSpacing' in mctx) (mctx as unknown as { letterSpacing: string }).letterSpacing = hs.letterSpacing === 'normal' ? '0px' : hs.letterSpacing;
-      if (canFilter) mctx.filter = st.filter && st.filter !== 'none' ? st.filter : 'none';
-      mctx.globalAlpha = parseFloat(st.opacity);
-      mctx.fillStyle = el.classList.contains('year') ? '#00ff00' : '#ff0000';
-      const m = mctx.measureText(el.textContent!);
-      const asc = m.fontBoundingBoxAscent ?? parseFloat(hs.fontSize) * 0.8;
-      const desc = m.fontBoundingBoxDescent ?? parseFloat(hs.fontSize) * 0.2;
-      const y = r.top + (r.height - asc - desc) / 2 + asc;
-      const rtlText = /[؀-ۿ]/.test(el.textContent!);
-      mctx.direction = rtlText ? 'rtl' : 'ltr';
-      mctx.textAlign = rtlText ? 'right' : 'left';
-      mctx.textBaseline = 'alphabetic';
-      mctx.fillText(el.textContent!, rtlText ? r.right : r.left, y);
-    }
-    textTex.needsUpdate = true;
-  };
-  glassMat.uniforms.tText.value = textTex;
-  glassMat.uniforms.uText.value = 1;
-  let glassOn = false;
+  // Glass on buttons, the header and headlines is drawn by the page (CSS), so it moves with the page.
+  // The stage keeps only the glass that belongs to the scene: the fluted seams between chapters.
 
   const resize = () => {
     W = innerWidth;
@@ -178,7 +90,7 @@ export async function startStage() {
     renderer.setSize(W, H, false);
     const bw = Math.max(1, Math.floor(W * pr)), bh = Math.max(1, Math.floor(H * pr));
     sceneRT.setSize(bw, bh);
-    const cols = Math.floor(W / (rtl ? 10 : 8)), rows = Math.floor(H / (rtl ? 16 : 14));
+    const cols = Math.floor(W / (rtl ? 8 : 6)), rows = Math.floor(H / (rtl ? 13 : 11));
     cellRT.setSize(cols, rows);
     cellMat.uniforms.uCells.value.set(cols, rows);
     baseMat.uniforms.uCells.value.set(cols, rows);
@@ -188,7 +100,6 @@ export async function startStage() {
       m.uniforms.uPx.value = pr;
     }
     baseMat.uniforms.uScrim.value.set(rtl ? -1 : 1, W < 900 ? 1 : 0); // matches the page's 899px breakpoint
-    sizeText();
     measure();
   };
   resize();
@@ -288,10 +199,6 @@ export async function startStage() {
     }
     const ch = name ? get(name) : undefined;
     active = ch;
-    placePanels();
-    drawText();
-    if (!glassOn) { glassOn = true; root.dataset.glassOn = ''; }
-    if (frames % 30 === 0) radii.clear(); // pick up shapes that change with state (the header turns into a pill)
 
     // Where we are in the chapter, and how close to its seams.
     const edge = 0.3 * H;
@@ -381,8 +288,6 @@ export async function startStage() {
       removeEventListener('resize', resize);
       ro.disconnect();
       showMarkers(undefined, 0);
-      delete root.dataset.glassOn;
-      textTex.dispose();
       baseRT.dispose();
       renderer.dispose();
     },

@@ -319,7 +319,7 @@ span.row-main { cursor: default; }
   :root:not([data-mode='text']) #stage { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 
   /* Copy over a live scene: a soft shadow instead of a box. */
-  :root:not([data-mode='text']) .chapter[data-scene] :is(h1, h2, p, li, .w) { text-shadow: 0 1px 18px var(--shade); }
+  :root:not([data-mode='text']) .chapter[data-scene] :is(p, li) { text-shadow: 0 1px 18px var(--shade); }
 
   /* Scroll-told chapters: each step holds the screen while the scene plays. */
   :root:not([data-mode='text']) .hero { min-height: 100svh; display: grid; align-items: center; padding-block: 120px 72px; }
@@ -345,27 +345,34 @@ span.row-main { cursor: default; }
     background: var(--blue-fill); color: #fff; opacity: 0; pointer-events: none;
     transition: opacity var(--mid) var(--ease);
   }
-  /* Liquid glass. Once the stage is drawing it (data-glass-on), headlines become glass that bends the
-     scene behind them, and [data-glass] elements become glass panels. The page keeps the words (for
-     reading aloud, selecting and finding) and the hit areas; only their paint moves to the stage. */
-  /* By day headlines are solid ink, crisp, drawn by the page; at night they hand over to glass on the stage. */
-  :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line, .year),
-  :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line) .w { color: transparent; text-shadow: none; }
+  /* Liquid glass, drawn by the page itself so it moves with the page: the header and controls are
+     frosted glass (backdrop blur over the scene), and at night headlines carry a soft glass sheen.
+     Drawing glass on the 3D canvas instead made it trail behind the page while scrolling. */
+  :root:not([data-mode='text']) .bar {
+    inset-inline: 12px; inset-block-start: 10px; height: 52px; border-radius: 26px; padding-inline: 18px;
+    background: var(--card); border: 1px solid var(--line-strong);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 12px 40px rgb(17 92 142 / 0.1);
+  }
+  :root:not([data-mode='text']) [data-glass]:not(.bar) {
+    background: var(--card); border: 1px solid var(--line-strong);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 8px 24px rgb(17 92 142 / 0.08);
+    -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+  }
+  :root:not([data-mode='text']) :is([data-glass='blue'], .place:has(input:checked), .switch[aria-pressed='true'])[data-glass] {
+    background: linear-gradient(160deg, #19adff, #0071e3); border-color: rgb(255 255 255 / 0.35); color: #fff;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), 0 8px 24px rgb(0 113 227 / 0.25);
+  }
   @supports (color: color-mix(in srgb, red, blue)) {
-    :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line),
-    :root[data-glass-on]:not([data-mode='text']) :is(h1, h2, .closing-line) .w { color: color-mix(in srgb, #10283d, transparent var(--f)); }
-    :root[data-glass-on]:not([data-mode='text']) .year { color: color-mix(in srgb, #0074be, transparent var(--f)); }
+    /* Night headlines: light glass, a white sheen falling to pale blue. */
+    :root:not([data-mode='text']) :is(h1, h2, .closing-line) .w {
+      background: linear-gradient(180deg, #fff 20%, color-mix(in srgb, #fff, #9fd3ff 55%) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      color: color-mix(in srgb, var(--text), transparent var(--f));
+    }
   }
-  :root[data-glass-on]:not([data-mode='text']) [data-glass] {
-    background: transparent; border-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
-  }
-  :root[data-glass-on]:not([data-mode='text']) .bar {
-    inset-inline: 12px; inset-block-start: 10px; height: 52px; border-radius: 26px; border: 0; padding-inline: 18px;
-  }
-  :root[data-glass-on]:not([data-mode='text']) .switch[data-glass][aria-pressed='true'] { color: #fff; }
   /* Glass answers touch a little: it swells under the pointer and gives when pressed. */
-  :root[data-glass-on]:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:hover { transform: scale(1.03); }
-  :root[data-glass-on]:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:active { transform: scale(0.97); }
+  :root:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:hover { transform: scale(1.03); }
+  :root:not([data-mode='text']) :is(.btn, .place, .switch)[data-glass]:active { transform: scale(0.97); }
 
   /* The chapter rail: where you are, quietly. */
   :root:not([data-mode='text']) .rail {

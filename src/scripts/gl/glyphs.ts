@@ -124,7 +124,6 @@ export function cellMaterial(set: GlyphSet) {
   });
 }
 
-export const MAX_PANELS = 8;
 
 const COMMON = /* glsl */ `
   const vec3 BLUE = vec3(0.022, 0.305, 1.0);   // #2997ff, linear
@@ -279,10 +278,9 @@ export function baseMaterial(set: GlyphSet) {
 }
 
 /**
- * Pass 3: liquid glass over the base, then out to the screen.
- * - Headlines: a mask of the text becomes bevelled glass that bends the base behind it.
- * - Panels: the header, buttons and choices are frosted glass (the base's blurred mip levels).
- * - Seams: where two chapters meet, a band of fluted glass crosses the screen.
+ * Pass 3: glass over the base, then out to the screen: where two chapters meet, a band of fluted
+ * glass crosses the screen. (Glass on headlines and controls is drawn by the page, so it moves
+ * with the page while scrolling.)
  * The optics (bevel height field, two-surface refraction, dispersion, Fresnel, highlights, inner
  * rim, shadow) are adapted from LiquidGlass by @ybouane; the flutes follow FlutedGlass from the
  * shaders library by Shader Effects Inc. Both MIT: see THIRD_PARTY_NOTICES.md.
@@ -291,27 +289,18 @@ export function glassMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: {
       tBase: { value: null },
-      tText: { value: null },
       uRes: { value: new THREE.Vector2(1, 1) },
       uPx: { value: 1 },
       uTime: { value: 0 },
       uNight: { value: 0 },
       uLight: { value: new THREE.Vector2(0, 0) },
-      uText: { value: 0 },
-      uTextTexel: { value: new THREE.Vector2(1, 1) },
-      uPanels: { value: 0 },
-      uPanel: { value: Array.from({ length: MAX_PANELS }, () => new THREE.Vector4()) },
-      uPanelInfo: { value: Array.from({ length: MAX_PANELS }, () => new THREE.Vector4()) },
       uSeam: { value: new THREE.Vector3(-1e4, 0, 1) },
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
-      uniform sampler2D tBase, tText;
-      uniform vec2 uRes, uTextTexel, uLight;
-      uniform float uPx, uTime, uNight, uText;
-      uniform int uPanels;
-      uniform vec4 uPanel[${MAX_PANELS}];     // centre xy, half size zw (drawing-buffer px, y up)
-      uniform vec4 uPanelInfo[${MAX_PANELS}]; // x radius px, y blue tint
+      uniform sampler2D tBase;
+      uniform vec2 uRes, uLight;
+      uniform float uPx, uTime, uNight;
       uniform vec3 uSeam;                     // where two chapters meet: y px, strength, half height px
       varying vec2 vUv;
       ${COMMON}
@@ -327,33 +316,6 @@ export function glassMaterial() {
         float spec = pow(max(dot(N, normalize(L + V)), 0.0), 80.0)
                    + pow(max(dot(N, normalize(normalize(vec3(-L.xy, 1.0)) + V)), 0.0), 50.0) * 0.3;
         return vec3(spec * 0.7 + fres * 0.35);
-      }
-
-      // Headline glass: height from a blurred copy of the text mask, so each letter is a rounded slab.
-      vec4 textGlass(vec2 p, float nf) {
-        if (uText < 0.5) return vec4(0.0);
-        vec2 uv = p / uRes;
-        vec2 m = textureLod(tText, uv, 0.0).rg; // explicit level: the mask has mipmaps for the bevel
-        float cov = max(m.r, m.g);
-        if (cov < 0.004) return vec4(0.0);
-        vec2 e = uTextTexel * 1.5;
-        float lod = 1.4;
-        float hR = dot(textureLod(tText, uv + vec2(e.x, 0.0), lod).rg, vec2(1.0)), hL = dot(textureLod(tText, uv - vec2(e.x, 0.0), lod).rg, vec2(1.0));
-        float hU = dot(textureLod(tText, uv + vec2(0.0, e.y), lod).rg, vec2(1.0)), hD = dot(textureLod(tText, uv - vec2(0.0, e.y), lod).rg, vec2(1.0));
-        vec2 grad = vec2(hR - hL, hU - hD);
-        vec3 N = normalize(vec3(-grad * 1.6, 1.0));
-        // Refraction pulls the view inward from the rims; dispersion fringes them.
-        vec3 seen = spectral(p + grad * 9.0 * uPx, N.xy * 2.5 * uPx);
-        // By day it is stained glass: deep ink blue that lets the sky and letters behind show through darker.
-        // By night it is clear glass with a little white, for clarity. Figures are blue glass in both.
-        float blue = m.g / max(cov, 1e-3);
-        vec3 stained = seen * mix(vec3(0.028, 0.075, 0.15), vec3(0.0, 0.2, 0.98), blue) + mix(NAVY, DEEP, blue) * 0.35;
-        vec3 clear = mix(seen, mix(vec3(1.0), BLUE * 1.6 + 0.15, blue), mix(0.64, 0.7, blue));
-        vec3 col = mix(stained, clear, nf);
-        vec2 soft = textureLod(tText, uv, lod).rg;
-        // By day the light on the glass is kept low, so thin strokes stay ink-dark instead of going pale.
-        col += sheen(N) * mix(mix(0.3, 0.12, blue), 1.0, nf) + clamp(1.0 - soft.r - soft.g, 0.0, 1.0) * mix(0.04, 0.18, nf);
-        return vec4(col, cov * nf); // by day the page draws the headline itself, as solid ink
       }
 
       void main() {
@@ -375,45 +337,6 @@ export function glassMaterial() {
           col = baseAt(p);
         }
 
-        vec4 t = textGlass(p, nf);
-        col = mix(col, t.rgb, t.a);
-
-        // Glass panels: the header, buttons and choices.
-        for (int i = 0; i < ${MAX_PANELS}; i++) {
-          if (i >= uPanels) break;
-          vec4 P = uPanel[i];
-          vec2 lp = p - P.xy;
-          float pad = 22.0 * uPx;
-          if (abs(lp.x) > P.z + pad || abs(lp.y) > P.w + pad) continue;
-          float r = min(uPanelInfo[i].x, min(P.z, P.w));
-          float sdf = rr(lp, P.zw, r);
-          if (sdf > 0.5 * uPx) {
-            // A soft shadow under the glass, a touch lower than the panel.
-            float sd = max(rr(lp + vec2(0.0, 3.0 * uPx), P.zw, r), 0.0) / (9.0 * uPx);
-            col *= 1.0 - exp(-sd * sd) * mix(0.14, 0.3, nf);
-            continue;
-          }
-          float inside = -sdf;
-          float mask = 1.0 - smoothstep(-1.5 * uPx, 0.5 * uPx, sdf);
-          float bev = min(min(P.z, P.w) * 0.45, 14.0 * uPx); // a rim, not a dome: the middle stays flat and clear
-          float e2 = 1.5 * uPx;
-          #define H(o) sqrt(clamp(-rr(lp + o, P.zw, r), 0.0, bev) * (2.0 * bev - clamp(-rr(lp + o, P.zw, r), 0.0, bev)))
-          vec2 grad = vec2(H(vec2(e2, 0.0)) - H(vec2(-e2, 0.0)), H(vec2(0.0, e2)) - H(vec2(0.0, -e2))) / (2.0 * e2);
-          vec3 N = normalize(vec3(-grad, 1.0));
-          vec2 at = p + grad * 7.6 * uPx;
-          // Frosted: the base's blurred mip levels, with a little of the sharp view (and any headline) left in.
-          vec4 tg = textGlass(at, nf);
-          vec3 sharp = mix(spectral(at, N.xy * 3.0 * uPx), tg.rgb, tg.a);
-          vec3 frost = (textureLod(tBase, at / uRes, 3.0).rgb + textureLod(tBase, at / uRes, 4.0).rgb) * 0.5;
-          vec3 seen = mix(sharp, frost, 0.75);
-          float blue = uPanelInfo[i].y;
-          vec3 clear = mix(mix(seen, vec3(1.0), 0.5), mix(seen * 0.7, vec3(1.0), 0.06), nf);
-          vec3 inked = mix(seen * vec3(0.02, 0.22, 0.95), vec3(0.0, 0.17, 0.77), mix(0.75, 0.86, nf));
-          vec3 glass = mix(clear, inked, blue) + sheen(N) * mix(0.35, 0.6, max(nf, 1.0 - blue));
-          float stroke = smoothstep(-2.5 * uPx, -1.5 * uPx, sdf) * (1.0 - smoothstep(-1.0 * uPx, 0.0, sdf));
-          glass += stroke * (0.25 + 0.2 * (0.5 + 0.5 * lp.y / P.w)) + smoothstep(6.0 * uPx, 0.0, inside) * 0.05;
-          col = mix(col, glass, mask);
-        }
 
         gl_FragColor = vec4(col, 1.0);
         #include <colorspace_fragment>
