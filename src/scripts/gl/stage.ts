@@ -43,7 +43,9 @@ export async function startStage() {
   const cellRT = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false });
   const cellMat = cellMaterial(glyphs);
   // The base (paper, letters, image) goes to a mip-mapped target; the glass pass reads it sharp or blurred.
-  const baseRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+  // Scenes drawn in letters are only ever read a few times per character cell, so they render small.
+  const loRT = new THREE.WebGLRenderTarget(1, 1, { type: half ? THREE.HalfFloatType : THREE.UnsignedByteType });
+  const baseRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   baseRT.texture.colorSpace = THREE.SRGBColorSpace; // display colours in 8 bits, without banding in the darks
   const baseMat = baseMaterial(glyphs);
   const glassMat = glassMaterial();
@@ -89,9 +91,13 @@ export async function startStage() {
     renderer.setPixelRatio(pr);
     renderer.setSize(W, H, false);
     const bw = Math.max(1, Math.floor(W * pr)), bh = Math.max(1, Math.floor(H * pr));
-    sceneRT.setSize(bw, bh);
+    // The real 3D image is soft by nature (night, fog, shadows): it renders at a capped size and is
+    // smoothed by multisampling, which costs far less than full retina resolution.
+    const sr = Math.min(pr, touch ? 1 : 1.25);
+    sceneRT.setSize(Math.max(1, Math.floor(W * sr)), Math.max(1, Math.floor(H * sr)));
     const cols = Math.floor(W / (rtl ? 8 : 6)), rows = Math.floor(H / (rtl ? 13 : 11));
     cellRT.setSize(cols, rows);
+    loRT.setSize(cols * 4, rows * 6); // one texel per tap of the cell pass
     cellMat.uniforms.uCells.value.set(cols, rows);
     baseMat.uniforms.uCells.value.set(cols, rows);
     baseRT.setSize(bw, bh);
@@ -109,7 +115,11 @@ export async function startStage() {
 
   // The light on the glass leans toward the pointer.
   const light = { x: 0, y: 0, tx: 0, ty: 0 };
+  const pointer = { x: -1e4, y: -1e4, on: 0, at: 0 }; // stirs and lights the letters; fades when it rests
   const onPointer = (e: PointerEvent) => {
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    pointer.at = performance.now();
     light.tx = (e.clientX / W) * 2 - 1;
     light.ty = 1 - (e.clientY / H) * 2;
   };
@@ -236,11 +246,13 @@ export async function startStage() {
       // Projections below need this frame's camera matrices, not last render's.
       ch.camera.updateMatrixWorld();
       showMarkers(ch, (ch.anchorAlpha ?? 0) * (fade > 0.6 ? 1 : 0));
-      renderer.setRenderTarget(sceneRT);
-      renderer.render(ch.scene, ch.camera);
       glyphOn = ch.glyph > 0;
+      const target = ch.glyph >= 1 ? loRT : sceneRT; // full size only when the real image is shown
+      renderer.setRenderTarget(target);
+      renderer.render(ch.scene, ch.camera);
+      ub.tScene.value = target.texture;
       if (glyphOn) {
-        cellMat.uniforms.tScene.value = sceneRT.texture;
+        cellMat.uniforms.tScene.value = target.texture;
         cellMat.uniforms.uGain.value = ch.gain ?? 1;
         renderer.setRenderTarget(cellRT);
         renderer.render(cellQuad, quadCam);
@@ -248,15 +260,23 @@ export async function startStage() {
     } else {
       showMarkers(undefined, 0);
     }
-    ub.tScene.value = sceneRT.texture;
     ub.tCells.value = cellRT.texture;
     ub.uGlyphMix.value = glyphOn && ch ? ch.glyph : 0;
     ub.uFade.value = ch && span ? fade : 0; // no scene here: only paper and mosaics under the glass
     ub.uFall.value = ch?.fall ?? 0;
-    renderer.setRenderTarget(baseRT);
-    renderer.render(baseQuad, quadCam);
-    renderer.setRenderTarget(null);
-    renderer.render(glassQuad, quadCam);
+    ub.uPointer.value.set(pointer.x * pr, (H - pointer.y) * pr, pointer.on);
+    pointer.on = approach(pointer.on, performance.now() - pointer.at < 1600 ? 1 : 0, dt, 5);
+    if (seamK > 0.004) {
+      // A seam is on screen: the base goes through the fluted glass.
+      renderer.setRenderTarget(baseRT);
+      renderer.render(baseQuad, quadCam);
+      renderer.setRenderTarget(null);
+      renderer.render(glassQuad, quadCam);
+    } else {
+      // Most of the time there is no glass on the canvas: one pass, straight to the screen.
+      renderer.setRenderTarget(null);
+      renderer.render(baseQuad, quadCam);
+    }
     if (!ch) return;
 
     if (ch.feed && feedVisible && now - lastFeed > 150) {
@@ -289,6 +309,7 @@ export async function startStage() {
       ro.disconnect();
       showMarkers(undefined, 0);
       baseRT.dispose();
+      loRT.dispose();
       renderer.dispose();
     },
   };

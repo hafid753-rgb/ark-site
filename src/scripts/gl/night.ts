@@ -24,6 +24,9 @@ export function create(ctx: SceneCtx): Chapter {
   moon.shadow.bias = -0.0004;
   moon.shadow.normalBias = 0.03;
   moon.shadow.radius = 3;
+  // The house stands still: the shadow map is redrawn only when the gate swings or the roof comes off.
+  moon.shadow.autoUpdate = false;
+  let shadowKey = '';
   scene.add(moon, moon.target);
   const rim = new THREE.DirectionalLight(0x7f95c4, 0.9); // the moon's glow catching the far edges
   rim.position.copy(moonDir).multiplyScalar(40);
@@ -186,6 +189,8 @@ export function create(ctx: SceneCtx): Chapter {
 
       const cutaway = f.mode === 'cutaway';
       house.roof.visible = !cutaway;
+      const key = `${cutaway}|${gate.toFixed(3)}`;
+      if (key !== shadowKey) { shadowKey = key; moon.shadow.needsUpdate = true; }
       threads.visible = !cutaway;
       ch.feed = cutaway ? feedCam : null;
       const wide = f.aspect > 1.05;

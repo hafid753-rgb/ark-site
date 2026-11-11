@@ -166,9 +166,11 @@ export function baseMaterial(set: GlyphSet) {
       uScroll: { value: 0 },
       uNight: { value: 0 },
       uSky: { value: 1 },
+      uPointer: { value: new THREE.Vector3(-1e4, -1e4, 0) },
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
+      uniform vec3 uPointer; // pointer in drawing-buffer px (y up), z = how present it is
       uniform float uSky; // 1 on the opening screen (vivid sky), easing to clean paper below
       uniform sampler2D tScene, tCells, tAtlas;
       uniform vec2 uCells, uRes, uGrid;
@@ -199,6 +201,15 @@ export function baseMaterial(set: GlyphSet) {
         float tick = floor(uTime * 12.0);
         if (uFall > 0.0 && idx > 0.5 && hash(src.x * 7.1 + src.y * 13.3 + tick) < uFall * 0.8)
           idx = 1.0 + floor(hash(src.y * 3.7 + src.x * 1.1 + tick) * (uCount - 1.0));
+        // Decode: as a chapter arrives or leaves, its letters shuffle before they settle.
+        float dec = 1.0 - uFade;
+        if (dec > 0.02 && idx > 0.5 && hash(src.x * 3.3 + src.y * 7.7 + tick) < dec * 0.9)
+          idx = 10.0 + floor(hash(src.y * 2.9 + src.x * 5.1 + tick) * (uCount - 10.0));
+        // The pointer stirs the letters it passes over.
+        vec2 pc = (cell + 0.5) * cellPx - uPointer.xy;
+        float near = exp(-dot(pc, pc) / (120.0 * 120.0 * uPx * uPx)) * uPointer.z;
+        if (idx > 0.5 && hash(cell.x * 9.7 + cell.y * 4.3 + tick) < near * 0.45)
+          idx = 10.0 + floor(hash(cell.y * 6.1 + cell.x * 2.3 + tick) * (uCount - 10.0));
         // Alive: now and then a letter quietly becomes another letter of the word.
         float slow = floor(uTime * 0.5 + hash(cell.x * 3.1 + cell.y * 5.7) * 9.0);
         if (idx > 9.5 && hash(cell.x * 1.7 + cell.y * 9.1 + slow) < 0.04) idx = 10.0 + floor(hash(slow + cell.x * 0.37) * (uCount - 10.0));
@@ -251,8 +262,25 @@ export function baseMaterial(set: GlyphSet) {
         vec4 tiles = mosaic(p, side);
 
         // Night: letters and image give light on black.
-        vec3 lit = g.rgb * g.a * 1.35;
-        lit = mix(lit, BLUE * luma(lit) * 3.0, 0.1 + 0.16 * drift + 0.55 * spark);
+        // Flash: a band of light sweeps across the letters now and then, and the pointer carries a glow.
+        float sweepAt = fract(uTime * 0.085) * 1.9 - 0.45;
+        float sweep = exp(-pow((vUv.x * 0.82 + vUv.y * 0.18 - sweepAt) / 0.045, 2.0));
+        vec2 pd = p - uPointer.xy;
+        float glow = exp(-dot(pd, pd) / (150.0 * 150.0 * uPx * uPx)) * uPointer.z;
+        float flash = clamp(sweep * 0.8 + glow, 0.0, 1.0);
+
+        // Night: letters give light. Neutral surfaces run a blue ramp (deep blue, Apple blue, cyan, white);
+        // coloured things keep their colour. Each cell also glows faintly behind its letter.
+        float tone = clamp(luma(g.rgb), 0.0, 1.0);
+        float mx = max(g.r, max(g.g, g.b)), mn = min(g.r, min(g.g, g.b));
+        float sat = mx > 0.0 ? (mx - mn) / mx : 0.0;
+        vec3 ramp = mix(vec3(0.0, 0.2, 0.85), BLUE, smoothstep(0.0, 0.45, tone));
+        ramp = mix(ramp, vec3(0.3, 0.8, 1.0), smoothstep(0.4, 0.8, tone));
+        ramp = mix(ramp, vec3(1.0), smoothstep(0.8, 1.0, tone) * 0.8);
+        vec3 hue = mix(ramp * (0.35 + tone), g.rgb, smoothstep(0.15, 0.5, sat));
+        vec3 lit = hue * g.a * 1.5 + hue * tone * 0.07;
+        lit = mix(lit, vec3(0.3, 0.8, 1.0) * luma(lit) * 2.6, 0.5 * spark);
+        lit += vec3(0.35, 0.8, 1.0) * g.a * tone * flash * 1.4;
         vec3 c = mix(real, lit, uGlyphMix);
         vec2 v = vUv - 0.5;
         c *= (1.0 - dot(v, v) * 0.55) * uFade * (uScrim.y > 0.5 ? mix(0.1, 1.0, open) : mix(0.22, 1.0, open));
@@ -261,14 +289,18 @@ export function baseMaterial(set: GlyphSet) {
         vec3 nightCol = paper + aces(c);
 
         // Day: the same letters as ink on the sky.
-        float ink = min(g.a * 1.2, 1.0) * clamp(luma(g.rgb) * 1.7, 0.0, 1.0) * uGlyphMix * uFade * mix(0.1, 1.0, open);
-        vec3 inkCol = mix(NAVY, DEEP, 0.3 + 0.35 * drift);
-        inkCol = mix(inkCol, vec3(0.05, 0.4, 0.9), spark * 0.8);
+        float ink = min(g.a * 1.5, 1.0) * clamp(luma(g.rgb) * 1.7, 0.0, 1.0) * uGlyphMix * uFade * mix(0.1, 1.0, open);
+        // Ink runs from navy in the shadows to bright blue on lit surfaces; the flash turns it electric.
+        vec3 inkCol = mix(NAVY, vec3(0.0, 0.2, 0.9), smoothstep(0.1, 0.9, tone) * 0.85 + 0.15 * drift);
+        inkCol = mix(inkCol, vec3(0.0, 0.42, 1.0), spark * 0.9);
+        inkCol = mix(inkCol, vec3(0.0, 0.5, 1.0), flash * 0.9);
+        ink = min(ink * (1.0 + flash * 0.6), 1.0);
         vec3 dayCol = mix(paper, inkCol, ink * 0.92);
         dayCol = mix(dayCol, aces(real), (1.0 - uGlyphMix) * uFade * step(0.001, luma(real)));
         dayCol = mix(dayCol, mix(tiles.rgb, vec3(1.0), 0.25), tiles.a * 0.42 * room * (1.0 - ink));
 
         gl_FragColor = vec4(mix(dayCol, nightCol, nf), 1.0);
+        #include <colorspace_fragment>
       }
     `,
     depthTest: false,
