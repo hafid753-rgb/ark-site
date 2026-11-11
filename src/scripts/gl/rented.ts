@@ -241,9 +241,10 @@ export function create(ctx: SceneCtx): Chapter {
   // Only what depends on somewhere else pours away; what is built here stays.
   const pours = [true, false, false, false, true, false];
   const clouded = [true, false, false, false, true, false];
+  const blank = new THREE.Group();
   const SERVICES = 4; // index of the step that groups the four services
   const holder = new THREE.Group();
-  [...things, ...services.slice(1)].forEach((t) => holder.add(t));
+  [...things, ...services.slice(1), blank].forEach((t) => holder.add(t));
   scene.add(holder);
 
   // The cloud each thing depends on, and the thread to it.
@@ -284,10 +285,9 @@ export function create(ctx: SceneCtx): Chapter {
       [...things, ...services].forEach((t) => (t.visible = false));
       let t = things[i];
       if (i === SERVICES) {
-        // The four services take turns: each stands a few seconds, then pours away for the next.
-        const beat = ctx.reduced ? 0 : f.time / 3.6;
-        t = services[Math.floor(beat) % services.length];
-        ch.fall = Math.max(ch.fall, smooth(0.78, 1, beat % 1));
+        // The receipt is typed on the page itself; the scene keeps only the cloud it hangs from.
+        t = blank;
+        ch.fall = 0;
       }
       t.visible = true;
       t.scale.setScalar(0.6 + 0.4 * grow);

@@ -107,19 +107,28 @@ const chapters = [
               </li>
             ))}
           </ol>
-          <div class="step services">
-            <p class="year word reveal">{t.rented.services.label}</p>
-            <Words as="h3" class="services-title" text={t.rented.services.title} />
-            <p class="body reveal">{t.rented.services.body}</p>
-            <ul class="service-grid">
-              {t.rented.services.items.map((sv) => (
-                <li class="service reveal">
-                  <h4>{sv.name}</h4>
-                  <p>{sv.text}</p>
-                  <a class="source meta" href={sv.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
-                </li>
+          <div class="step services" data-receipt>
+            <div class="services-copy">
+              <p class="year word reveal">{t.rented.services.label}</p>
+              <Words as="h3" class="services-title" text={t.rented.services.title} />
+              <p class="body reveal">{t.rented.services.body}</p>
+              <p class="meta reveal">{t.rented.services.sources}: {t.rented.services.items.map((sv, i) => (
+                <>{i > 0 && ' · '}<a class="source" href={sv.source} target="_blank" rel="noreferrer noopener">{sv.name}</a></>
+              ))}</p>
+            </div>
+            <!-- A receipt, typed straight onto the page: it prints line by line as you scroll, then drops away. -->
+            <dl class="receipt mono">
+              <div class="r-line r-head" style="--i:0"><dt>{t.rented.services.head}</dt></div>
+              <div class="r-line r-rule" style="--i:1" aria-hidden="true"></div>
+              {t.rented.services.items.map((sv, i) => (
+                <div class="r-line" style={`--i:${i + 2}`}>
+                  <dt>{sv.name}</dt><span class="r-dots" aria-hidden="true"></span><dd>{sv.value}</dd>
+                  <p class="r-note">{sv.note}</p>
+                </div>
               ))}
-            </ul>
+              <div class="r-line r-rule" style="--i:6" aria-hidden="true"></div>
+              <div class="r-line r-total" style="--i:7"><dt>{t.rented.services.total}</dt><span class="r-dots" aria-hidden="true"></span><dd>0</dd></div>
+            </dl>
           </div>
           <div class="step closing">
             <p class="body reveal">{t.rented.lead}</p>

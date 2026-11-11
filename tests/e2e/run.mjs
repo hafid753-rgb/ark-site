@@ -65,7 +65,7 @@ try {
     await page.waitForFunction(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--night')) > 0.95, null, { timeout: 60000 });
     check(await page.evaluate(() => document.documentElement.dataset.theme) === 'dark', 'the theme button pins night everywhere');
     check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color.replace(/\s/g, '').endsWith('0)')), 'at night the headline turns to glass');
-    check((await page.$$('#rented .service')).length === 4, 'the four services stand together');
+    check((await page.$$('#rented .receipt dd')).length === 5, 'the receipt lists the four services and a total');
     await page.click('[data-theme-toggle]');
     // Build your own setup: choosing a place shows what Ark does there.
     await page.locator('#setup').scrollIntoViewIfNeeded();

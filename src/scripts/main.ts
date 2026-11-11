@@ -75,6 +75,22 @@ if (bar) {
   }, { passive: true });
 }
 
+/* ---------- 01: the receipt prints as it scrolls in, and drops away as it leaves ---------- */
+
+const receipt = $('[data-receipt]');
+if (receipt && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  let queued = false;
+  const print = () => {
+    queued = false;
+    const r = receipt.getBoundingClientRect();
+    const mid = (innerHeight / 2 - r.top) / r.height; // 0 as the step's top passes mid-screen, 1 at its bottom
+    receipt.style.setProperty('--p', String(Math.min(1, Math.max(0, (mid + 0.35) / 0.55))));
+    receipt.style.setProperty('--out', String(Math.min(1, Math.max(0, (mid - 0.78) / 0.3))));
+  };
+  addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(print); } }, { passive: true });
+  print();
+}
+
 /* ---------- Gentle reveal ---------- */
 
 // Only used where CSS scroll timelines are missing; there the focus pull plays once.

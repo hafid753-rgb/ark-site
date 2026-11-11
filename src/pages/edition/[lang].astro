@@ -63,7 +63,7 @@ const chapters = [
               <ol>{t.rented.facts.map((f) => <li><span class="year">{f.year}</span>{f.text} <a href={f.source} rel="noreferrer">{t.rented.source}</a></li>)}</ol>
               <h3>{t.rented.services.title}</h3>
               <p class="muted">{t.rented.services.body}</p>
-              <ul>{t.rented.services.items.map((sv) => <li><strong>{sv.name}</strong> {sv.text} <a href={sv.source} rel="noreferrer">{t.rented.source}</a></li>)}</ul>
+              <ul>{t.rented.services.items.map((sv) => <li><strong>{sv.name}</strong>: {sv.value}. {sv.note} <a href={sv.source} rel="noreferrer">{t.rented.source}</a></li>)}</ul>
               <p>{t.rented.lead}</p>
               <p><strong>{t.rented.closing}</strong></p>
             </>
