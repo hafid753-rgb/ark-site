@@ -3,11 +3,17 @@ import { seeded } from './util';
 import type { Chapter, SceneCtx } from './types';
 
 type Kind = 'film' | 'album' | 'book';
-// A home library: titles a household here might own. The covers are generated; no artwork is copied.
+// A home library: titles a household here might own. Titles with artwork in /media show their real
+// cover (the owner holds the rights); the rest get a generated one.
+const ART: Record<string, string> = {
+  'Abbey Road': 'abbey_road', 'Le Petit Prince': 'the_little_prince', 'Spirited Away': 'spirited_away',
+  'Nineteen Eighty-Four': 'nineteen_eighty-four', 'The Hobbit': 'the_hobbit', 'Random Access Memories': 'random_access_memories',
+  'The Dark Side of the Moon': 'the_dark_side_of_the_moon', 'The Grand Budapest Hotel': 'the_grand_budapest_hotel',
+};
 const SHELF: [string, Kind][] = [
   ['Timbuktu', 'film'], ['Abbey Road', 'album'], ['Le Petit Prince', 'book'], ['Interstellar', 'film'],
   ['Discovery', 'album'], ['Dune', 'book'], ['ألف ليلة وليلة', 'book'], ['Spirited Away', 'film'],
-  ['Kind of Blue', 'album'], ['Nineteen Eighty-Four', 'book'], ['Casablanca', 'film'], ['أم كلثوم', 'album'],
+  ['Kind of Blue', 'album'], ['Nineteen Eighty-Four', 'book'], ['The Grand Budapest Hotel', 'film'], ['أم كلثوم', 'album'],
   ['The Hobbit', 'book'], ['Lawrence of Arabia', 'film'], ['Talking Timbuktu', 'album'], ['موسم الهجرة إلى الشمال', 'book'],
   ['Heremakono', 'film'], ['Random Access Memories', 'album'], ['Les Misérables', 'book'], ['Seven Samurai', 'film'],
   ['Thriller', 'album'], ['The Odyssey', 'book'], ['Bamako', 'film'], ['The Dark Side of the Moon', 'album'],
@@ -38,8 +44,27 @@ export function create(ctx: SceneCtx): Chapter {
   Promise.all([document.fonts.load(`500 30px ${sans}`), document.fonts.load(`500 30px ${arabic}`, 'ليل'), document.fonts.load(`400 16px ${mono}`)])
     .catch(() => {})
     .then(() => {
-      drawCovers(canvas.getContext('2d')!, kinds, sans, mono, arabic);
+      const c = canvas.getContext('2d')!;
+      drawCovers(c, kinds, sans, mono, arabic);
       tex.needsUpdate = true;
+      // Real covers arrive after the generated ones and take their place (cover-fit, centred).
+      SHELF.forEach(([title], i) => {
+        if (!ART[title]) return;
+        const img = new Image();
+        img.onload = () => {
+          const x0 = (i % COLS) * CW, y0 = Math.floor(i / COLS) * CH;
+          const k = Math.max(CW / img.width, CH / img.height);
+          const w = img.width * k, h = img.height * k;
+          c.save();
+          c.beginPath();
+          c.rect(x0, y0, CW, CH);
+          c.clip();
+          c.drawImage(img, x0 + (CW - w) / 2, y0 + (CH - h) / 2, w, h);
+          c.restore();
+          tex.needsUpdate = true;
+        };
+        img.src = `/media/${ART[title]}.webp`;
+      });
     });
 
   const N = SHELF.length;

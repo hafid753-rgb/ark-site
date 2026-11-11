@@ -47,7 +47,7 @@
     --bg: color-mix(in srgb, #fdfdfe, #061322 var(--n));
     --surface: color-mix(in srgb, #f0f6fa, #0b1e32 var(--n));
     --raised: color-mix(in srgb, #e5f0f7, #142b42 var(--n));
-    --card: color-mix(in srgb, rgb(255 255 255 / 0.72), rgb(180 215 245 / 0.08) var(--f));
+    --card: color-mix(in srgb, rgb(255 255 255 / 0.92), rgb(16 38 62 / 0.86) var(--f));
     --text: color-mix(in srgb, #0e2439, #f5f5f7 var(--f));
     --text-2: color-mix(in srgb, #41566b, #a1a1a6 var(--f));
     --muted: color-mix(in srgb, #5c7084, #86868b var(--f));
@@ -75,7 +75,6 @@ button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
 [hidden] { display: none !important; }
 
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .skip { position: fixed; inset-block-start: 8px; inset-inline-start: 8px; z-index: 30; padding: 8px 14px; background: var(--text); color: var(--bg); border-radius: 8px; transform: translateY(-200%); }
 .skip:focus { transform: none; }
 
@@ -408,6 +407,11 @@ span.row-main { cursor: default; }
     :root:not([data-mode='text']) #control .phone { position: static; }
     :root:not([data-mode='text']) #control .head { min-height: 70svh; align-content: end; }
     :root:not([data-mode='text']) .rail { display: none; }
+    /* The setup's place stands in the top half; its words start below it. The hero's small line moves out of the letters. */
+    :root:not([data-mode='text']) #setup .wrap { padding-block-start: 46svh; }
+    /* …and slide over it as a sheet, so the place is never tangled with the text. */
+    :root:not([data-mode='text']) #setup { background: linear-gradient(to bottom, transparent calc(46svh - 48px), var(--bg) 46svh); }
+    :root:not([data-mode='text']) .hero .ledger-line { display: none; }
   }
 
   /* Focus pull: text comes into focus as it scrolls in, and softens as it leaves. */

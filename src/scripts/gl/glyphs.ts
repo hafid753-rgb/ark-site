@@ -247,7 +247,8 @@ export function baseMaterial(set: GlyphSet) {
         float nf = smoothstep(0.34, 0.5, uNight); // ink flips to light a little before the paper is dark
         // 0 on the side where the words are, 1 on the scene's side.
         float side = uScrim.y > 0.5 ? vUv.y : (uScrim.x > 0.0 ? vUv.x : 1.0 - vUv.x);
-        float open = uScrim.y > 0.5 ? smoothstep(0.0, 0.64, side) : smoothstep(0.0, 0.56, side);
+        // On phones the words sit low on the screen: letters stay clear of that half.
+        float open = uScrim.y > 0.5 ? smoothstep(0.46, 0.66, side) : smoothstep(0.0, 0.56, side);
 
         // Paper: by day a pale sky, deeper toward the top, with slow lighter drifts; by night, black.
         float up = smoothstep(0.2, 1.0, vUv.y);
@@ -289,7 +290,7 @@ export function baseMaterial(set: GlyphSet) {
         vec3 nightCol = paper + aces(c);
 
         // Day: the same letters as ink on the sky.
-        float ink = min(g.a * 1.5, 1.0) * clamp(luma(g.rgb) * 1.7, 0.0, 1.0) * uGlyphMix * uFade * mix(0.1, 1.0, open);
+        float ink = min(g.a * 1.5, 1.0) * clamp(luma(g.rgb) * 1.7, 0.0, 1.0) * uGlyphMix * uFade * mix(uScrim.y > 0.5 ? 0.0 : 0.1, 1.0, open);
         // Ink runs from navy in the shadows to bright blue on lit surfaces; the flash turns it electric.
         vec3 inkCol = mix(NAVY, vec3(0.0, 0.2, 0.9), smoothstep(0.1, 0.9, tone) * 0.85 + 0.15 * drift);
         inkCol = mix(inkCol, vec3(0.0, 0.42, 1.0), spark * 0.9);
