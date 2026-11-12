@@ -52,13 +52,15 @@ Each chapter is a `<section>` in `src/components/Page.astro`. Its text lives in 
 
 | Chapter | What the visitor sees | Built in |
 |---|---|---|
-| **Hero** | *Nothing rented. Everything yours*. By day: a pale sky, the Ark mark and its rippling outline drawn in blue ink letters (the letters of *sovereignty*), and the headline in deep-blue liquid glass. Scrolling flies the camera through the mark's window. | `gl/hero.ts` |
-| **01 Going digital** (الرقمنة) | *A country going digital, on tools made for somewhere else*. One argument in three beats. **The country:** in 2018 the only submarine cable was cut and Mauritania went offline; the answer was to build (the 2022 national agenda, records online through Houwiyeti in 2025, 800+ procedures on one platform in 2026). **The home:** *the country is building its own; at home, digital life is still rented from far away* (photos on Google Drive, films from Netflix and music from Spotify billed in dollars, an Alexa that speaks Gulf Arabic, not Hassaniya). **The answer:** *progress should reach the light switch, too. Ark is made here, and it runs in your house*. Each fact has an object; the ones that hang from a cloud abroad pour away like sand as they scroll past. | `gl/rented.ts` |
-| **02 Yours** | Grains of sand gather into the small machine Ark runs on (sand becomes silicon), then the machine opens into four labelled parts. Drawn in letters, with extra letter exposure for the dark metal. | `gl/device.ts` |
-| **03 Offline** | A courtyard house at night under clouds, with blue threads running from its roof mast up into the cloud. *Turn the lights on* (a simulated trip to a server abroad, labelled as simulated), *then cut the cloud and try again*. The threads fall, the clouds clear to stars and a moon, and the house answers instantly. That time is **measured** on the visitor's device. | `gl/night.ts`, `gl/house.ts`, `scripts/main.ts` |
-| **04 Control** | The same house seen from above with its roof off, beside a working Ark Home phone mock. It has rooms, AC with temperature, a gate that **asks before opening**, scenes, a live courtyard camera drawn in letters, and its own EN / FR / ع switch. Tapping a room in the 3D house works too. The first time the chapter comes into view, "Arrive home" runs by itself, unless the visitor has already used the phone or the cloud demo. | `gl/night.ts`, Page phone markup, `scripts/main.ts` |
-| **05 Cinema** | *Your home cinema. Offline*. A ribbon of generated covers (films, albums, books with invented titles in Latin and Arabic script) flowing along a dune-shaped curve, with Sharkfin, Sharkwave and Sharkink. | `gl/cinema.ts` |
-| **06 Your setup** | Morning again. *Build your own setup, tailored to you*. Choose a place (Home, Apartment building, Office, Store): the list shows what Ark does there, and the place itself stands beside it, drawn in letters. Choosing another pours the old one away and the new one takes its place. Plain radio buttons and CSS `:has()`, so the list works without JavaScript. | `gl/places.ts`, Page markup, `site.css` |
+| **Hero** | *Nothing rented. Everything yours*. By day: a vivid sky easing to white, the Ark mark and its rippling outline drawn in blue letters (the letters of *sovereignty*), with a bold ink headline. The mark leans toward the pointer; scrolling flies the camera through its window. | `gl/hero.ts` |
+| **01 Going digital** (الرقمنة) | *A country going digital, on tools made for somewhere else*. One argument in three beats. **The country:** in 2018 the only submarine cable was cut and Mauritania went offline; the answer was to build (the 2022 national agenda, records online through Houwiyeti in 2025, 800+ procedures on one platform in 2026). **The home:** *the country is building its own; at home, digital life is still rented from far away* shown as a **receipt** typed onto the page under the cloud it hangs from: Google Drive past 15 GB, Netflix US$ 7.99, Spotify US$ 3.29, Alexa with no Hassaniya, and *Owned at the end: 0*. It prints line by line as it scrolls in and drops away as it leaves. **The answer:** *progress should reach the light switch, too. Ark is made here, and it runs in your house*. Each fact has an object; the ones that hang from a cloud abroad pour away like sand as they scroll past. | `gl/rented.ts` |
+| **02 Yours** | Grains of sand gather into the small machine Ark runs on (sand becomes silicon), then the machine opens into four labelled parts. Drawn in letters. | `gl/device.ts` |
+| **03 Connected** | *Every device answers to the house*. Eight devices (bulb, camera, lock, speaker, screen, phone, air conditioner, gate) leave the machine and take their places around it, with light running along each link both ways. Drawn in letters; it turns toward the pointer. | `gl/network.ts` |
+| **04 Offline** | A courtyard house at night under clouds, with blue threads running from its roof mast up into the cloud. *Turn the lights on* (a simulated trip to a server abroad, labelled as simulated), *then cut the cloud and try again*. The threads fall, the clouds clear to stars and a moon, and the house answers instantly. That time is **measured** on the visitor's device. | `gl/night.ts`, `gl/house.ts`, `scripts/main.ts` |
+| **05 Control** | The same house seen from above with its roof off, beside a working Ark Home phone mock. It has rooms, AC with temperature, a gate that **asks before opening**, scenes, a live courtyard camera drawn in letters, and its own EN / FR / ع switch. Tapping a room in the 3D house works too. The first time the chapter comes into view, "Arrive home" runs by itself, unless the visitor has already used the phone or the cloud demo. | `gl/night.ts`, Page phone markup, `scripts/main.ts` |
+| **06 Cinema** | *Your home cinema. Offline*. A ribbon of covers: real artwork for eight titles (the owner holds the rights), generated covers for the rest, in Latin and Arabic script flowing along a dune-shaped curve, with Sharkfin, Sharkwave and Sharkink. | `gl/cinema.ts` |
+| **07 Your setup** | Morning again. *Build your own setup, tailored to you*. Choose a place (Home, Apartment building, Office, Store): the list shows what Ark does there, and the place itself stands beside it, drawn in letters. Choosing another pours the old one away and the new one takes its place. Plain radio buttons and CSS `:has()`, so the list works without JavaScript. | `gl/places.ts`, Page markup, `site.css` |
+| **Dawn** | *Tech sovereignty starts at home*. The sun rises behind dunes and the house, rays turning slowly, with a call to build your own setup. | `gl/dawn.ts` |
 | **Start** | *Start with your place*: three offers (Ark Home, Cinema, Installation) and contact. | Page markup |
 
 **The arc.** The page is one day. It opens in daylight (the country, the argument, the machine), night falls as you reach the house (*Cut the cloud* recalls 2018: the cable is cut again, on purpose, and the house keeps working), stays dark for the phone and the cinema, and morning returns for *Build your own setup*. The hero's promise, *nothing rented*, is what chapter 01 sets up (everything at home is rented from abroad) and what chapters 02 to 05 answer one by one.
@@ -79,18 +81,14 @@ A **Text mode** switch in the header turns off the 3D and shows the whole story 
 
   The letters are the page's word: *sovereignty* in English, *souveraineté* in French, and *السيادة التقنية* in Arabic. In Arabic the scenes are literally drawn in Arabic letters.
 - **Day and night** (`gl/stage.ts`, `site.css`). One number, `--night`, runs from 0 (day) to 1 (night). Chapters marked `data-sky="night"` (the two house chapters and the cinema) pull it to 1; it passes through 0.5 exactly at a chapter seam, where the scenes have faded out anyway. The stage writes it to the shaders and to the page, where every colour token is a `color-mix()` of its day and night value. Ink flips from dark to light quickly around dusk, so text never sits grey on grey. The header's theme button pins night everywhere (remembered per browser). The phone mock is always a night object. Browsers without `color-mix` get the night palette throughout.
-- **Three passes** (`gl/glyphs.ts`).
-  1. *Cells:* one texel per character cell picks the letter whose shape matches the scene there.
-  2. *Base:* the page's paper and everything on it. By day the paper is a pale sky and the scene is blue ink letters; by night the paper is black and letters (or the real 3D image, tone-mapped) give light. Mosaics and the text-side dimming live here. It renders to a mip-mapped target.
-  3. *Glass:* liquid glass over the base, then out to the screen. Because the base is a texture with mip levels, glass can read it sharp (refraction) or blurred (frost) for the price of a texture lookup. This replaced a single pass that recomputed letters for every glass sample, and made the night-house chapter about 70% faster in the software renderer used for testing.
-- **Liquid glass.** Optics adapted from LiquidGlass's fragment shader (bevel height field, two-surface refraction, dispersion, Fresnel, highlights, inner rim, shadow).
-  - **Headlines:** `h1`, `h2`, the closing line and the timeline figures are drawn into a mask whenever something moves (each word with its own scroll-driven opacity and blur, so the focus pull still plays). By day they are stained glass: deep ink blue that shows the sky and letters behind it, darker. By night they are clear glass with a little white for clarity. Figures are blue glass in both. The page keeps the real words (transparent) for selection, search and screen readers.
-  - **Panels:** elements marked `data-glass` (the floating header, buttons, the setup choices, the cloud-demo controls) are frosted glass with a soft shadow, white by day and smoky by night; blue ones are blue glass. They swell a little on hover and give when pressed.
-  - **Light:** the highlight on all glass leans toward the pointer.
-  - **Seams:** where one chapter meets the next, a band of fluted glass (vertical rounded bars that refract what's behind them) crosses the screen. The model follows the FlutedGlass effect in the shaders library, rewritten in GLSL.
+- **Passes** (`gl/glyphs.ts`).
+  1. *Cells:* one texel per character cell (6 × 11 px, 8 × 13 in Arabic) picks the letter whose shape matches the scene there. Scenes drawn in letters render to a small target, one texel per tap of this pass, not at full retina size.
+  2. *Base:* the page's paper and everything on it. By day the paper is a sky easing to white and the scene is blue ink; by night it is deep navy and letters (or the real 3D image, tone-mapped) give light. Mosaics and the text-side dimming live here. When no chapter seam is on screen, this pass goes straight to the screen.
+  3. *Seams:* only while a seam crosses the screen, the base goes through a band of fluted glass (vertical rounded bars that refract, after the shaders library's FlutedGlass).
+- **Glass on the page.** The header, buttons, choices and night headlines are glass drawn by the page itself (CSS), so they move with it while scrolling: frosted see-through for normal controls, bright blue glass for main actions, and a white-to-pale-blue sheen on headlines at night. (Painting them on the canvas, as an earlier round did, made them trail a frame behind the page.)
 - **The glass ripples (hero).** One shader on a plane behind the mark. The mark's silhouette is the union of two convex blocks; taking the mitred distance to each block (the furthest of its edge lines) and the nearer of the two gives offsets that keep the steps and the chamfer sharp at every size. Bands of that distance flow outward over time, with a slow liquid wobble. Each band is shaded as a rounded glass tube: Fresnel rims, a highlight from the top left, and dispersion (red, green and blue see the tube slightly wider or narrower, so its edges fringe). Letters need more light than eyes, so the ribbons are wide and bright and the outer ones fade early, keeping the headline side readable. Each chapter can set its own letter exposure (`gain`); the hero uses 2.2.
-- **Readable letters.** Besides the page's word, the atlas has strokes (`- | / \\ _ : = #`), so edges and outlines are drawn as lines and silhouettes read as shapes. Very dim cells stay empty for a quieter background. Cells are 8 × 14 px (10 × 16 in Arabic).
-- **A little blue.** Letters lean slightly toward Apple blue in a slow drift across the screen, and about one in sixteen is fully blue.
+- **Readable letters.** Besides the page's word, the atlas has strokes (`- | / \\ _ : = #`), so edges and outlines are drawn as lines and silhouettes read as shapes. Very dim cells stay empty for a quieter background.
+- **Flash.** Letters take a blue ramp by brightness (navy to electric blue by day; deep blue, Apple blue, cyan and white at night, with a faint glow per cell). A band of light sweeps across them every few seconds; the pointer lights and stirs the letters it passes; letters shuffle as a chapter arrives and leaves, then settle.
 - **Pixel mosaics.** A few small clusters of square tiles in four blues (baby blue `#89cff0`, cyan `#64d2ff`, Apple blue `#2997ff`, deep blue `#0071e3`) sit in the background. They drift slowly, twinkle, and scroll at half the page's speed. They appear only where the scene is dark, so they never cover objects or letters, and mostly on the scene's side of the screen, away from the words. They're kept sparse on purpose: a couple of clusters per screen.
 - **Crumbling.** The "pour away" effect shifts each column of character cells downward at its own speed and scrambles the letters as they fall. It costs almost nothing.
 - **Phone camera feed.** The courtyard is rendered from a second camera into a tiny target and run through the same glyph pass. It refreshes every 150 ms, only while the phone is on screen, and is drawn into the phone's canvas from the same atlas.
@@ -196,7 +194,7 @@ Brands are not named on the page; the facts are described generically and linked
 - No claims that couldn't be checked (no "no subscription", no device counts).
 - The cloud latency is labelled *simulated*; the local one is *measured*.
 - The media apps are introduced as *Sharkfin*, *Sharkwave* and *Sharkink*, the names on the owner's home screen.
-- Film, album and book covers are generated, with invented titles: no real posters, no rights issues.
+- The cinema shows real artwork for eight titles; the owner states they hold the rights. Other titles get generated covers.
 
 ---
 
@@ -224,6 +222,7 @@ Brands are not named on the page; the facts are described generically and linked
 astro.config.mjs        site URL (placeholder), CSS inlined, scripts kept as files
 THIRD_PARTY_NOTICES.md  licence notice for the LiquidGlass optics
 public/
+  media/                cover artwork for the cinema
   _headers              CSP and privacy headers (Netlify / Cloudflare Pages format)
   sw.js                 offline copy, installed only on request
   favicon.svg, apple-touch-icon.png, robots.txt
@@ -247,7 +246,7 @@ src/
     gl/
       stage.ts          renderer, chapters, glass panels and headline mask, seams, markers, camera feed, adaptive resolution
       glyphs.ts, glyph-math.ts  the GPU glyph renderer and the liquid-glass compositor
-      hero.ts, rented.ts, device.ts, night.ts, cinema.ts, places.ts   the scenes
+      hero.ts, rented.ts, device.ts, network.ts, night.ts, cinema.ts, places.ts, dawn.ts   the scenes
       house.ts          the courtyard house
       util.ts, types.ts
 tests/
@@ -359,6 +358,14 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
    - **Details:** uppercase chapter labels, a header that steps aside while reading down and returns on the way up, a labelled Dark button, the current language as a pill, a footer on its own surface, and real titles in the cinema (on generated covers; no artwork is copied).
    - **Kept from this version:** night for the house and cinema, the setup scene, the story order, sourced figures only.
    - These choices override some of the unslop rules used earlier (no cards, sentence-case labels, weights up to 600): the owner's preference wins.
+13. **Sixth round and after:**
+   - **Glass that moves with the page:** the header, buttons and night headlines moved from the canvas to CSS; they had trailed behind the page while scrolling.
+   - **Smaller, flashier letters:** 6 × 11 px cells, a blue ramp by brightness, a sweeping band of light, the pointer lighting and stirring letters, and a shuffle as chapters change.
+   - **Faster:** letter scenes render small, one pass instead of two when no seam is on screen, house shadows only when the gate or roof moves, no backdrop blur over the canvas, blur only on headline words. Letter chapters went from about 5–7 to about 12 frames a second in the software renderer used for testing.
+   - **Phones:** letters stay out of the half where the words sit; the setup's text slides over its place; the hero's counter line is hidden.
+   - **The receipt** replaces the four service cards.
+   - **New scenes:** *03 Connected* (devices around the machine, light along the links) and *Dawn* (sunrise over dunes and the house) before the last section; chapters renumbered.
+   - **Real covers** in the cinema, at the owner's request.
 ---
 
 ## Known limitations and next steps
@@ -367,7 +374,7 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
   - All checks so far ran in headless Chromium with software rendering, which is slower than real GPUs.
   - Check frame rate, the camera-feed readback, and the scroll-driven focus pull: Safari 26 supports scroll timelines; older Safari gets the fallback.
 - **Accessibility:** structure, focus styles, reduced motion, text mode and labelled controls are in place; glass headlines keep their real words in the page. A full audit (screen reader pass, keyboard path through the phone mock and setup picker, contrast of glass text over busy scenes) is still to do.
-- **Speed on real devices:** still unmeasured on real hardware. In the software renderer used here, the night-house chapter runs at about 1.4 frames a second (2.3 before any glass, 0.85 with the first glass, 1.4 after the three-pass rebuild); a software renderer overstates the cost, and the adaptive resolution lowers the render size when frames are slow. Check on a mid-range phone.
+- **Speed on real devices:** still unmeasured on real hardware. In the software renderer used here, letter chapters run at about 12 frames a second and the two night-house chapters (real 3D with shadows) at about 1.5; a software renderer overstates the cost, and the adaptive resolution lowers the render size when frames are slow. Check the house chapters on a mid-range phone first.
 - **Before launch:** contact details, domain, share image and native review (see [Before going live](#before-going-live)).
 - **Optional:** add the Studio Hosqo free packs; add a WebGPU layer with the `shaders` library; a Mauritanian artist collaboration for the house patterns; real photography or footage if wanted later.
 

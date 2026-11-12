@@ -93,7 +93,7 @@ export function create(ctx: SceneCtx): Chapter {
       const side = ctx.rtl ? -1 : 1;
       system.position.set(wide ? 2.5 * side : 0, wide ? 0 : 2.3, 0);
       system.rotation.set(0.42 - f.pointer.y * 0.15, f.time * 0.14 + f.pointer.x * 0.3, 0);
-      system.scale.setScalar(wide ? 1.0 : 0.62);
+      system.scale.setScalar(wide ? 1.0 : 0.85);
       camera.aspect = f.aspect;
       camera.position.set(0, 0.6, wide ? 13 : 18);
       camera.lookAt(0, 0.2, 0);

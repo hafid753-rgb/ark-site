@@ -11,7 +11,7 @@ export function create(ctx: SceneCtx): Chapter {
   const sunLight = new THREE.DirectionalLight(0xfff0d8, 2.6);
   scene.add(sunLight);
   // The house faces us with the sun behind it: a soft light from the front keeps it from going black.
-  const fill = new THREE.DirectionalLight(0xdfe9ff, 1.5);
+  const fill = new THREE.DirectionalLight(0xdfe9ff, 2.4);
   fill.position.set(2, 5, 14);
   scene.add(fill);
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 200);
@@ -28,7 +28,8 @@ export function create(ctx: SceneCtx): Chapter {
     pos.setY(i, heightAt(x, z) * smooth(8, -18, z) - 1.6);
   }
   sand.computeVertexNormals();
-  const dunes = new THREE.Mesh(sand, new THREE.MeshStandardMaterial({ color: 0xd9c9a8, roughness: 1 }));
+  // Darker than the house, so the house stands out in letters.
+  const dunes = new THREE.Mesh(sand, new THREE.MeshStandardMaterial({ color: 0x7d6a4c, roughness: 1 }));
   scene.add(dunes);
 
   const sun = new THREE.Mesh(new THREE.SphereGeometry(2.6, 40, 24), new THREE.MeshBasicMaterial({ color: 0xfff4dc }));
@@ -43,7 +44,7 @@ export function create(ctx: SceneCtx): Chapter {
   scene.add(rays, sun);
 
   const house = buildHouse().group;
-  house.scale.setScalar(0.26);
+  house.scale.setScalar(0.3);
   scene.add(house);
 
   const ch: Chapter = {
@@ -64,7 +65,7 @@ export function create(ctx: SceneCtx): Chapter {
       sunLight.position.set(sx, lerp(0.6, 9, rise), -18);
       sunLight.intensity = lerp(0.8, 2.8, rise);
 
-      const hx = wide ? 6.2 * side : 0, hz = -2;
+      const hx = wide ? 5.2 * side : 0, hz = 0.5;
       house.position.set(hx, heightAt(hx, hz) * smooth(8, -18, hz) - 1.6 + 0.05, hz);
       house.rotation.y = -0.5 * side;
 
