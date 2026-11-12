@@ -29,7 +29,7 @@ const url = (l: Lang) => new URL(pathFor(l), Astro.site).href;
 const isFigure = (v: string) => /^\d{4}$/.test(v);
 const kick = (k: string) => { const [n, ...rest] = k.split(' '); return { n, label: rest.join(' ') }; };
 const chapters = [
-  ['rented', t.rented.kicker], ['yours', t.yours.kicker], ['offline', t.offline.kicker], ['control', t.control.kicker],
+  ['rented', t.rented.kicker], ['yours', t.yours.kicker], ['connected', t.connected.kicker], ['offline', t.offline.kicker], ['control', t.control.kicker],
   ['cinema', t.cinema.kicker], ['setup', t.setup.kicker],
 ].map(([id, k]) => ({ id, ...kick(k) }));
 ---
@@ -157,6 +157,23 @@ const chapters = [
         </div>
       </section>
 
+      <section class="chapter" id="connected" data-scene="network">
+        <div class="wrap">
+          <header class="step head">
+            <p class="kicker reveal"><span class="kn">{kick(t.connected.kicker).n}</span> {kick(t.connected.kicker).label}</p>
+            <Words text={t.connected.title} />
+            <p class="body reveal">{t.connected.body}</p>
+          </header>
+          <div class="step">
+            <ol class="parts">
+              {t.connected.points.map((pt, i) => (
+                <li class="reveal"><span class="num mono">{String(i + 1).padStart(2, '0')}</span><span>{pt}</span></li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
       <section class="chapter interactive" id="offline" data-scene="night" data-night="cloud" data-sky="night">
         <div class="wrap">
           <div class="pinned">
@@ -276,6 +293,16 @@ const chapters = [
             ))}
           </div>
           <div class="actions reveal"><a class="btn primary" href="#start" data-glass="blue">{t.setup.cta}</a></div>
+        </div>
+      </section>
+
+      <section class="chapter" id="dawn" data-scene="dawn">
+        <div class="wrap">
+          <div class="step">
+            <Words text={t.dawn.title} />
+            <p class="body reveal">{t.dawn.body}</p>
+            <div class="actions reveal"><a class="btn primary" href="#start" data-glass="blue">{t.setup.cta}</a></div>
+          </div>
         </div>
       </section>
 

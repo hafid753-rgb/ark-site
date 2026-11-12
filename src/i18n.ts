@@ -64,8 +64,14 @@ const en = {
       { name: 'Shell', text: 'Sits on a shelf and runs quietly' },
     ],
   },
+  connected: {
+    kicker: '03 Connected',
+    title: 'Every device answers to the house',
+    body: 'Lights, cameras, locks and screens talk to the machine in your home, over your own network. Nothing has to leave the house to work.',
+    points: ['No account on a server abroad', 'Works when the internet is down', 'Faster, because the answer is in the next room'],
+  },
   offline: {
-    kicker: '03 Offline',
+    kicker: '04 Offline',
     title: 'Cut the cloud. See what happens',
     body: 'Remember 2018? Try it on this house. Turn the lights on, then cut the cloud and try again.',
     lights: 'Lights',
@@ -79,13 +85,13 @@ const en = {
     after: 'The cloud is gone. Your home did not notice.',
   },
   control: {
-    kicker: '04 Control',
+    kicker: '05 Control',
     title: 'The whole house, on your phone',
     body: 'Ark Home shows every room at a glance: lights, climate, the gate, the cameras. In Arabic, French or English.',
     hint: 'Tap a room in the house, or use the app',
   },
   cinema: {
-    kicker: '05 Cinema',
+    kicker: '06 Cinema',
     title: 'Your home cinema. Offline',
     body: 'Movies, series, music and books, on your TV and your phone. Stored in your house and playing even when the internet is down. Bought once, kept for good.',
     apps: [
@@ -96,7 +102,7 @@ const en = {
     kinds: { film: 'Film', album: 'Album', book: 'Book' },
   },
   setup: {
-    kicker: '06 Your setup',
+    kicker: '07 Your setup',
     title: 'Build your own setup, tailored to you',
     body: "Ark isn't one box for everyone. Tell us the place and how it's used: we design it, install it and look after it, and it runs right there, not on a server abroad.",
     choose: 'Choose a place',
@@ -107,6 +113,10 @@ const en = {
       { id: 'office', name: 'Office', items: ['Doors that open with a badge or a phone', 'Meeting rooms, lights and climate on schedules', 'Files stored on a server in the office, not abroad', 'Cameras and alarms that answer to you'] },
       { id: 'store', name: 'Store', items: ['Shutters, lights and signs on schedules', 'Cameras whose recordings stay in the shop', 'Visitor counts, hour by hour', "Alarms and alerts straight to the owner's phone"] },
     ],
+  },
+  dawn: {
+    title: 'Tech sovereignty starts at home',
+    body: 'Own the machine. Keep the keys. Let the house answer to you.',
   },
   start: {
     title: 'Start with your place',
@@ -219,8 +229,14 @@ const fr: Copy = {
       { name: 'Boîtier', text: 'Posé sur une étagère, il tourne en silence' },
     ],
   },
+  connected: {
+    kicker: '03 Connecté',
+    title: 'Chaque appareil répond à la maison',
+    body: "Lumières, caméras, serrures et écrans parlent à la machine installée chez vous, sur votre propre réseau. Rien n'a besoin de sortir de la maison pour fonctionner.",
+    points: ["Aucun compte sur un serveur à l'étranger", 'Fonctionne quand Internet est coupé', "Plus rapide, car la réponse est dans la pièce d'à côté"],
+  },
   offline: {
-    kicker: '03 Hors ligne',
+    kicker: '04 Hors ligne',
     title: 'Coupez le cloud. Regardez ce qui se passe',
     body: 'Vous vous souvenez de 2018 ? Essayez sur cette maison. Allumez les lumières, puis coupez le cloud et réessayez.',
     lights: 'Lumières',
@@ -234,13 +250,13 @@ const fr: Copy = {
     after: "Le cloud a disparu. Votre maison ne l'a pas remarqué.",
   },
   control: {
-    kicker: '04 Contrôle',
+    kicker: '05 Contrôle',
     title: 'Toute la maison, sur votre téléphone',
     body: "Ark Home affiche chaque pièce d'un coup d'œil : lumières, climatisation, portail, caméras. En arabe, en français ou en anglais.",
     hint: "Touchez une pièce de la maison, ou utilisez l'app",
   },
   cinema: {
-    kicker: '05 Cinéma',
+    kicker: '06 Cinéma',
     title: 'Votre home cinéma. Hors ligne',
     body: 'Films, séries, musique et livres, sur votre télé et votre téléphone. Stockés chez vous, ils se lancent même quand internet est coupé. Achetés une fois, gardés pour de bon.',
     apps: [
@@ -251,7 +267,7 @@ const fr: Copy = {
     kinds: { film: 'Film', album: 'Album', book: 'Livre' },
   },
   setup: {
-    kicker: '06 Sur mesure',
+    kicker: '07 Sur mesure',
     title: 'Construisez votre installation, faite pour vous',
     body: "Ark n'est pas une boîte unique pour tout le monde. Dites-nous le lieu et son usage : nous le concevons, l'installons et l'entretenons, et il tourne sur place, pas sur un serveur à l'étranger.",
     choose: 'Choisissez un lieu',
@@ -262,6 +278,10 @@ const fr: Copy = {
       { id: 'office', name: 'Bureau', items: ["Des portes qui s'ouvrent avec un badge ou un téléphone", 'Salles de réunion, lumières et climatisation programmées', "Des fichiers stockés sur un serveur au bureau, pas à l'étranger", 'Caméras et alarmes sous votre contrôle'] },
       { id: 'store', name: 'Commerce', items: ['Rideaux, lumières et enseignes programmés', 'Des caméras dont les enregistrements restent en boutique', 'La fréquentation, heure par heure', 'Alarmes et alertes directement sur le téléphone du gérant'] },
     ],
+  },
+  dawn: {
+    title: 'La souveraineté technologique commence chez vous',
+    body: 'Possédez la machine. Gardez les clés. Que la maison vous réponde, à vous.',
   },
   start: {
     title: 'Commencez par chez vous',
@@ -371,8 +391,14 @@ const ar: Copy = {
       { name: 'الهيكل', text: 'يوضع على رفّ ويعمل بهدوء' },
     ],
   },
+  connected: {
+    kicker: '03 متّصل',
+    title: 'كلّ جهاز يستجيب للبيت',
+    body: 'الأضواء والكاميرات والأقفال والشاشات تخاطب الجهاز الموجود في بيتك، عبر شبكتك أنت. لا شيء يحتاج إلى مغادرة البيت كي يعمل.',
+    points: ['لا حساب على خادم في الخارج', 'يعمل عند انقطاع الإنترنت', 'أسرع، لأن الجواب في الغرفة المجاورة'],
+  },
   offline: {
-    kicker: '03 دون إنترنت',
+    kicker: '04 دون إنترنت',
     title: 'اقطع السحابة، وانظر ماذا يحدث',
     body: 'أتذكر 2018؟ جرّب ذلك على هذا البيت. أشعل الأضواء، ثم اقطع السحابة وجرّب من جديد.',
     lights: 'الأضواء',
@@ -386,13 +412,13 @@ const ar: Copy = {
     after: 'اختفت السحابة، ولم يلاحظ بيتك ذلك.',
   },
   control: {
-    kicker: '04 التحكّم',
+    kicker: '05 التحكّم',
     title: 'البيت كلّه، على هاتفك',
     body: 'يعرض Ark Home كلّ غرفة بنظرة واحدة: الأضواء والتكييف والبوّابة والكاميرات. بالعربية أو الفرنسية أو الإنجليزية.',
     hint: 'المس غرفة في البيت، أو استخدم التطبيق',
   },
   cinema: {
-    kicker: '05 السينما',
+    kicker: '06 السينما',
     title: 'سينماك المنزلية. دون إنترنت',
     body: 'أفلام ومسلسلات وموسيقى وكتب، على تلفازك وهاتفك. محفوظة في بيتك، وتعمل حتى عند انقطاع الإنترنت. تشتريها مرة، وتبقى لك.',
     apps: [
@@ -403,7 +429,7 @@ const ar: Copy = {
     kinds: { film: 'فيلم', album: 'ألبوم', book: 'كتاب' },
   },
   setup: {
-    kicker: '06 على مقاسك',
+    kicker: '07 على مقاسك',
     title: 'ابنِ نظامك الخاص، مصمّمًا لك',
     body: 'Ark ليس صندوقًا واحدًا للجميع. أخبرنا بالمكان وطريقة استخدامه، فنصمّمه ونركّبه ونتابعه، ويعمل هناك، لا على خادم في الخارج.',
     choose: 'اختر مكانًا',
@@ -414,6 +440,10 @@ const ar: Copy = {
       { id: 'office', name: 'مكتب', items: ['أبواب تُفتح ببطاقة أو بالهاتف', 'قاعات الاجتماعات والأضواء والتكييف وفق جدول', 'ملفات محفوظة على خادم في المكتب، لا في الخارج', 'كاميرات وإنذارات تحت تحكّمك'] },
       { id: 'store', name: 'متجر', items: ['الستائر المعدنية والأضواء واللافتات وفق جدول', 'كاميرات تبقى تسجيلاتها داخل المتجر', 'عدد الزوار ساعة بساعة', 'إنذارات وتنبيهات مباشرة إلى هاتف المالك'] },
     ],
+  },
+  dawn: {
+    title: 'السيادة التقنية تبدأ من بيتك',
+    body: 'امتلك الجهاز. احتفظ بالمفاتيح. ودَع البيت يستجيب لك أنت.',
   },
   start: {
     title: 'ابدأ من مكانك',

@@ -12,6 +12,8 @@ const SCENES: Record<string, () => Promise<{ create: Factory }>> = {
   night: () => import('./night'),
   cinema: () => import('./cinema'),
   places: () => import('./places'),
+  network: () => import('./network'),
+  dawn: () => import('./dawn'),
 };
 
 /** The single WebGL stage behind the page. Returns a handle to stop it (text mode). */
@@ -242,7 +244,7 @@ export async function startStage() {
 
     let glyphOn = false;
     if (ch && span) {
-      ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night });
+      ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night, pointer: light });
       // Projections below need this frame's camera matrices, not last render's.
       ch.camera.updateMatrixWorld();
       showMarkers(ch, (ch.anchorAlpha ?? 0) * (fade > 0.6 ? 1 : 0));

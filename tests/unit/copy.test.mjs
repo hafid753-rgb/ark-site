@@ -28,7 +28,7 @@ test('no empty strings, no names the owner asked to keep off the site', () => {
 
 test('headlines carry no final period (unslop)', () => {
   for (const [lang, c] of Object.entries(copy)) {
-    for (const key of ['hero', 'rented', 'yours', 'offline', 'control', 'cinema', 'setup', 'start']) {
+    for (const key of ['hero', 'rented', 'yours', 'connected', 'dawn', 'offline', 'control', 'cinema', 'setup', 'start']) {
       assert.doesNotMatch(c[key].title, /\.$/, `${lang}.${key}.title`);
     }
   }

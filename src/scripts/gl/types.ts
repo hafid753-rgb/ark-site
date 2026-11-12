@@ -11,6 +11,8 @@ export interface FrameInfo {
   W: number;
   H: number;
   mode?: string;
+  /** The pointer, eased: -1..1 across and up the screen. */
+  pointer: { x: number; y: number };
 }
 
 export interface Chapter {

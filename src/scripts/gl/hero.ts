@@ -96,8 +96,9 @@ export function create(ctx: SceneCtx): Chapter {
       const side = ctx.rtl ? -1 : 1;
       mark.position.set(lerp(wide ? 2.9 * side : 0, 0, through), lerp(wide ? 0 : 1.9, 0, through), 0);
       mark.rotation.set(
-        lerp(-0.1 + Math.sin(f.time * 0.23) * 0.05, 0, through),
-        lerp(Math.sin(f.time * 0.3) * 0.22 - 0.16 * side, 0, through),
+        // The mark leans toward the pointer.
+        lerp(-0.1 + Math.sin(f.time * 0.23) * 0.05 - f.pointer.y * 0.22, 0, through),
+        lerp(Math.sin(f.time * 0.3) * 0.22 - 0.16 * side + f.pointer.x * 0.35, 0, through),
         0,
       );
       const hfov = 2 * Math.atan(Math.tan(16 * DEG) * f.aspect);

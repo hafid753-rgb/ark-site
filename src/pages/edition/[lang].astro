@@ -15,6 +15,7 @@ const art = asciiMark(lang === 'ar' ? 40 : 56, t.glyphs.replace(/\s/g, ''));
 const chapters = [
   { k: t.rented.kicker, h: t.rented.title, p: '' },
   { k: t.yours.kicker, h: t.yours.title, p: t.yours.body },
+  { k: t.connected.kicker, h: t.connected.title, p: t.connected.body },
   { k: t.offline.kicker, h: t.offline.title, p: t.offline.after },
   { k: t.control.kicker, h: t.control.title, p: t.control.body },
   { k: t.cinema.kicker, h: t.cinema.title, p: t.cinema.body },
@@ -69,8 +70,8 @@ const chapters = [
             </>
           )}
           {i === 1 && <ul>{t.yours.parts.map((p) => <li><strong>{p.name}</strong> {p.text}</li>)}</ul>}
-          {i === 4 && <ul>{t.cinema.apps.map((a) => <li><strong>{a.name}</strong> {a.text}</li>)}</ul>}
-          {i === 5 && t.setup.places.map((pl) => <><h3>{pl.name}</h3><ul>{pl.items.map((it) => <li>{it}</li>)}</ul></>)}
+          {i === 5 && <ul>{t.cinema.apps.map((a) => <li><strong>{a.name}</strong> {a.text}</li>)}</ul>}
+          {i === 6 && t.setup.places.map((pl) => <><h3>{pl.name}</h3><ul>{pl.items.map((it) => <li>{it}</li>)}</ul></>)}
         </section>
       ))}
 
