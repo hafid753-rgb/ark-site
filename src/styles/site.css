@@ -435,6 +435,16 @@ span.row-main { cursor: default; }
     /* …and slide over it as a sheet, so the place is never tangled with the text. */
     :root:not([data-mode='text']) #setup { background: linear-gradient(to bottom, transparent calc(46svh - 48px), var(--bg) 46svh); }
     :root:not([data-mode='text']) .hero .ledger-line { display: none; }
+    /* The 3D chapters' lists ride on a frosted sheet, so the device and the network can pass behind them and the words stay clear. */
+    :root:not([data-mode='text']) :is(#yours, #connected) .parts {
+      position: relative; z-index: 3; /* above the floating part numbers, which blur away beneath it */
+      margin-inline: -12px; padding: 4px 12px; border-radius: 20px;
+      background: color-mix(in srgb, var(--bg) 78%, transparent);
+      backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+      box-shadow: 0 0 0 1px var(--line), 0 18px 40px -24px rgb(0 0 0 / 0.25);
+    }
+    :root:not([data-mode='text']) :is(#yours, #connected) .parts li:first-child { border-block-start: 0; }
+    :root:not([data-mode='text']) :is(#yours, #connected) .parts li:last-child { border-block-end: 0; }
   }
 
   /* Focus pull: text comes into focus as it scrolls in, and softens as it leaves. */

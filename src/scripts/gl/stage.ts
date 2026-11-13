@@ -195,7 +195,10 @@ export async function startStage() {
       if (!a || !ch || alpha <= 0) { m.style.opacity = '0'; return; }
       const v = a.clone().project(ch.camera);
       if (!Number.isFinite(v.x) || !Number.isFinite(v.y)) return;
-      m.style.transform = `translate(${((v.x + 1) / 2) * W}px, ${((1 - v.y) / 2) * H}px)`;
+      // Keep every label whole on screen: a name near the edge slides in rather than being cut off.
+      const half = m.classList.contains('device-tag') ? m.offsetWidth / 2 : 14;
+      const x = Math.min(W - half - 8, Math.max(half + 8, ((v.x + 1) / 2) * W));
+      m.style.transform = `translate(${x}px, ${((1 - v.y) / 2) * H}px)`;
       m.style.opacity = String(alpha);
     });
   };

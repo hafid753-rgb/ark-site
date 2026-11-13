@@ -16,8 +16,9 @@ export function create(ctx: SceneCtx): Chapter {
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
 
   const matte = new THREE.MeshStandardMaterial({ color: 0xdcd7cd, roughness: 0.55, envMapIntensity: 0.6 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.5 });
-  const wire = new THREE.MeshStandardMaterial({ color: 0x8d877c, roughness: 0.8 });
+  // Drawn in letters on black: a near-black part would vanish, so the 'dark' parts are a mid grey.
+  const dark = new THREE.MeshStandardMaterial({ color: 0x67625a, roughness: 0.5 });
+  const wire = new THREE.MeshStandardMaterial({ color: 0xb4ada2, roughness: 0.6, emissive: 0x1d3550 });
   const blue = new THREE.MeshBasicMaterial({ color: 0x2997ff });
   const light = new THREE.MeshBasicMaterial({ color: 0x9fd8ff });
   const part = (g: THREE.Group, geo: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0) => {
@@ -42,7 +43,7 @@ export function create(ctx: SceneCtx): Chapter {
     () => { const g = new THREE.Group(); part(g, new RoundedBoxGeometry(1.3, 0.78, 0.07, 2, 0.03), dark); part(g, new THREE.PlaneGeometry(1.18, 0.66), matte, 0, 0, 0.04); part(g, new THREE.BoxGeometry(0.5, 0.05, 0.3), dark, 0, -0.5, 0); return g; }, // screen
     () => { const g = new THREE.Group(); part(g, new RoundedBoxGeometry(0.5, 0.95, 0.07, 3, 0.07), dark); part(g, new THREE.PlaneGeometry(0.42, 0.84), matte, 0, 0, 0.04); return g; }, // phone
     () => { const g = new THREE.Group(); part(g, new RoundedBoxGeometry(1.3, 0.45, 0.4, 2, 0.08), matte); for (let i = 0; i < 4; i++) part(g, new THREE.BoxGeometry(1.1, 0.03, 0.02), dark, 0, -0.12 + i * 0.07, 0.21); return g; }, // air conditioner
-    () => { const g = new THREE.Group(); for (let i = 0; i < 6; i++) part(g, new THREE.BoxGeometry(0.06, 0.9, 0.06), dark, -0.5 + i * 0.2, 0, 0); for (const y of [-0.38, 0.38]) part(g, new THREE.BoxGeometry(1.12, 0.07, 0.07), dark, 0, y, 0); return g; }, // gate
+    () => { const g = new THREE.Group(); for (let i = 0; i < 5; i++) part(g, new THREE.BoxGeometry(0.12, 0.95, 0.12), matte, -0.5 + i * 0.25, 0, 0); for (const y of [-0.38, 0.38]) part(g, new THREE.BoxGeometry(1.2, 0.12, 0.12), matte, 0, y, 0); return g; }, // gate
   ];
   // Real models replace two of the hand-built stand-ins once they arrive: a speaker (BoomBox, CC0)
   // and a lamp (LightsPunctualLamp by DGG, CC BY 4.0), both from the Khronos glTF sample assets,
@@ -82,7 +83,7 @@ export function create(ctx: SceneCtx): Chapter {
     const obj = make();
     system.add(obj);
     // The link, and two lights that run along it: one to the machine, one back.
-    const link = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1, 6), wire);
+    const link = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 8), wire);
     link.quaternion.setFromUnitVectors(up, at.clone().normalize());
     system.add(link);
     const pulses = [0, 1].map(() => {
@@ -95,6 +96,7 @@ export function create(ctx: SceneCtx): Chapter {
   scene.add(system);
   MODELS.forEach(([i, name]) => swapIn(i, name));
   const anchors = nodes.map(() => new THREE.Vector3());
+  const box = new THREE.Box3();
 
   const ch: Chapter = {
     scene,
@@ -125,15 +127,19 @@ export function create(ctx: SceneCtx): Chapter {
 
       const wide = f.aspect > 1.05;
       const side = ctx.rtl ? -1 : 1;
-      system.position.set(wide ? 3.0 * side : 0, wide ? 0 : 2.3, 0);
+      system.position.set(wide ? 2.6 * side : 0, wide ? 0 : 2.3, 0);
       system.rotation.set(0.42 - f.pointer.y * 0.15, f.time * 0.14 + f.pointer.x * 0.3, 0);
-      system.scale.setScalar(wide ? 0.88 : 0.85);
+      system.scale.setScalar(wide ? 0.82 : 0.85);
       camera.aspect = f.aspect;
       camera.position.set(0, 0.6, wide ? 13 : 18);
       camera.lookAt(0, 0.2, 0);
       camera.updateProjectionMatrix();
       system.updateMatrixWorld();
-      nodes.forEach(({ obj }, i) => obj.localToWorld(anchors[i].set(0, 0.85, 0)));
+      // Each name sits just above its own device, whatever its height.
+      nodes.forEach(({ obj }, i) => {
+        box.setFromObject(obj);
+        box.getCenter(anchors[i]).setY(box.max.y + 0.3);
+      });
     },
   };
   return ch;
