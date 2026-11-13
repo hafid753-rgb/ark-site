@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { buildGlyphs, cellMaterial, baseMaterial, glassMaterial, fullscreen } from './glyphs';
+import { buildGlyphs, cellMaterial, baseMaterial, transitionMaterial, fullscreen } from './glyphs';
 import { approach, clamp01, lerp, smooth } from './util';
 import type { Chapter, SceneCtx } from './types';
 
@@ -29,7 +29,8 @@ export async function startStage() {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.setClearColor(0x000000, 1);
+  // Scenes without a background leave alpha 0: real 3D then blends onto the page's paper by coverage.
+  renderer.setClearColor(0x000000, 0);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -41,7 +42,10 @@ export async function startStage() {
   const glyphs = buildGlyphs(word, font, rtl);
 
   const half = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
-  const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: half ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: 4 });
+  // Real 3D keeps its light above 1 (half float) and gets mip levels, which the base pass reads as bloom.
+  const sceneRT = new THREE.WebGLRenderTarget(1, 1, {
+    type: half ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: 4, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter,
+  });
   const cellRT = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false });
   const cellMat = cellMaterial(glyphs);
   // The base (paper, letters, image) goes to a mip-mapped target; the glass pass reads it sharp or blurred.
@@ -50,7 +54,7 @@ export async function startStage() {
   const baseRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   baseRT.texture.colorSpace = THREE.SRGBColorSpace; // display colours in 8 bits, without banding in the darks
   const baseMat = baseMaterial(glyphs);
-  const glassMat = glassMaterial();
+  const glassMat = transitionMaterial();
   const cellQuad = fullscreen(cellMat);
   const baseQuad = fullscreen(baseMat);
   const glassQuad = fullscreen(glassMat);
@@ -84,7 +88,7 @@ export async function startStage() {
     });
   };
   // Glass on buttons, the header and headlines is drawn by the page (CSS), so it moves with the page.
-  // The stage keeps only the glass that belongs to the scene: the fluted seams between chapters.
+  // The stage keeps only the transition between chapters (a pixelate, after gl-transitions).
 
   const resize = () => {
     W = innerWidth;
@@ -183,9 +187,11 @@ export async function startStage() {
     feedCtx.globalCompositeOperation = 'source-over';
   };
 
-  const showMarkers = (ch: Chapter | undefined, alpha: number) => {
-    markers.forEach((m, i) => {
-      const a = ch?.anchors?.[i];
+  const showMarkers = (ch: Chapter | undefined, alpha: number, el?: HTMLElement) => {
+    let k = 0;
+    markers.forEach((m) => {
+      const i = el?.contains(m) ? k++ : -1; // anchor i drives the i-th marker of the chapter's own section
+      const a = i >= 0 ? ch?.anchors?.[i] : undefined;
       if (!a || !ch || alpha <= 0) { m.style.opacity = '0'; return; }
       const v = a.clone().project(ch.camera);
       if (!Number.isFinite(v.x) || !Number.isFinite(v.y)) return;
@@ -234,20 +240,19 @@ export async function startStage() {
     light.y = approach(light.y, light.ty, dt, 4);
 
     const ub = baseMat.uniforms, ug = glassMat.uniforms;
-    ub.uTime.value = ug.uTime.value = time;
-    ub.uNight.value = ug.uNight.value = night;
+    ub.uTime.value = time;
+    ub.uNight.value = night;
     ub.uScroll.value = scrollY * pr;
     ub.uSky.value = 1 - 0.85 * smooth(0.25 * H, 1.1 * H, scrollY);
-    ug.uLight.value.set(light.x + Math.sin(time * 0.21) * 0.12, light.y);
-    // The seam to the neighbouring chapter, as a band of fluted glass while it crosses the screen.
-    ug.uSeam.value.set((H - seamY) * pr, seamK * 0.9, 0.16 * H * pr);
+    // Near a chapter seam the picture pixelates into blocks, then resolves into the next chapter.
+    ug.uProgress.value = seamK;
 
     let glyphOn = false;
     if (ch && span) {
       ch.update({ time, dt, p, el: span.el, aspect: W / H, W, H, mode: span.el.dataset.night, pointer: light });
       // Projections below need this frame's camera matrices, not last render's.
       ch.camera.updateMatrixWorld();
-      showMarkers(ch, (ch.anchorAlpha ?? 0) * (fade > 0.6 ? 1 : 0));
+      showMarkers(ch, (ch.anchorAlpha ?? 0) * (fade > 0.6 ? 1 : 0), span.el);
       glyphOn = ch.glyph > 0;
       const target = ch.glyph >= 1 ? loRT : sceneRT; // full size only when the real image is shown
       renderer.setRenderTarget(target);
@@ -269,7 +274,7 @@ export async function startStage() {
     ub.uPointer.value.set(pointer.x * pr, (H - pointer.y) * pr, pointer.on);
     pointer.on = approach(pointer.on, performance.now() - pointer.at < 1600 ? 1 : 0, dt, 5);
     if (seamK > 0.004) {
-      // A seam is on screen: the base goes through the fluted glass.
+      // A seam is near: the base goes through the pixelate transition.
       renderer.setRenderTarget(baseRT);
       renderer.render(baseQuad, quadCam);
       renderer.setRenderTarget(null);

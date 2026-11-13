@@ -359,6 +359,8 @@ span.row-main { cursor: default; }
     background: var(--blue-fill); color: #fff; opacity: 0; pointer-events: none;
     transition: opacity var(--mid) var(--ease);
   }
+  /* Device names in Connected: quieter than the numbered parts, and centred on their device. */
+  :root:not([data-mode='text']) .marker.device-tag { background: var(--surface); color: var(--text); border: 1px solid var(--line-strong); margin: -12px 0 0 0; translate: -50% 0; white-space: nowrap; font-family: var(--sans); font-size: 12px; }
   /* Liquid glass, drawn by the page itself so it moves with the page: the header and controls are
      frosted glass (backdrop blur over the scene), and at night headlines carry a soft glass sheen.
      Drawing glass on the 3D canvas instead made it trail behind the page while scrolling. */

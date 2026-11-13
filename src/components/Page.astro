@@ -172,6 +172,9 @@ const chapters = [
             </ol>
           </div>
         </div>
+        <div class="markers full-only" aria-hidden="true">
+          {t.connected.devices.map((d) => <span class="marker device-tag">{d}</span>)}
+        </div>
       </section>
 
       <section class="chapter interactive" id="offline" data-scene="night" data-night="cloud" data-sky="night">

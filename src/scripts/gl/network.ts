@@ -64,6 +64,7 @@ export function create(ctx: SceneCtx): Chapter {
     return { at, obj, link, pulses, phase: i * 0.37 };
   });
   scene.add(system);
+  const anchors = nodes.map(() => new THREE.Vector3());
 
   const ch: Chapter = {
     scene,
@@ -71,6 +72,8 @@ export function create(ctx: SceneCtx): Chapter {
     glyph: 1,
     gain: 1.3,
     fall: 0,
+    anchors,
+    anchorAlpha: 0,
     update(f) {
       // The devices leave the machine and take their places as the chapter arrives.
       const out = ctx.reduced ? 1 : smooth(0.02, 0.4, f.p);
@@ -88,16 +91,19 @@ export function create(ctx: SceneCtx): Chapter {
         });
       });
       ring.scale.setScalar(1 + 0.06 * Math.sin(f.time * 3));
+      ch.anchorAlpha = smooth(0.3, 0.42, f.p);
 
       const wide = f.aspect > 1.05;
       const side = ctx.rtl ? -1 : 1;
-      system.position.set(wide ? 2.5 * side : 0, wide ? 0 : 2.3, 0);
+      system.position.set(wide ? 3.0 * side : 0, wide ? 0 : 2.3, 0);
       system.rotation.set(0.42 - f.pointer.y * 0.15, f.time * 0.14 + f.pointer.x * 0.3, 0);
-      system.scale.setScalar(wide ? 1.0 : 0.85);
+      system.scale.setScalar(wide ? 0.88 : 0.85);
       camera.aspect = f.aspect;
       camera.position.set(0, 0.6, wide ? 13 : 18);
       camera.lookAt(0, 0.2, 0);
       camera.updateProjectionMatrix();
+      system.updateMatrixWorld();
+      nodes.forEach(({ obj }, i) => obj.localToWorld(anchors[i].set(0, 0.85, 0)));
     },
   };
   return ch;

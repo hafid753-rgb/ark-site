@@ -8,20 +8,24 @@ import type { Chapter, SceneCtx } from './types';
 export function create(ctx: SceneCtx): Chapter {
   const scene = new THREE.Scene();
   scene.environment = ctx.env;
-  scene.background = new THREE.Color(0x000000);
-  scene.add(new THREE.HemisphereLight(0x9aa4b5, 0x1d160e, 0.5));
-  const key = new THREE.DirectionalLight(0xfff1e0, 1.8);
+  // No background: the machine stands on the page itself, in real 3D (this chapter is not drawn in letters).
+  scene.add(new THREE.HemisphereLight(0xdfe8f5, 0x2a2622, 0.7));
+  const key = new THREE.DirectionalLight(0xffffff, 1.5);
   key.position.set(-4, 7, 5);
-  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xbfe0ff, 2.6); // a cool back light outlines the edges
+  rim.position.set(3, 3, -6);
+  scene.add(key, rim);
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
 
-  const shellMat = new THREE.MeshStandardMaterial({ color: 0x3a3835, metalness: 0.7, roughness: 0.34, transparent: true });
-  const baseMat = new THREE.MeshStandardMaterial({ color: 0x2a2826, metalness: 0.6, roughness: 0.4, transparent: true });
+  // Brushed titanium over a graphite base, with a clear coat that catches the room's light.
+  const shellMat = new THREE.MeshPhysicalMaterial({ color: 0x9ea3aa, metalness: 1, roughness: 0.38, clearcoat: 0.5, clearcoatRoughness: 0.2, envMapIntensity: 0.75, transparent: true });
+  const baseMat = new THREE.MeshPhysicalMaterial({ color: 0x2b2d31, metalness: 0.7, roughness: 0.35, clearcoat: 0.4, transparent: true });
   const chrome = new THREE.MeshStandardMaterial({ color: 0xe9e5dd, metalness: 1, roughness: 0.18 });
   const pcb = new THREE.MeshStandardMaterial({ color: 0x15201a, roughness: 0.6 });
   const chip = new THREE.MeshStandardMaterial({ color: 0x1e1e1e, roughness: 0.35, metalness: 0.3 });
   const alu = new THREE.MeshStandardMaterial({ color: 0xc9c5bd, metalness: 0.9, roughness: 0.28 });
-  const amber = new THREE.MeshBasicMaterial({ color: 0x2997ff }); // the status light, in the brand blue
+  // The status light, in the brand blue and bright enough to bloom.
+  const amber = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x2997ff).multiplyScalar(6) });
 
   const device = new THREE.Group();
   const cover = new THREE.Group();
@@ -68,6 +72,23 @@ export function create(ctx: SceneCtx): Chapter {
   storage.position.set(-0.4, 0.0, 0.95);
   device.add(board, radio, storage);
   scene.add(device);
+  // A soft contact shadow, so the machine sits on the page instead of floating.
+  const sh = document.createElement('canvas');
+  sh.width = sh.height = 128;
+  const sg = sh.getContext('2d')!;
+  const grad = sg.createRadialGradient(64, 64, 4, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  sg.fillStyle = grad;
+  sg.fillRect(0, 0, 128, 128);
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.2, 6.2),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sh), transparent: true, depthWrite: false }),
+  );
+  const shadowMat = shadow.material as THREE.MeshBasicMaterial;
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = -0.45;
+  device.add(shadow);
 
   // Sand: some grains stay as dunes, the rest become the machine.
   const touch = matchMedia('(hover: none)').matches;
@@ -136,8 +157,7 @@ export function create(ctx: SceneCtx): Chapter {
   const ch: Chapter = {
     scene,
     camera,
-    glyph: 1, // drawn in letters, like the chapters around it
-    gain: 1.8, // dark metal: lift it so the machine still gets letters
+    glyph: 0, // the one chapter in real 3D: the machine itself
     fall: 0,
     anchors,
     anchorAlpha: 0,
@@ -150,6 +170,7 @@ export function create(ctx: SceneCtx): Chapter {
       sandMat.uniforms.uSolid.value = solid;
       sandMat.uniforms.uPr.value = ctx.renderer.getPixelRatio();
       shellMat.opacity = baseMat.opacity = solid;
+      shadowMat.opacity = solid; // no shadow until there is a machine to cast it
       shellMat.transparent = baseMat.transparent = solid < 1;
       chrome.opacity = solid;
       chrome.transparent = solid < 1;

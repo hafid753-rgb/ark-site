@@ -259,7 +259,13 @@ export function baseMaterial(set: GlyphSet) {
 
         float drift = 0.0, spark = 0.0;
         vec4 g = uGlyphMix > 0.0 ? glyphAt(p, drift, spark) : vec4(0.0);
-        vec3 real = uGlyphMix < 1.0 ? texture2D(tScene, vUv).rgb : vec3(0.0);
+        // Real 3D: colour premultiplied by coverage (alpha), plus bloom from the scene's blurred mip levels,
+        // so lamps, LEDs and lit windows glow.
+        vec4 rs = uGlyphMix < 1.0 ? texture2D(tScene, vUv) : vec4(0.0);
+        vec3 real = rs.rgb;
+        vec3 bloom = uGlyphMix < 1.0
+          ? max(textureLod(tScene, vUv, 3.0).rgb * 0.55 + textureLod(tScene, vUv, 5.0).rgb * 0.6 - 0.55, 0.0)
+          : vec3(0.0);
         vec4 tiles = mosaic(p, side);
 
         // Night: letters and image give light on black.
@@ -282,7 +288,7 @@ export function baseMaterial(set: GlyphSet) {
         vec3 lit = hue * g.a * 1.5 + hue * tone * 0.07;
         lit = mix(lit, vec3(0.3, 0.8, 1.0) * luma(lit) * 2.6, 0.5 * spark);
         lit += vec3(0.35, 0.8, 1.0) * g.a * tone * flash * 1.4;
-        vec3 c = mix(real, lit, uGlyphMix);
+        vec3 c = mix(real + bloom, lit, uGlyphMix);
         vec2 v = vUv - 0.5;
         c *= (1.0 - dot(v, v) * 0.55) * uFade * (uScrim.y > 0.5 ? mix(0.1, 1.0, open) : mix(0.22, 1.0, open));
         float room = max(uGlyphMix, 1.0 - uFade); // mosaics stay off a real 3D image
@@ -297,7 +303,9 @@ export function baseMaterial(set: GlyphSet) {
         inkCol = mix(inkCol, vec3(0.0, 0.5, 1.0), flash * 0.9);
         ink = min(ink * (1.0 + flash * 0.6), 1.0);
         vec3 dayCol = mix(paper, inkCol, ink * 0.92);
-        dayCol = mix(dayCol, aces(real), (1.0 - uGlyphMix) * uFade * step(0.001, luma(real)));
+        float rk = (1.0 - uGlyphMix) * uFade;
+        dayCol = mix(dayCol, aces(real / max(rs.a, 1e-3)), rs.a * rk);
+        dayCol += aces(bloom) * rk * 0.9;
         dayCol = mix(dayCol, mix(tiles.rgb, vec3(1.0), 0.25), tiles.a * 0.42 * room * (1.0 - ink));
 
         gl_FragColor = vec4(mix(dayCol, nightCol, nf), 1.0);
@@ -311,67 +319,34 @@ export function baseMaterial(set: GlyphSet) {
 }
 
 /**
- * Pass 3: glass over the base, then out to the screen: where two chapters meet, a band of fluted
- * glass crosses the screen. (Glass on headlines and controls is drawn by the page, so it moves
- * with the page while scrolling.)
- * The optics (bevel height field, two-surface refraction, dispersion, Fresnel, highlights, inner
- * rim, shadow) are adapted from LiquidGlass by @ybouane; the flutes follow FlutedGlass from the
- * shaders library by Shader Effects Inc. Both MIT: see THIRD_PARTY_NOTICES.md.
+ * Pass 3, only while a chapter seam is on screen: the base pixelates into blocks as one chapter
+ * fades out, and resolves again as the next fades in. Adapted from "Pixelize" in gl-transitions
+ * (author gre, MIT; see THIRD_PARTY_NOTICES.md), driven by the seam instead of a crossfade, since
+ * the two chapters meet through blank paper.
  */
-export function glassMaterial() {
+export function transitionMaterial() {
   return new THREE.ShaderMaterial({
     uniforms: {
       tBase: { value: null },
       uRes: { value: new THREE.Vector2(1, 1) },
       uPx: { value: 1 },
-      uTime: { value: 0 },
-      uNight: { value: 0 },
-      uLight: { value: new THREE.Vector2(0, 0) },
-      uSeam: { value: new THREE.Vector3(-1e4, 0, 1) },
+      uProgress: { value: 0 }, // 0 = settled, 1 = right at the seam
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
       uniform sampler2D tBase;
-      uniform vec2 uRes, uLight;
-      uniform float uPx, uTime, uNight;
-      uniform vec3 uSeam;                     // where two chapters meet: y px, strength, half height px
+      uniform vec2 uRes;
+      uniform float uPx, uProgress;
       varying vec2 vUv;
-      ${COMMON}
-
-      vec3 baseAt(vec2 p) { return texture2D(tBase, p / uRes).rgb; }
-      vec3 spectral(vec2 p, vec2 ca) { return vec3(baseAt(p + ca).r, baseAt(p).g, baseAt(p - ca).b); }
-
-      // Light on glass with surface normal N. The light leans toward the pointer.
-      vec3 sheen(vec3 N) {
-        vec3 V = vec3(0.0, 0.0, 1.0);
-        vec3 L = normalize(vec3(-0.4 + uLight.x * 0.9, 0.7 + uLight.y * 0.6, 1.0));
-        float fres = pow(1.0 - abs(N.z), 3.0);
-        float spec = pow(max(dot(N, normalize(L + V)), 0.0), 80.0)
-                   + pow(max(dot(N, normalize(normalize(vec3(-L.xy, 1.0)) + V)), 0.0), 50.0) * 0.3;
-        return vec3(spec * 0.7 + fres * 0.35);
-      }
-
       void main() {
-        vec2 p = vUv * uRes;
-        float nf = smoothstep(0.34, 0.5, uNight);
-
-        // Where two chapters meet, the seam crosses the screen as a band of fluted glass.
-        vec3 col;
-        float d = (p.y - uSeam.x) / uSeam.z;
-        if (uSeam.y > 0.001 && abs(d) < 1.0) {
-          float k = uSeam.y * (1.0 - d * d) * (1.0 - d * d);
-          float fw = 26.0 * uPx;
-          float u = fract(p.x / fw) - 0.5;                 // across one flute
-          float slope = sin(u * 3.14159);                  // a rounded bar
-          vec2 q = vec2(p.x - slope * fw * 0.55 * k, p.y);
-          col = spectral(q, vec2(slope * 2.0 * uPx * k, 0.0));
-          col += pow(max(1.0 - abs(u - 0.18 - uLight.x * 0.12) * 3.2, 0.0), 6.0) * k * mix(0.12, 0.06, nf);
-        } else {
-          col = baseAt(p);
-        }
-
-
-        gl_FragColor = vec4(col, 1.0);
+        // gl-transitions Pixelize: d = min(progress, 1 - progress), stepped, sets the block size.
+        const float STEPS = 10.0;
+        vec2 squaresMin = vec2(36.0, 36.0 * uRes.y / uRes.x); // square blocks at any aspect
+        float d = 0.5 * uProgress;
+        float dist = ceil(d * STEPS) / STEPS;
+        vec2 squareSize = 2.0 * dist / squaresMin;
+        vec2 uv = dist > 0.0 ? (floor(vUv / squareSize) + 0.5) * squareSize : vUv;
+        gl_FragColor = vec4(texture2D(tBase, uv).rgb, 1.0);
         #include <colorspace_fragment>
       }
     `,
