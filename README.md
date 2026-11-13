@@ -38,7 +38,7 @@ The output in `dist/` is plain static files and can go on any static host.
 
 - [ ] **Contact details:** set `email` and/or `whatsapp` in `src/site.ts`. Until then, the contact section says "Contact details are coming soon".
 - [ ] **Domain:** replace `https://ark.example` in `astro.config.mjs`. It's used for canonical links, language alternates and the share-image URL.
-- [ ] **Share image:** add `public/og.png` (1200 × 630). A screenshot of the hero works.
+- [x] **Share image:** `public/og.png` (1200 × 630), rendered from the real hero. Re-render it if the headline changes.
 - [ ] **Timeline sources:** open the four links in *Elsewhere* once in a browser; they were confirmed through search results, not read directly.
 - [ ] **Native-speaker review** of the French and Arabic copy in `src/i18n.ts`.
 - [ ] **Real devices:** everything was checked in headless Chromium with software rendering. Test on an iPhone (Safari), an Android phone and a laptop before launch.
@@ -381,7 +381,7 @@ In the test browser, the page had downloaded roughly 320–360 KB from Ark by th
   - Check frame rate, the camera-feed readback, and the scroll-driven focus pull: Safari 26 supports scroll timelines; older Safari gets the fallback.
 - **Accessibility:** structure, focus styles, reduced motion, text mode and labelled controls are in place; glass headlines keep their real words in the page. A full audit (screen reader pass, keyboard path through the phone mock and setup picker, contrast of glass text over busy scenes) is still to do.
 - **Speed on real devices:** still unmeasured on real hardware. In the software renderer used here, letter chapters run at about 12 frames a second and the two night-house chapters (real 3D with shadows) at about 1.5; a software renderer overstates the cost, and the adaptive resolution lowers the render size when frames are slow. Check the house chapters on a mid-range phone first.
-- **Before launch:** contact details, domain, share image and native review (see [Before going live](#before-going-live)).
+- **Before launch:** contact details, domain and native review (see [Before going live](#before-going-live)).
 - **Optional:** add the Studio Hosqo free packs; add a WebGPU layer with the `shaders` library; a Mauritanian artist collaboration for the house patterns; real photography or footage if wanted later.
 
 ---
