@@ -66,8 +66,11 @@ themeBtn?.addEventListener('click', () => setTheme(root.dataset.theme !== 'dark'
 
 const bar = $('.bar');
 if (bar) {
-  let lastY = scrollY;
+  let lastY = scrollY, rest = 0;
   addEventListener('scroll', () => {
+    // Once scrolling stops, the header comes back, so its buttons are always within reach.
+    clearTimeout(rest);
+    rest = window.setTimeout(() => bar.classList.remove('is-hidden'), 1200);
     const y = scrollY;
     if (Math.abs(y - lastY) < 6) return;
     bar.classList.toggle('is-hidden', y > lastY && y > 160);

@@ -19,11 +19,12 @@ export function create(ctx: SceneCtx): Chapter {
   const moon = new THREE.DirectionalLight(0xc9d7f2, 2.4);
   moon.position.set(-22, 30, 18);
   moon.castShadow = true;
-  moon.shadow.mapSize.set(touch ? 1024 : 2048, touch ? 1024 : 2048);
+  // Phones: a smaller shadow map with a softer filter costs a quarter of the memory and fill.
+  moon.shadow.mapSize.set(touch ? 512 : 2048, touch ? 512 : 2048);
   Object.assign(moon.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 });
   moon.shadow.bias = -0.0004;
   moon.shadow.normalBias = 0.03;
-  moon.shadow.radius = 3;
+  moon.shadow.radius = touch ? 2 : 3;
   // The house stands still: the shadow map is redrawn only when the gate swings or the roof comes off.
   moon.shadow.autoUpdate = false;
   let shadowKey = '';
