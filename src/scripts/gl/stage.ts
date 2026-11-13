@@ -76,7 +76,7 @@ export async function startStage() {
   };
 
   // Sizes. `scale` drops on slow devices and recovers on fast ones.
-  const dpr = Math.min(devicePixelRatio || 1, touch ? 1.5 : 1.75);
+  const dpr = Math.min(devicePixelRatio || 1, touch ? 2.5 : 2); // sharp letters on retina; `scale` still backs off on slow devices
   let scale = 1;
   let W = 1, H = 1, pr = 1;
   const sections = [...document.querySelectorAll<HTMLElement>('main > .chapter')];
@@ -99,7 +99,7 @@ export async function startStage() {
     const bw = Math.max(1, Math.floor(W * pr)), bh = Math.max(1, Math.floor(H * pr));
     // The real 3D image is soft by nature (night, fog, shadows): it renders at a capped size and is
     // smoothed by multisampling, which costs far less than full retina resolution.
-    const sr = Math.min(pr, touch ? 1 : 1.25);
+    const sr = Math.min(pr, 2);
     sceneRT.setSize(Math.max(1, Math.floor(W * sr)), Math.max(1, Math.floor(H * sr)));
     // Small, dense letters: about 1.8 times as many as before, so shapes read in finer detail.
     const cols = Math.floor(W / (rtl ? 5.5 : 4.5)), rows = Math.floor(H / (rtl ? 9.5 : 8));
