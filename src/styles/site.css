@@ -93,7 +93,8 @@ p { margin: 0; text-wrap: pretty; }
 .meta { font-size: 13px; line-height: 20px; color: var(--muted); }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .kicker { font: 400 13px/20px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-:lang(ar) .kicker { letter-spacing: 0; }
+:lang(ar) .kicker { letter-spacing: 0; font-family: var(--sans); }
+:lang(ar) .kicker .kn { font-family: var(--mono); } /* the mono face has no Arabic: its fallback pulled the letters apart */
 .kn { color: var(--blue); }
 strong { font-weight: 500; color: var(--text); }
 .w { display: inline-block; }
