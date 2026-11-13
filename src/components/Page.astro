@@ -73,7 +73,7 @@ const chapters = [
           <span data-theme-label>{t.nav.dark}</span>
         </button>
         <button class="mode-toggle" type="button" data-mode-toggle aria-pressed="false" data-on={t.nav.fullMode} data-off={t.nav.textMode}>{t.nav.textMode}</button>
-        <a class="btn primary small" href="#start">{t.nav.talk}</a>
+        <a class="btn primary small" href="#contact">{t.nav.talk}</a>
       </div>
     </header>
 
@@ -317,10 +317,11 @@ const chapters = [
           <Words text={t.start.title} />
           <ul class="offers">
             {t.start.offers.map((o, i) => (
-              <li class="reveal"><span class="kn mono">{String(i + 1).padStart(2, '0')}</span><h3>{o.name}</h3><p>{o.text}</p></li>
+              <li class="reveal"><span class="kn mono">{String(i + 1).padStart(2, '0')}</span><h3><a href={['#control', '#cinema', '#setup'][i]}>{o.name}<span class="go" aria-hidden="true"></span></a></h3><p>{o.text}</p></li>
             ))}
           </ul>
-          <div class="contact reveal">
+          <div class="contact reveal" id="contact" data-glass>
+            <Mark size={40} />
             <h3>{t.start.contact}</h3>
             {contact.email || whatsapp ? (
               <div class="actions">
