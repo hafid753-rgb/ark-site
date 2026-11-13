@@ -150,9 +150,16 @@ main, .bar, .foot { position: relative; z-index: 1; }
 .theme-toggle { height: 32px; padding: 0 12px 0 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border-radius: 16px; border: 1px solid var(--line); background: transparent; color: var(--text-2); cursor: pointer; transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
 .theme-toggle:hover, .theme-toggle[aria-pressed='true'] { color: var(--text); border-color: var(--line-strong); }
 .theme-toggle svg { width: 16px; height: 16px; }
+/* Header labels never wrap: on phones the controls tighten instead, and on the narrowest the mark stands alone. */
+.mode-toggle, .theme-toggle, .langs a { white-space: nowrap; flex-shrink: 0; }
 @media (max-width: 640px) {
   .bar .btn.small { display: none; }
+  .bar { gap: 10px; }
+  .bar-end { gap: 6px; }
+  .langs a { min-width: 28px; padding-inline: 6px; }
+  .mode-toggle { padding-inline: 10px; }
 }
+@media (max-width: 379px) { .brand span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } }
 
 /* Hero */
 .hero { padding-block: 168px 112px; }
