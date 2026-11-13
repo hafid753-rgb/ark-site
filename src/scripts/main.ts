@@ -275,3 +275,14 @@ if (offlineBtn && offlineStatus) {
     });
   }
 }
+
+// The small game at the end of the page: loaded only when it comes near.
+const play = document.getElementById('play');
+if (play) {
+  play.hidden = false;
+  new IntersectionObserver((entries, io) => {
+    if (!entries[0].isIntersecting) return;
+    io.disconnect();
+    import('./game').then((m) => m.start(play));
+  }, { rootMargin: '600px 0px' }).observe(play);
+}

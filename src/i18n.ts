@@ -119,6 +119,7 @@ const en = {
     title: 'Tech sovereignty starts at home',
     body: 'Own the machine. Keep the keys. Let the house answer to you.',
   },
+  game: { kicker: 'One more thing', hint: 'Jump under each box. Arrow keys and space, or the buttons.', words: ['You', 'deserve', 'sovereignty'], left: 'Left', right: 'Right', jump: 'Jump', again: 'Play again', label: 'A small game: collect three boxes' },
   start: {
     title: 'Start with your place',
     offers: [
@@ -287,6 +288,7 @@ const fr: Copy = {
     title: 'La souveraineté technologique commence chez vous',
     body: 'Possédez la machine. Gardez les clés. Que la maison vous réponde, à vous.',
   },
+  game: { kicker: 'Une dernière chose', hint: 'Sautez sous chaque boîte. Flèches et espace, ou les boutons.', words: ['Vous', 'méritez', 'la souveraineté'], left: 'Gauche', right: 'Droite', jump: 'Sauter', again: 'Rejouer', label: 'Un petit jeu : trois boîtes à ouvrir' },
   start: {
     title: 'Commencez par chez vous',
     offers: [
@@ -452,6 +454,7 @@ const ar: Copy = {
     title: 'السيادة التقنية تبدأ من بيتك',
     body: 'امتلك الجهاز. احتفظ بالمفاتيح. ودَع البيت يستجيب لك أنت.',
   },
+  game: { kicker: 'شيء أخير', hint: 'اقفز تحت كل صندوق. الأسهم والمسافة، أو الأزرار.', words: ['أنت', 'تستحق', 'السيادة'], left: 'يسار', right: 'يمين', jump: 'اقفز', again: 'العب مجددًا', label: 'لعبة صغيرة: افتح ثلاثة صناديق' },
   start: {
     title: 'ابدأ من مكانك',
     offers: [

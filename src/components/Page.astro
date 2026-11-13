@@ -334,6 +334,24 @@ const chapters = [
           </div>
         </div>
       </section>
+      <section class="chapter plain play" id="play" hidden data-words={JSON.stringify(t.game.words)}>
+        <div class="wrap">
+          <p class="kicker">{t.game.kicker}</p>
+          <div class="play-stage" data-glass>
+            <canvas class="play-canvas" width="256" height="120" tabindex="0" role="img" aria-label={t.game.label}></canvas>
+          </div>
+          <div class="play-bar">
+            <p class="play-hint">{t.game.hint}</p>
+            <div class="play-pad" dir="ltr">
+              <button type="button" class="btn" data-glass data-key="left" aria-label={t.game.left}>◀</button>
+              <button type="button" class="btn" data-glass data-key="right" aria-label={t.game.right}>▶</button>
+              <button type="button" class="btn primary" data-glass="blue" data-key="jump">{t.game.jump}</button>
+            </div>
+          </div>
+          <p class="play-done" aria-live="polite"></p>
+          <button type="button" class="btn play-again" data-glass hidden>{t.game.again}</button>
+        </div>
+      </section>
     </main>
 
     <footer class="foot">
