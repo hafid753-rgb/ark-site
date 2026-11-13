@@ -101,3 +101,10 @@ their geometry (textures and other attributes removed, simplified, quantized) fo
 - `lamp.glb`: **LightsPunctualLamp**, © 2021 DGG, licensed under
   [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/). Modified
   (geometry only, simplified).
+
+## More 3D models and a glyph (timeline)
+
+- **Cesium Man** (`public/models/walker.glb`), © Cesium, CC BY 4.0, from the [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CesiumMan). Textures removed.
+- **building-small-a** (`public/models/house.glb`) from the [Kenney City Builder starter kit](https://github.com/KenneyNL/Starter-Kit-City-Builder), CC0. Reduced to its shape.
+- **generic-hand / right** (`public/models/hand.glb`) from the [W3C WebXR input profiles](https://github.com/immersive-web/webxr-input-profiles), W3C Software and Document License. Reduced to its shape.
+- **@ glyph** (`src/scripts/gl/at-glyph.json`) from Droid Sans Bold, Apache License 2.0, via the three.js typeface fonts.

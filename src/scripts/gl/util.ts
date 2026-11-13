@@ -60,3 +60,22 @@ export const NOISE = /* glsl */ `
   }
   float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 17.1; a *= 0.5; } return v; }
 `;
+
+/** A model from /models (or, in the one-file build, from the inline copy), parsed by GLTFLoader. */
+export async function loadModel(name: string) {
+  const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+  const inline = (globalThis as { __arkModels?: Record<string, string> }).__arkModels?.[name];
+  const buf = inline ? Uint8Array.from(atob(inline), (c) => c.charCodeAt(0)).buffer : await (await fetch(`/models/${name}.glb`)).arrayBuffer();
+  return new GLTFLoader().parseAsync(buf, '');
+}
+
+/** Scale a model so its largest side is `size`, centred on the origin (or standing on it, with `stand`). */
+export function fit(model: THREE.Object3D, size: number, stand = false) {
+  const box = new THREE.Box3().setFromObject(model);
+  const dim = box.getSize(new THREE.Vector3());
+  model.scale.multiplyScalar(size / Math.max(dim.x, dim.y, dim.z));
+  const b = new THREE.Box3().setFromObject(model);
+  const c = b.getCenter(new THREE.Vector3());
+  model.position.sub(stand ? c.setY(b.min.y) : c);
+  return model;
+}

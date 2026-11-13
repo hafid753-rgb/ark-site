@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { smooth } from './util';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { smooth, loadModel, fit } from './util';
+import atGlyph from './at-glyph.json';
 import type { Chapter, SceneCtx } from './types';
 
 /** The timeline: one object per fact. What hangs on a server elsewhere pours away as it scrolls past. */
@@ -35,22 +38,8 @@ export function create(ctx: SceneCtx): Chapter {
   };
 
   // 2018: the day the country went offline, as an open hand, turning slowly: what was held was let go.
+  // The hand is the WebXR generic hand (immersive-web/webxr-input-profiles, W3C licence), shape only.
   const cable = new THREE.Group();
-  cable.add(new THREE.Mesh(new RoundedBoxGeometry(1.15, 1.2, 0.38, 4, 0.16), matte)); // palm
-  [[-0.41, 0.72], [-0.14, 0.86], [0.14, 0.8], [0.41, 0.62]].forEach(([x, len]) => {
-    const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, len, 6, 12), matte);
-    finger.position.set(x, 0.6 + len / 2, 0);
-    finger.rotation.z = -x * 0.18; // fanned a little
-    cable.add(finger);
-  });
-  const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.55, 6, 12), matte);
-  thumb.position.set(-0.75, 0.0, 0.05);
-  thumb.rotation.z = 0.75;
-  cable.add(thumb);
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.6, 24), matte);
-  wrist.position.y = -0.85;
-  cable.add(wrist);
-  cable.scale.setScalar(0.85);
 
   // 2022: the national agenda, as a mast bringing broadband further out.
   const mast = new THREE.Group();
@@ -78,19 +67,11 @@ export function create(ctx: SceneCtx): Chapter {
   beacon.position.y = 1.65;
   mast.add(beacon);
 
-  // 2026: public services online, as an @ turning in the air.
+  // 2026: public services online, as an @ turning in the air: the real glyph from Droid Sans Bold (Apache 2.0).
   const phone = new THREE.Group();
-  const tube = 0.17;
-  const outer = new THREE.Mesh(new THREE.TorusGeometry(1, tube, 14, 72, Math.PI * 1.68), matte);
-  outer.rotation.z = -Math.PI * 0.08; // opens at the lower right, where the tail meets the stem
-  const inner = new THREE.Mesh(new THREE.TorusGeometry(0.4, tube, 14, 48), matte);
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(tube, tube, 0.95, 14), matte);
-  stem.position.set(0.57, -0.05, 0);
-  const s0 = new THREE.Vector3(0.57, -0.52, 0), s1 = new THREE.Vector3(Math.cos(-Math.PI * 0.08), Math.sin(-Math.PI * 0.08), 0);
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(tube, tube, s0.distanceTo(s1), 14), matte);
-  tail.position.copy(s0).lerp(s1, 0.5);
-  tail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), s1.clone().sub(s0).normalize());
-  phone.add(outer, inner, stem, tail);
+  const atGeo = new TextGeometry('@', { font: new FontLoader().parse(atGlyph as never), size: 2.3, depth: 0.42, curveSegments: 10, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.04, bevelSegments: 3 });
+  atGeo.center();
+  phone.add(new THREE.Mesh(atGeo, matte));
 
   // 15 GB: a folder of family photos, kept on someone else's servers.
   const drive = new THREE.Group();
@@ -202,42 +183,23 @@ export function create(ctx: SceneCtx): Chapter {
   card.add(face);
   card.rotation.x = -0.08;
 
-  // What remains: a house that keeps its things.
+  // What remains: a house that keeps its things (Kenney City Builder, CC0), and someone walking home to it
+  // (CesiumMan from the Khronos glTF samples, CC BY 4.0), with the walk that comes with the model.
   const house = new THREE.Group();
-  const walls = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.4, 2.2), matte);
-  house.add(walls);
-  const parapet = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.18, 2.3), matte);
-  parapet.position.y = 0.79;
-  house.add(parapet);
-  for (const x of [-0.7, 0.1]) {
-    const win = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.05), glow);
-    win.position.set(x, 0.15, 1.12);
-    house.add(win);
-  }
-  const door = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.8, 0.05), dark);
-  door.position.set(0.8, -0.3, 1.12);
-  house.add(door);
   house.rotation.set(0.25, -0.5, 0);
-  // Someone walking home: a simple figure whose arms and legs swing from hip and shoulder.
   const walker = new THREE.Group();
-  const limb = (len: number, x: number, y: number) => {
-    const pivot = new THREE.Group();
-    pivot.position.set(x, y, 0);
-    const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, len, 4, 10), matte);
-    m.position.y = -len / 2 - 0.04;
-    pivot.add(m);
-    walker.add(pivot);
-    return pivot;
-  };
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.36, 4, 12), matte);
-  body.position.y = 0.66;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), matte);
-  head.position.y = 1.07;
-  walker.add(body, head);
-  const legs2 = [limb(0.42, -0.08, 0.46), limb(0.42, 0.08, 0.46)];
-  const arms = [limb(0.36, -0.22, 0.86), limb(0.36, 0.22, 0.86)];
-  walker.position.set(-1.6, -0.7, 1.8);
   house.add(walker);
+  let mixer: THREE.AnimationMixer | undefined;
+  const shapeOnly = (m: THREE.Object3D) => m.traverse((o) => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).material = matte; });
+  loadModel('hand').then((g) => { shapeOnly(g.scene); g.scene.rotation.z = Math.PI; /* fingers up */ cable.add(fit(g.scene, 2.6)); }).catch(() => {});
+  loadModel('house').then((g) => { shapeOnly(g.scene); house.add(fit(g.scene, 2.8, true)); g.scene.position.y -= 0.7; }).catch(() => {});
+  loadModel('walker').then((g) => {
+    shapeOnly(g.scene);
+    walker.add(fit(g.scene, 1.15, true));
+    mixer = new THREE.AnimationMixer(g.scene);
+    if (g.animations[0]) mixer.clipAction(g.animations[0]).play();
+  }).catch(() => {});
+  walker.position.set(-1.6, -0.7, 1.8);
 
   // The bridge between the country's story and the home's: a house still hanging from the cloud.
   const services = [drive, tv, phones, speaker];
@@ -303,14 +265,11 @@ export function create(ctx: SceneCtx): Chapter {
       t.rotation.y = flat ? 0.12 * side0 + Math.sin(f.time * 0.6) * 0.2 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
       t.position.y = Math.sin(f.time * 0.8) * 0.06;
       if (t === house) {
-        // The walker crosses to the door, again and again.
-        const w = ctx.reduced ? 0.5 : (f.time * 0.22) % 1;
-        walker.position.x = -1.7 + w * 2.5;
+        // The walker crosses to the door, again and again, on the model's own walk cycle.
+        const w = ctx.reduced ? 0.5 : (f.time * 0.12) % 1;
+        walker.position.x = -1.9 + w * 2.6;
         walker.rotation.y = Math.PI / 2;
-        const swing = ctx.reduced ? 0 : Math.sin(f.time * 6.5) * 0.55;
-        legs2[0].rotation.x = swing; legs2[1].rotation.x = -swing;
-        arms[0].rotation.x = -swing * 0.8; arms[1].rotation.x = swing * 0.8;
-        walker.position.y = -0.7 + Math.abs(Math.cos(f.time * 6.5)) * 0.03;
+        if (!ctx.reduced) mixer?.update(f.dt);
         walker.visible = w < 0.94; // through the door
       }
 
