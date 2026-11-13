@@ -58,20 +58,23 @@ export function create(ctx: SceneCtx): Chapter {
       const side = ctx.rtl ? -1 : 1;
       const rise = ctx.reduced ? 1 : smooth(0.05, 0.75, f.p);
       const sx = wide ? 5.2 * side : 0;
-      sun.position.set(sx, lerp(-3.4, wide ? 3.4 : 6.2, rise), -22);
+      sun.position.set(sx, lerp(-3.4, wide ? 3.4 : 5.4, rise), -22);
       rays.position.copy(sun.position).setZ(-22.5);
       rays.rotation.z = f.time * 0.04;
       rayMat.opacity = 0.05 + 0.2 * rise;
       sunLight.position.set(sx, lerp(0.6, 9, rise), -18);
       sunLight.intensity = lerp(0.8, 2.8, rise);
 
-      const hx = wide ? 5.2 * side : 0, hz = 0.5;
+      // On phones the words sit low, so the house stands further back, on the horizon beside the sun.
+      const hx = wide ? 5.2 * side : 2.2 * side, hz = wide ? 0.5 : -9;
+      house.scale.setScalar(wide ? 0.3 : 0.5);
       house.position.set(hx, heightAt(hx, hz) * smooth(8, -18, hz) - 1.6 + 0.05, hz);
       house.rotation.y = -0.5 * side;
 
       camera.aspect = f.aspect;
       camera.position.set(f.pointer.x * 0.6, 1.4 + rise * 0.5, wide ? 15 : 20);
-      camera.lookAt(0, wide ? 1.4 : 2.6, -8);
+      // Phones: aim lower, so the horizon (and the house on it) rises into the top half, above the words.
+      camera.lookAt(0, wide ? 1.4 : -2.2, -8);
       camera.updateProjectionMatrix();
     },
   };

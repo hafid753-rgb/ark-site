@@ -87,19 +87,12 @@ export function create(ctx: SceneCtx): Chapter {
   const ui = new THREE.Mesh(
     new THREE.PlaneGeometry(1.22, 2.55),
     panel((c, w, h) => {
-      c.fillStyle = '#f1ece2';
+      // Bold for letters: a dark screen with a 2 x 3 grid of big light tiles, one per service.
+      c.fillStyle = '#16181c';
       c.fillRect(0, 0, w, h);
-      c.fillStyle = '#1a1916';
-      rounded(c, 28, 48, 150, 18, 9);
-      c.fillStyle = '#8a857c';
-      rounded(c, 28, 80, 210, 12, 6);
-      const tones = ['#2997ff', '#1a1916', '#6b6760', '#3a3833', '#9d968a', '#1a1916'];
-      for (let i = 0; i < 12; i++) {
-        c.fillStyle = tones[i % tones.length];
-        rounded(c, 28 + (i % 3) * 88, 124 + Math.floor(i / 3) * 98, 70, 70, 18);
-      }
-      c.fillStyle = '#1a1916';
-      rounded(c, 28, h - 92, w - 56, 56, 28);
+      c.fillStyle = '#f4f1ea';
+      for (let i = 0; i < 6; i++) rounded(c, 34 + (i % 2) * 124, 70 + Math.floor(i / 2) * 150, 108, 120, 26);
+      rounded(c, 34, h - 96, w - 68, 50, 25);
     }, 300, 628),
   );
   ui.position.z = 0.075;
@@ -198,25 +191,23 @@ export function create(ctx: SceneCtx): Chapter {
   const face = new THREE.Mesh(
     new THREE.PlaneGeometry(2.8, 1.7),
     panel((c, w, h) => {
-      c.fillStyle = '#e6dfd2';
+      // Drawn bold for letters: light shapes become dense ink, dark ones stay open, and
+      // nothing thinner than a few character cells survives. A portrait and three lines.
+      c.fillStyle = '#16181c';
       c.fillRect(0, 0, w, h);
-      // A portrait, a few lines of particulars, and a band of colour: an identity card, no real emblems.
-      c.fillStyle = '#3a3833';
-      rounded(c, 32, 56, 120, 150, 12);
-      c.fillStyle = '#e6dfd2';
+      c.fillStyle = '#f4f1ea';
       c.beginPath();
-      c.arc(92, 112, 28, 0, Math.PI * 2);
+      c.arc(110, 108, 46, 0, Math.PI * 2); // head
       c.fill();
-      c.fillRect(56, 150, 72, 56);
-      c.fillStyle = '#3a3833';
-      for (let i = 0; i < 4; i++) rounded(c, 176, 70 + i * 36, 220 - i * 30, 14, 7);
-      c.fillStyle = '#2997ff';
-      c.fillRect(0, 0, w, 26);
+      c.beginPath();
+      c.ellipse(110, 250, 82, 70, 0, Math.PI, 0); // shoulders
+      c.fill();
+      for (let i = 0; i < 3; i++) rounded(c, 224, 74 + i * 58, 190 - i * 44, 30, 15);
     }, 448, 272),
   );
   face.position.z = 0.035;
   card.add(face);
-  card.rotation.x = -0.2;
+  card.rotation.x = -0.08;
 
   // What remains: a house that keeps its things.
   const house = new THREE.Group();
@@ -290,10 +281,12 @@ export function create(ctx: SceneCtx): Chapter {
         ch.fall = 0;
       }
       t.visible = true;
-      t.scale.setScalar(0.6 + 0.4 * grow);
+      // Flat objects read best large and facing the reader.
+      const big = t === card || t === phone ? 1.45 : 1;
+      t.scale.setScalar((0.6 + 0.4 * grow) * big);
       // Flat things sway so they never turn edge-on; solid things turn slowly.
       const flat = t === phone || t === card || t === drive || t === tv;
-      t.rotation.y = flat ? 0.25 * side0 + Math.sin(f.time * 0.6) * 0.45 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
+      t.rotation.y = flat ? 0.12 * side0 + Math.sin(f.time * 0.6) * 0.2 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
       t.position.y = Math.sin(f.time * 0.8) * 0.06;
 
       cloud.visible = clouded[i];
