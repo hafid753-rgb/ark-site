@@ -53,7 +53,7 @@ try {
     await page.waitForFunction(() => document.documentElement.style.getPropertyValue('--night') !== '', null, { timeout: 20000 });
     check(!(await page.$('.lens')), 'the ascii-to-3D lens is gone');
     check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color !== 'rgba(0, 0, 0, 0)'), 'by day the headline is solid ink');
-    check((await page.textContent('h1')).length > 0 && (await page.getAttribute('h1', 'aria-label')).length > 0, 'the headline words stay in the page for reading aloud');
+    check((await page.textContent('h1 .sr-only')).length > 0, 'the headline words stay in the page for reading aloud');
     // Day and night: the story starts by day, the house chapters happen at night, and the button pins night.
     const night = () => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--night')));
     check((await night()) < 0.05, 'the story opens by day');
@@ -65,7 +65,7 @@ try {
     await page.waitForFunction(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--night')) > 0.95, null, { timeout: 60000 });
     check(await page.evaluate(() => document.documentElement.dataset.theme) === 'dark', 'the theme button pins night everywhere');
     check(await page.evaluate(() => getComputedStyle(document.querySelector('h1 .w')).color.replace(/\s/g, '').endsWith('0)')), 'at night the headline turns to glass');
-    check((await page.$$('#rented .receipt dd')).length === 5, 'the receipt lists the four services and a total');
+    check((await page.$$('#rented .receipt .r-val')).length === 5, 'the receipt lists the four services and a total');
     await page.click('[data-theme-toggle]');
     // Build your own setup: choosing a place shows what Ark does there.
     await page.locator('#setup').scrollIntoViewIfNeeded();

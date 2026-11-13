@@ -117,18 +117,18 @@ const chapters = [
               ))}</p>
             </div>
             <!-- A receipt, typed straight onto the page: it prints line by line as you scroll, then drops away. -->
-            <dl class="receipt mono">
-              <div class="r-line r-head" style="--i:0"><dt>{t.rented.services.head}</dt></div>
-              <div class="r-line r-rule" style="--i:1" aria-hidden="true"></div>
+            <ul class="receipt mono">
+              <li class="r-line r-head" style="--i:0"><span class="r-name">{t.rented.services.head}</span></li>
+              <li class="r-line r-rule" style="--i:1" aria-hidden="true"></li>
               {t.rented.services.items.map((sv, i) => (
-                <div class="r-line" style={`--i:${i + 2}`}>
-                  <dt>{sv.name}</dt><span class="r-dots" aria-hidden="true"></span><dd>{sv.value}</dd>
-                  <p class="r-note">{sv.note}</p>
-                </div>
+                <li class="r-line" style={`--i:${i + 2}`}>
+                  <span class="r-name">{sv.name}</span><span class="r-dots" aria-hidden="true"></span><span class="r-val">{sv.value}</span>
+                  <span class="r-note">{sv.note}</span>
+                </li>
               ))}
-              <div class="r-line r-rule" style="--i:6" aria-hidden="true"></div>
-              <div class="r-line r-total" style="--i:7"><dt>{t.rented.services.total}</dt><span class="r-dots" aria-hidden="true"></span><dd>0</dd></div>
-            </dl>
+              <li class="r-line r-rule" style="--i:6" aria-hidden="true"></li>
+              <li class="r-line r-total" style="--i:7"><span class="r-name">{t.rented.services.total}</span><span class="r-dots" aria-hidden="true"></span><span class="r-val">0</span></li>
+            </ul>
           </div>
           <div class="step closing">
             <p class="body reveal">{t.rented.lead}</p>

@@ -284,6 +284,7 @@ About 4,000 lines of source in total.
   - the lens being gone, headlines painted as glass while the words stay in the page, and the setup picker switching places.
 
   **All 31 checks passed** on the last run. In this headless browser the GPU is emulated in software (under one frame a second in the night-house chapters), so the runner scrolls instantly and gives clicks up to two minutes to see steady frames; one earlier run still timed out on a wait. The runner owns its preview server (`--ignore-lock`, its own process group).
+- **Lighthouse** (Google's audit, desktop preset, run on the built site): accessibility **100**, best practices **100**, SEO **100**, in English and Arabic. Fixed on the way: headline labels now use visually hidden text instead of `aria-label` on a paragraph, the phone mock's grey labels were lifted above 4.5:1 contrast, and the receipt is a list (a `<dl>` couldn't hold its notes). Performance is not scored here: the test browser has no graphics chip.
 - **Visual review:** every chapter was screenshotted in headless Chromium at desktop (1440 × 900), phone (390 × 844) and in Arabic, and reviewed after each change. Those runs showed no console errors and **no third-party requests**.
 
 ---
