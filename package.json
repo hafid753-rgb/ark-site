@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && node scripts/postbuild.mjs",
+    "build:single": "npm run build && node scripts/single-file.mjs",
     "preview": "astro preview",
     "test": "node --test tests/unit/*.test.mjs",
     "test:e2e": "node tests/e2e/run.mjs"

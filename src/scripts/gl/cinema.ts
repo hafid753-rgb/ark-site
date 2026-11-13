@@ -63,7 +63,9 @@ export function create(ctx: SceneCtx): Chapter {
           c.restore();
           tex.needsUpdate = true;
         };
-        img.src = `/media/${ART[title]}.webp`;
+        // The one-file build (scripts/single-file.mjs) carries the covers inline.
+        const inline = (globalThis as { __arkMedia?: Record<string, string> }).__arkMedia;
+        img.src = inline?.[ART[title]] ?? `/media/${ART[title]}.webp`;
       });
     });
 

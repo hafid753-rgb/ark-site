@@ -25,6 +25,7 @@ npm install
 npm run dev          # local development server
 npm run build        # static site in dist/ (also runs scripts/postbuild.mjs)
 npm run preview      # serve dist/ locally
+npm run build:single # one self-contained page per language in dist-single/ (for previews where only inline code runs)
 npm test             # unit tests (node:test, no extra packages)
 node tests/e2e/run.mjs   # browser tests against dist/ (needs Playwright + Chromium installed)
 ```

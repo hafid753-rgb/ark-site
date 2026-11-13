@@ -240,7 +240,8 @@ if (offlineBtn && offlineStatus) {
   };
   if (!('serviceWorker' in navigator)) offlineBtn.disabled = true;
   else {
-    navigator.serviceWorker.getRegistration().then((reg) => saved(!!reg?.active));
+    // Some hosts (a preview frame, a file opened from disk) refuse service workers: then the button is off.
+    navigator.serviceWorker.getRegistration().then((reg) => saved(!!reg?.active)).catch(() => (offlineBtn.disabled = true));
     navigator.serviceWorker.addEventListener('message', (e) => {
       if (e.data?.type === 'progress') offlineStatus.textContent = fill(d.progress!, { n: e.data.n, total: e.data.total });
       if (e.data?.type === 'done') saved(true);
