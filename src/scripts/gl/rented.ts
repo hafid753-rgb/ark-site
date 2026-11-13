@@ -34,26 +34,23 @@ export function create(ctx: SceneCtx): Chapter {
     c.fill();
   };
 
-  // 2018: the one submarine cable, cut. Its fibres glow at the break.
+  // 2018: the day the country went offline, as an open hand, turning slowly: what was held was let go.
   const cable = new THREE.Group();
-  const path = new THREE.CatmullRomCurve3([[-2.2, -0.5, 0], [-1.1, 0.1, 0.3], [0, -0.1, 0], [1.1, 0.25, -0.2]].map(([x, y, z]) => new THREE.Vector3(x, y, z)));
-  cable.add(new THREE.Mesh(new THREE.TubeGeometry(path, 80, 0.26, 24), matte));
-  for (let i = 0; i < 9; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.03, 8, 32), dark);
-    const t = 0.06 + i * 0.1;
-    ring.position.copy(path.getPointAt(t));
-    ring.lookAt(path.getPointAt(Math.min(1, t + 0.01)));
-    cable.add(ring);
-  }
-  const end = path.getPointAt(1), dir = path.getTangentAt(1);
-  for (let i = 0; i < 7; i++) {
-    const a = (i / 7) * Math.PI * 2, rr = i ? 0.12 : 0;
-    const fibre = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5 + (i % 3) * 0.18, 6), blue);
-    fibre.position.copy(end).add(new THREE.Vector3(0, Math.cos(a) * rr, Math.sin(a) * rr)).addScaledVector(dir, 0.2);
-    fibre.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().add(new THREE.Vector3(0, Math.cos(a), Math.sin(a)).multiplyScalar(0.25)).normalize());
-    cable.add(fibre);
-  }
-  cable.rotation.set(0.35, 0, 0.1);
+  cable.add(new THREE.Mesh(new RoundedBoxGeometry(1.15, 1.2, 0.38, 4, 0.16), matte)); // palm
+  [[-0.41, 0.72], [-0.14, 0.86], [0.14, 0.8], [0.41, 0.62]].forEach(([x, len]) => {
+    const finger = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, len, 6, 12), matte);
+    finger.position.set(x, 0.6 + len / 2, 0);
+    finger.rotation.z = -x * 0.18; // fanned a little
+    cable.add(finger);
+  });
+  const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.55, 6, 12), matte);
+  thumb.position.set(-0.75, 0.0, 0.05);
+  thumb.rotation.z = 0.75;
+  cable.add(thumb);
+  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.6, 24), matte);
+  wrist.position.y = -0.85;
+  cable.add(wrist);
+  cable.scale.setScalar(0.85);
 
   // 2022: the national agenda, as a mast bringing broadband further out.
   const mast = new THREE.Group();
@@ -81,23 +78,19 @@ export function create(ctx: SceneCtx): Chapter {
   beacon.position.y = 1.65;
   mast.add(beacon);
 
-  // 2026: public services, on a phone.
+  // 2026: public services online, as an @ turning in the air.
   const phone = new THREE.Group();
-  phone.add(new THREE.Mesh(new RoundedBoxGeometry(1.35, 2.7, 0.14, 4, 0.16), dark));
-  const ui = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.22, 2.55),
-    panel((c, w, h) => {
-      // Bold for letters: a dark screen with a 2 x 3 grid of big light tiles, one per service.
-      c.fillStyle = '#16181c';
-      c.fillRect(0, 0, w, h);
-      c.fillStyle = '#f4f1ea';
-      for (let i = 0; i < 6; i++) rounded(c, 34 + (i % 2) * 124, 70 + Math.floor(i / 2) * 150, 108, 120, 26);
-      rounded(c, 34, h - 96, w - 68, 50, 25);
-    }, 300, 628),
-  );
-  ui.position.z = 0.075;
-  phone.add(ui);
-  phone.rotation.x = -0.12;
+  const tube = 0.17;
+  const outer = new THREE.Mesh(new THREE.TorusGeometry(1, tube, 14, 72, Math.PI * 1.68), matte);
+  outer.rotation.z = -Math.PI * 0.08; // opens at the lower right, where the tail meets the stem
+  const inner = new THREE.Mesh(new THREE.TorusGeometry(0.4, tube, 14, 48), matte);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(tube, tube, 0.95, 14), matte);
+  stem.position.set(0.57, -0.05, 0);
+  const s0 = new THREE.Vector3(0.57, -0.52, 0), s1 = new THREE.Vector3(Math.cos(-Math.PI * 0.08), Math.sin(-Math.PI * 0.08), 0);
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(tube, tube, s0.distanceTo(s1), 14), matte);
+  tail.position.copy(s0).lerp(s1, 0.5);
+  tail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), s1.clone().sub(s0).normalize());
+  phone.add(outer, inner, stem, tail);
 
   // 15 GB: a folder of family photos, kept on someone else's servers.
   const drive = new THREE.Group();
@@ -225,6 +218,26 @@ export function create(ctx: SceneCtx): Chapter {
   door.position.set(0.8, -0.3, 1.12);
   house.add(door);
   house.rotation.set(0.25, -0.5, 0);
+  // Someone walking home: a simple figure whose arms and legs swing from hip and shoulder.
+  const walker = new THREE.Group();
+  const limb = (len: number, x: number, y: number) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(x, y, 0);
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, len, 4, 10), matte);
+    m.position.y = -len / 2 - 0.04;
+    pivot.add(m);
+    walker.add(pivot);
+    return pivot;
+  };
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.36, 4, 12), matte);
+  body.position.y = 0.66;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), matte);
+  head.position.y = 1.07;
+  walker.add(body, head);
+  const legs2 = [limb(0.42, -0.08, 0.46), limb(0.42, 0.08, 0.46)];
+  const arms = [limb(0.36, -0.22, 0.86), limb(0.36, 0.22, 0.86)];
+  walker.position.set(-1.6, -0.7, 1.8);
+  house.add(walker);
 
   // The bridge between the country's story and the home's: a house still hanging from the cloud.
   const services = [drive, tv, phones, speaker];
@@ -276,18 +289,30 @@ export function create(ctx: SceneCtx): Chapter {
       [...things, ...services].forEach((t) => (t.visible = false));
       let t = things[i];
       if (i === SERVICES) {
-        // The receipt is typed on the page itself; the scene keeps only the cloud it hangs from.
-        t = blank;
-        ch.fall = 0;
+        // The four services take turns beside the receipt: each stands a few seconds, then pours away in letters for the next.
+        const beat = ctx.reduced ? 0 : f.time / 3.6;
+        t = services[Math.floor(beat) % services.length];
+        ch.fall = Math.max(ch.fall, smooth(0.78, 1, beat % 1));
       }
       t.visible = true;
       // Flat objects read best large and facing the reader.
-      const big = t === card || t === phone ? 1.45 : 1;
+      const big = t === card ? 1.45 : t === phone ? 1.2 : 1;
       t.scale.setScalar((0.6 + 0.4 * grow) * big);
       // Flat things sway so they never turn edge-on; solid things turn slowly.
-      const flat = t === phone || t === card || t === drive || t === tv;
+      const flat = t === card || t === drive || t === tv;
       t.rotation.y = flat ? 0.12 * side0 + Math.sin(f.time * 0.6) * 0.2 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
       t.position.y = Math.sin(f.time * 0.8) * 0.06;
+      if (t === house) {
+        // The walker crosses to the door, again and again.
+        const w = ctx.reduced ? 0.5 : (f.time * 0.22) % 1;
+        walker.position.x = -1.7 + w * 2.5;
+        walker.rotation.y = Math.PI / 2;
+        const swing = ctx.reduced ? 0 : Math.sin(f.time * 6.5) * 0.55;
+        legs2[0].rotation.x = swing; legs2[1].rotation.x = -swing;
+        arms[0].rotation.x = -swing * 0.8; arms[1].rotation.x = swing * 0.8;
+        walker.position.y = -0.7 + Math.abs(Math.cos(f.time * 6.5)) * 0.03;
+        walker.visible = w < 0.94; // through the door
+      }
 
       cloud.visible = clouded[i];
       cloud.position.set(0, 2.5, -0.5);
@@ -302,6 +327,13 @@ export function create(ctx: SceneCtx): Chapter {
       const wide = f.aspect > 1.05;
       const side = ctx.rtl ? -1 : 1;
       holder.position.set(wide ? 2.6 * side : 0, wide ? -0.3 : 1.6, 0);
+      holder.scale.setScalar(1);
+      if (wide && i === SERVICES) {
+        // The receipt fills the right column: the services take their turns small, in the gap under the words.
+        holder.position.set(-2.75 * side, -1.85, 0);
+        holder.scale.setScalar(0.62);
+        cloud.visible = thread.visible = false;
+      }
       camera.aspect = f.aspect;
       camera.position.set(0, 0.6, wide ? 12 : 17);
       camera.lookAt(0, 0.3, 0);
