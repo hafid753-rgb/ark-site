@@ -101,7 +101,7 @@ export async function startStage() {
     // smoothed by multisampling, which costs far less than full retina resolution.
     const sr = Math.min(pr, touch ? 1 : 1.25);
     sceneRT.setSize(Math.max(1, Math.floor(W * sr)), Math.max(1, Math.floor(H * sr)));
-    const cols = Math.floor(W / (rtl ? 8 : 6)), rows = Math.floor(H / (rtl ? 13 : 11));
+    const cols = Math.floor(W / (rtl ? 7 : 6)), rows = Math.floor(H / (rtl ? 12 : 11));
     cellRT.setSize(cols, rows);
     loRT.setSize(cols * 4, rows * 6); // one texel per tap of the cell pass
     cellMat.uniforms.uCells.value.set(cols, rows);

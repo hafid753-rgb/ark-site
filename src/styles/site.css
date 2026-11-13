@@ -331,6 +331,8 @@ span.row-main { cursor: default; }
   :root:not([data-mode='text']) .text-only { display: none; }
   :root:not([data-mode='text']) .full-only { display: block; }
   :root:not([data-mode='text']) #stage { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  /* The canvas fades in once its first frame is drawn, instead of popping in. */
+  @media (prefers-reduced-motion: no-preference) { :root:not([data-mode='text']) #stage { animation: stage-in 900ms var(--ease) both; } }
 
   /* Copy over a live scene: a soft shadow instead of a box. */
   :root:not([data-mode='text']) .chapter[data-scene] :is(p, li) { text-shadow: 0 1px 18px var(--shade); }
@@ -478,3 +480,5 @@ span.row-main { cursor: default; }
 :root[data-mode='text'] .chapter { padding-block: 72px; border-block-start: 1px solid var(--line); }
 :root[data-mode='text'] .hero { border: 0; padding-block-start: 136px; }
 :root[data-mode='text'] .step { margin-block-end: 40px; }
+
+@keyframes stage-in { from { opacity: 0; } to { opacity: 1; } }
