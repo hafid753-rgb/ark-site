@@ -1,0 +1,7 @@
+---
+// A heading whose words come into focus one after another as it scrolls in.
+interface Props { text: string; as?: 'h1' | 'h2' | 'h3' | 'p'; class?: string }
+const { text, as: Tag = 'h2', class: className } = Astro.props;
+const words = text.split(' ');
+---
+<Tag class:list={['words', className]} aria-label={text}>{words.map((w, i) => (<><span class="w" style={`--i:${i}`} aria-hidden="true">{w}</span>{i < words.length - 1 ? ' ' : ''}</>))}</Tag>

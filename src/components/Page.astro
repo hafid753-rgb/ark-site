@@ -1,0 +1,357 @@
+---
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/700.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-sans-arabic/400.css';
+import '@fontsource/ibm-plex-sans-arabic/500.css';
+import '@fontsource/ibm-plex-sans-arabic/700.css';
+import '../styles/site.css';
+import Mark from './Mark.astro';
+import Words from './Words.astro';
+import { copy, langs, langNames, langLabels, pathFor, type Lang } from '../i18n';
+import { contact, coordinates } from '../site';
+import { asciiMark } from '../mark';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = copy[lang];
+const dir = lang === 'ar' ? 'rtl' : 'ltr';
+const glyphWord = t.glyphs.replace(/\s/g, '');
+const art = asciiMark(lang === 'ar' ? 40 : 56, glyphWord);
+const appStrings = Object.fromEntries(langs.map((l) => [l, copy[l].app]));
+const rooms = Object.keys(t.app.rooms) as (keyof typeof t.app.rooms)[];
+const whatsapp = contact.whatsapp.replace(/\D/g, '');
+const url = (l: Lang) => new URL(pathFor(l), Astro.site).href;
+// "01 Elsewhere" → number in the accent, label quiet.
+// Timeline labels: years in mono; prices and percentages in the sans, which spaces "$7.99" properly.
+const isFigure = (v: string) => /^\d{4}$/.test(v);
+const kick = (k: string) => { const [n, ...rest] = k.split(' '); return { n, label: rest.join(' ') }; };
+const chapters = [
+  ['rented', t.rented.kicker], ['yours', t.yours.kicker], ['connected', t.connected.kicker], ['offline', t.offline.kicker], ['control', t.control.kicker],
+  ['cinema', t.cinema.kicker], ['setup', t.setup.kicker],
+].map(([id, k]) => ({ id, ...kick(k) }));
+---
+<!doctype html>
+<html lang={lang} dir={dir} data-mode="full" data-glyphs={glyphWord}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f6faff" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="canonical" href={url(lang)} />
+    {langs.map((l) => <link rel="alternate" hreflang={l} href={url(l)} />)}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:image" content={new URL('/og.png', Astro.site).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip" href="#main">{t.nav.skip}</a>
+    <canvas id="stage" aria-hidden="true"></canvas>
+
+    <header class="bar" data-glass>
+      <a class="brand" href={pathFor(lang)} aria-label="Ark"><Mark size={30} /><span>Ark</span></a>
+      <div class="bar-end">
+        <nav class="langs" aria-label={t.nav.language}>
+          {langs.map((l) => (
+            <a href={pathFor(l)} hreflang={l} lang={l} aria-current={l === lang ? 'page' : undefined} title={langLabels[l]}>{langNames[l]}</a>
+          ))}
+        </nav>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" data-dark={t.nav.dark} data-light={t.nav.light}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.25" fill="none" stroke="currentColor" stroke-width="1.5" /><path d="M12 3.75a8.25 8.25 0 0 1 0 16.5z" fill="currentColor" /></svg>
+          <span data-theme-label>{t.nav.dark}</span>
+        </button>
+        <button class="mode-toggle" type="button" data-mode-toggle aria-pressed="false" data-on={t.nav.fullMode} data-off={t.nav.textMode}>{t.nav.textMode}</button>
+        <a class="btn primary small" href="#start">{t.nav.talk}</a>
+      </div>
+    </header>
+
+    <nav class="rail full-only" aria-label={t.nav.chapters}>
+      {chapters.map((c) => <a href={`#${c.id}`} data-rail={c.id}><span class="mono">{c.n}</span><span class="rail-label">{c.label}</span></a>)}
+    </nav>
+
+    <main id="main">
+      <section class="chapter hero" id="top" data-scene="hero">
+        <div class="wrap">
+          <p class="meta ledger-line reveal"><span>{t.hero.ledger}</span> <output class="mono" data-third-party>0</output></p>
+          <Words as="h1" text={t.hero.title} />
+          <p class="lede reveal">{t.hero.sub}</p>
+          <div class="actions reveal">
+            <a class="btn primary" href="#rented" data-glass="blue">{t.hero.primary}</a>
+            <a class="btn" href="#start" data-glass>{t.hero.secondary}</a>
+          </div>
+          <pre class="art text-only" aria-hidden="true">{art}</pre>
+        </div>
+      </section>
+
+      <section class="chapter" id="rented" data-scene="rented">
+        <div class="wrap">
+          <header class="step head">
+            <p class="kicker reveal"><span class="kn">{kick(t.rented.kicker).n}</span> {kick(t.rented.kicker).label}</p>
+            <Words text={t.rented.title} />
+          </header>
+          <ol class="facts">
+            {t.rented.facts.map((f) => (
+              <li class="step fact">
+                <p class:list={["year reveal", isFigure(f.year) ? "mono" : "word"]}>{/^\d{4}$/.test(f.year) ? <time datetime={f.year}>{f.year}</time> : <bdi dir="ltr">{f.year}</bdi>}</p>
+                <p class="reveal">{f.text}</p>
+                <a class="source meta reveal" href={f.source} target="_blank" rel="noreferrer noopener">{t.rented.source}</a>
+              </li>
+            ))}
+          </ol>
+          <div class="step services" data-receipt>
+            <div class="services-copy">
+              <p class="year word reveal">{t.rented.services.label}</p>
+              <Words as="h3" class="services-title" text={t.rented.services.title} />
+              <p class="body reveal">{t.rented.services.body}</p>
+              <p class="meta reveal">{t.rented.services.sources}: {t.rented.services.items.map((sv, i) => (
+                <>{i > 0 && ' · '}<a class="source" href={sv.source} target="_blank" rel="noreferrer noopener">{sv.name}</a></>
+              ))}</p>
+            </div>
+            <!-- A receipt, typed straight onto the page: it prints line by line as you scroll, then drops away. -->
+            <dl class="receipt mono">
+              <div class="r-line r-head" style="--i:0"><dt>{t.rented.services.head}</dt></div>
+              <div class="r-line r-rule" style="--i:1" aria-hidden="true"></div>
+              {t.rented.services.items.map((sv, i) => (
+                <div class="r-line" style={`--i:${i + 2}`}>
+                  <dt>{sv.name}</dt><span class="r-dots" aria-hidden="true"></span><dd>{sv.value}</dd>
+                  <p class="r-note">{sv.note}</p>
+                </div>
+              ))}
+              <div class="r-line r-rule" style="--i:6" aria-hidden="true"></div>
+              <div class="r-line r-total" style="--i:7"><dt>{t.rented.services.total}</dt><span class="r-dots" aria-hidden="true"></span><dd>0</dd></div>
+            </dl>
+          </div>
+          <div class="step closing">
+            <p class="body reveal">{t.rented.lead}</p>
+            <Words as="p" class="closing-line" text={t.rented.closing} />
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter" id="yours" data-scene="device">
+        <div class="wrap">
+          <header class="step head">
+            <p class="kicker reveal"><span class="kn">{kick(t.yours.kicker).n}</span> {kick(t.yours.kicker).label}</p>
+            <Words text={t.yours.title} />
+            <p class="body reveal">{t.yours.body}</p>
+          </header>
+          <div class="step">
+            <ol class="parts">
+              {t.yours.parts.map((p, i) => (
+                <li class="reveal"><span class="num mono">{String(i + 1).padStart(2, '0')}</span><span><strong>{p.name}</strong> {p.text}</span></li>
+              ))}
+            </ol>
+          </div>
+        </div>
+        <div class="markers full-only" aria-hidden="true">
+          {t.yours.parts.map((_, i) => <span class="marker mono" data-part={i}>{String(i + 1).padStart(2, '0')}</span>)}
+        </div>
+      </section>
+
+      <section class="chapter" id="connected" data-scene="network">
+        <div class="wrap">
+          <header class="step head">
+            <p class="kicker reveal"><span class="kn">{kick(t.connected.kicker).n}</span> {kick(t.connected.kicker).label}</p>
+            <Words text={t.connected.title} />
+            <p class="body reveal">{t.connected.body}</p>
+          </header>
+          <div class="step">
+            <ol class="parts">
+              {t.connected.points.map((pt, i) => (
+                <li class="reveal"><span class="num mono">{String(i + 1).padStart(2, '0')}</span><span>{pt}</span></li>
+              ))}
+            </ol>
+          </div>
+        </div>
+        <div class="markers full-only" aria-hidden="true">
+          {t.connected.devices.map((d) => <span class="marker device-tag">{d}</span>)}
+        </div>
+      </section>
+
+      <section class="chapter interactive" id="offline" data-scene="night" data-night="cloud" data-sky="night">
+        <div class="wrap">
+          <div class="pinned">
+            <p class="kicker reveal"><span class="kn">{kick(t.offline.kicker).n}</span> {kick(t.offline.kicker).label}</p>
+            <Words text={t.offline.title} />
+            <p class="body reveal">{t.offline.body}</p>
+            <div class="demo reveal" data-demo data-on={t.offline.on} data-off={t.offline.off} data-cut={t.offline.cut} data-reconnect={t.offline.reconnect} data-waiting={t.offline.waiting} data-cloud={t.offline.viaCloud} data-local={t.offline.local} data-after={t.offline.after}>
+              <button class="switch" type="button" data-lights aria-pressed="false" data-glass>
+                <span class="knob" aria-hidden="true"></span><span>{t.offline.lights}</span><span class="state mono">{t.offline.off}</span>
+              </button>
+              <button class="btn cut" type="button" data-cut aria-pressed="false" data-glass>{t.offline.cut}</button>
+              <p class="status mono" data-status aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter interactive" id="control" data-scene="night" data-night="cutaway" data-sky="night">
+        <div class="wrap split">
+          <header class="head">
+            <p class="kicker reveal"><span class="kn">{kick(t.control.kicker).n}</span> {kick(t.control.kicker).label}</p>
+            <Words text={t.control.title} />
+            <p class="body reveal">{t.control.body}</p>
+            <p class="hint full-only reveal">{t.control.hint}</p>
+          </header>
+          <div class="phone reveal" data-phone lang={lang} dir={dir}>
+            <div class="phone-screen">
+              <div class="phone-status mono" aria-hidden="true"><span>22:36</span><span class="dots"><i></i><i></i><i></i></span></div>
+              <div class="phone-head">
+                <h3 data-t="title">{t.app.title}</h3>
+                <div class="seg" role="group" aria-label={t.nav.language}>
+                  {langs.map((l) => <button type="button" data-app-lang={l} aria-pressed={l === lang ? 'true' : 'false'}>{langNames[l]}</button>)}
+                </div>
+              </div>
+              <div class="rooms">
+                {rooms.map((r) => (
+                  <button type="button" class="room" data-room={r} aria-pressed="false">
+                    <span data-t={`rooms.${r}`}>{t.app.rooms[r]}</span>
+                    <span class="state mono" data-state>{t.app.off}</span>
+                  </button>
+                ))}
+              </div>
+              <div class="row">
+                <button type="button" class="row-main" data-ac aria-pressed="false"><span data-t="ac">{t.app.ac}</span><span class="state mono" data-state>{t.app.off}</span></button>
+                <div class="stepper"><button type="button" data-temp="-1" aria-label="−">−</button><output class="mono" data-temp-value>24°</output><button type="button" data-temp="1" aria-label="+">+</button></div>
+              </div>
+              <div class="row">
+                <span class="row-main"><span data-t="gate">{t.app.gate}</span><span class="state mono" data-gate-state>{t.app.closed}</span></span>
+                <button type="button" class="chip" data-gate>{t.app.openAction}</button>
+              </div>
+              <div class="cam full-only">
+                <div class="cam-head"><span data-t="camera">{t.app.camera}</span><span class="live mono"><i></i><span data-t="live">{t.app.live}</span></span></div>
+                <canvas class="feed" data-feed width="480" height="200" aria-hidden="true"></canvas>
+              </div>
+              <div class="scenes">
+                <span class="meta" data-t="scenes">{t.app.scenes}</span>
+                <div class="chips">
+                  <button type="button" class="chip" data-scene-preset="arrive" data-t="arrive">{t.app.arrive}</button>
+                  <button type="button" class="chip" data-scene-preset="night" data-t="night">{t.app.night}</button>
+                  <button type="button" class="chip" data-scene-preset="away" data-t="away">{t.app.away}</button>
+                </div>
+              </div>
+              <div class="sheet" data-sheet hidden>
+                <p data-t="confirm">{t.app.confirm}</p>
+                <div class="sheet-actions">
+                  <button type="button" class="btn" data-sheet-cancel data-t="cancel">{t.app.cancel}</button>
+                  <button type="button" class="btn primary" data-sheet-ok data-t="openAction">{t.app.openAction}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <script type="application/json" id="app-strings" set:html={JSON.stringify(appStrings)} />
+        </div>
+      </section>
+
+      <section class="chapter interactive" id="cinema" data-scene="cinema" data-sky="night" data-kinds={JSON.stringify(t.cinema.kinds)}>
+        <div class="wrap">
+          <div class="pinned">
+            <p class="kicker reveal"><span class="kn">{kick(t.cinema.kicker).n}</span> {kick(t.cinema.kicker).label}</p>
+            <Words text={t.cinema.title} />
+            <p class="body reveal">{t.cinema.body}</p>
+            <ul class="apps">
+              {t.cinema.apps.map((a, i) => (
+                <li class="reveal">
+                  <span class="app-icon" aria-hidden="true">
+                    {i === 0 && <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" /></svg>}
+                    {i === 1 && <svg viewBox="0 0 24 24"><path d="M10 17.2V6.6l8-2.1v3.4l-5.5 1.4v8.3a3 3 0 1 1-2.5-0.4z" /></svg>}
+                    {i === 2 && <svg viewBox="0 0 24 24"><path d="M3 6.2c3-1.3 6-1.2 8.4.6v12c-2.4-1.6-5.4-1.7-8.4-.5zM12.6 6.8c2.4-1.8 5.4-1.9 8.4-.6v12.1c-3-1.2-6-1.1-8.4.5z" /></svg>}
+                  </span>
+                  <span><strong>{a.name}</strong> {a.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter interactive setup" id="setup" data-scene="places">
+        <div class="wrap">
+          <header class="head">
+            <p class="kicker reveal"><span class="kn">{kick(t.setup.kicker).n}</span> {kick(t.setup.kicker).label}</p>
+            <Words text={t.setup.title} />
+            <p class="body reveal">{t.setup.body}</p>
+          </header>
+          <!-- Choosing a place is plain radio buttons; CSS shows the matching list, so it works without JavaScript. -->
+          <fieldset class="places reveal">
+            <legend class="meta">{t.setup.choose}</legend>
+            {t.setup.places.map((pl, i) => (
+              <label class="place" data-glass><input type="radio" name="place" value={pl.id} checked={i === 0} /><span>{pl.name}</span></label>
+            ))}
+          </fieldset>
+          <div class="place-panels">
+            {t.setup.places.map((pl) => (
+              <ul class="place-items" data-place={pl.id} aria-label={pl.name}>
+                {pl.items.map((it, j) => <li><span class="num mono">{String(j + 1).padStart(2, '0')}</span><span>{it}</span></li>)}
+              </ul>
+            ))}
+          </div>
+          <div class="actions reveal"><a class="btn primary" href="#start" data-glass="blue">{t.setup.cta}</a></div>
+        </div>
+      </section>
+
+      <section class="chapter" id="dawn" data-scene="dawn">
+        <div class="wrap">
+          <div class="step">
+            <Words text={t.dawn.title} />
+            <p class="body reveal">{t.dawn.body}</p>
+            <div class="actions reveal"><a class="btn primary" href="#start" data-glass="blue">{t.setup.cta}</a></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chapter plain" id="start">
+        <div class="wrap">
+          <Words text={t.start.title} />
+          <ul class="offers">
+            {t.start.offers.map((o, i) => (
+              <li class="reveal"><span class="kn mono">{String(i + 1).padStart(2, '0')}</span><h3>{o.name}</h3><p>{o.text}</p></li>
+            ))}
+          </ul>
+          <div class="contact reveal">
+            <h3>{t.start.contact}</h3>
+            {contact.email || whatsapp ? (
+              <div class="actions">
+                {contact.email && <a class="btn primary" href={`mailto:${contact.email}`} data-glass="blue">{t.start.email}</a>}
+                {whatsapp && <a class="btn" href={`https://wa.me/${whatsapp}`} rel="noreferrer noopener" data-glass>{t.start.whatsapp}</a>}
+              </div>
+            ) : (
+              <p class="meta">{t.start.soon}</p>
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <p class="brand-line"><Mark size={22} /><span>{t.footer.tagline}</span></p>
+        <p>{t.footer.privacy}</p>
+        <nav class="langs" aria-label={t.nav.language}>
+          {langs.map((l) => <a href={pathFor(l)} hreflang={l} lang={l} aria-current={l === lang ? 'page' : undefined}>{langLabels[l]}</a>)}
+        </nav>
+        <details class="credits">
+          <summary>{t.footer.credits}</summary>
+          <ul>{t.credits.map((c) => <li>{c}</li>)}</ul>
+        </details>
+        <p class="foot-links">
+          <button class="link" type="button" data-offline data-progress={t.footer.offlineProgress} data-done={t.footer.offlineDone} data-remove={t.footer.offlineRemove} data-save={t.footer.offline} data-fail={t.footer.offlineFail}>{t.footer.offline}</button>
+          <a class="link" href={`/edition/${lang}/`} download={`ark-${lang}.html`}>{t.footer.edition}</a>
+        </p>
+        <p class="meta" data-offline-status aria-live="polite"></p>
+        <p class="meta text-only">{t.footer.textNote}</p>
+        <p class="meta mono coords" dir="ltr">{coordinates}</p>
+      </div>
+    </footer>
+    <script src="../scripts/main.ts"></script>
+  </body>
+</html>
