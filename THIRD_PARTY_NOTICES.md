@@ -108,3 +108,5 @@ their geometry (textures and other attributes removed, simplified, quantized) fo
 - **building-small-a** (`public/models/house.glb`) from the [Kenney City Builder starter kit](https://github.com/KenneyNL/Starter-Kit-City-Builder), CC0. Reduced to its shape.
 - **generic-hand / right** (`public/models/hand.glb`) from the [W3C WebXR input profiles](https://github.com/immersive-web/webxr-input-profiles), W3C Software and Document License. Reduced to its shape.
 - **@ glyph** (`src/scripts/gl/at-glyph.json`) from Droid Sans Bold, Apache License 2.0, via the three.js typeface fonts.
+- **televisionModern, laptop, speaker** (`public/models/tv.glb`, `laptop.glb`, `speaker2.glb`) from the Kenney Furniture Kit, CC0 (via the [ETdoFresh/kenney.nl](https://github.com/ETdoFresh/kenney.nl) mirror). Reduced to shape.
+- **Antenna_1, Fence** (`public/models/antenna.glb`, `fence.glb`) from Quaternius' Cyberpunk pack, CC0 (via [trebeljahr/quaternius-showcase](https://github.com/trebeljahr/quaternius-showcase)). Reduced to shape.

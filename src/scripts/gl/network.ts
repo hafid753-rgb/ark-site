@@ -48,7 +48,7 @@ export function create(ctx: SceneCtx): Chapter {
   // Real models replace two of the hand-built stand-ins once they arrive: a speaker (BoomBox, CC0)
   // and a lamp (LightsPunctualLamp by DGG, CC BY 4.0), both from the Khronos glTF sample assets,
   // reduced to their shape (textures dropped: the scene is drawn in letters).
-  const MODELS: [number, string][] = [[0, 'lamp'], [3, 'speaker']];
+  const MODELS: [number, string][] = [[0, 'lamp'], [3, 'speaker'], [4, 'tv'], [7, 'fence']]; // tv: Kenney Furniture Kit; fence: Quaternius (both CC0)
   const bytes = async (name: string) => {
     const inline = (globalThis as { __arkModels?: Record<string, string> }).__arkModels?.[name];
     if (inline) return Uint8Array.from(atob(inline), (c) => c.charCodeAt(0)).buffer; // the one-file build

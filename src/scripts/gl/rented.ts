@@ -200,6 +200,14 @@ export function create(ctx: SceneCtx): Chapter {
     if (g.animations[0]) mixer.clipAction(g.animations[0]).play();
   }).catch(() => {});
   walker.position.set(-1.6, -0.7, 1.8);
+  // Ready-made models take the place of the hand-built stand-ins once they arrive (all CC0):
+  // a rooftop antenna (Quaternius), a laptop, a TV and a speaker (Kenney Furniture Kit).
+  const swap = (g: THREE.Group, name: string, size: number) =>
+    loadModel(name).then((m) => { shapeOnly(m.scene); g.clear(); g.add(fit(m.scene, size)); }).catch(() => {});
+  swap(mast, 'antenna', 3.2);
+  swap(drive, 'laptop', 2.6);
+  swap(tv, 'tv', 2.8);
+  swap(speaker, 'speaker2', 2.2);
 
   // The bridge between the country's story and the home's: a house still hanging from the cloud.
   const services = [drive, tv, phones, speaker];
