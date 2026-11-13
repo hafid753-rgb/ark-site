@@ -91,3 +91,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## 3D models (Khronos glTF Sample Assets)
+
+From [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets), reduced to
+their geometry (textures and other attributes removed, simplified, quantized) for `public/models/`:
+
+- `speaker.glb`: **BoomBox**, CC0 1.0 (public domain dedication).
+- `lamp.glb`: **LightsPunctualLamp**, © 2021 DGG, licensed under
+  [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/). Modified
+  (geometry only, simplified).

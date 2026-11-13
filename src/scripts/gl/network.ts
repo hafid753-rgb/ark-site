@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { smooth } from './util';
 import type { Chapter, SceneCtx } from './types';
 
@@ -43,6 +44,34 @@ export function create(ctx: SceneCtx): Chapter {
     () => { const g = new THREE.Group(); part(g, new RoundedBoxGeometry(1.3, 0.45, 0.4, 2, 0.08), matte); for (let i = 0; i < 4; i++) part(g, new THREE.BoxGeometry(1.1, 0.03, 0.02), dark, 0, -0.12 + i * 0.07, 0.21); return g; }, // air conditioner
     () => { const g = new THREE.Group(); for (let i = 0; i < 6; i++) part(g, new THREE.BoxGeometry(0.06, 0.9, 0.06), dark, -0.5 + i * 0.2, 0, 0); for (const y of [-0.38, 0.38]) part(g, new THREE.BoxGeometry(1.12, 0.07, 0.07), dark, 0, y, 0); return g; }, // gate
   ];
+  // Real models replace two of the hand-built stand-ins once they arrive: a speaker (BoomBox, CC0)
+  // and a lamp (LightsPunctualLamp by DGG, CC BY 4.0), both from the Khronos glTF sample assets,
+  // reduced to their shape (textures dropped: the scene is drawn in letters).
+  const MODELS: [number, string][] = [[0, 'lamp'], [3, 'speaker']];
+  const bytes = async (name: string) => {
+    const inline = (globalThis as { __arkModels?: Record<string, string> }).__arkModels?.[name];
+    if (inline) return Uint8Array.from(atob(inline), (c) => c.charCodeAt(0)).buffer; // the one-file build
+    return (await fetch(`/models/${name}.glb`)).arrayBuffer();
+  };
+  const loader = new GLTFLoader();
+  const swapIn = (i: number, name: string) =>
+    bytes(name)
+      .then((buf) => loader.parseAsync(buf, ''))
+      .then((gltf) => {
+        const model = gltf.scene;
+        model.traverse((o) => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).material = matte; });
+        // Fit it to about one unit, standing on its base, centred.
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        model.scale.setScalar(1.15 / Math.max(size.x, size.y, size.z));
+        const c = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3());
+        model.position.sub(c);
+        const holder = nodes[i].obj;
+        holder.clear();
+        holder.add(model);
+      })
+      .catch(() => {}); // the stand-in stays
+
   const system = new THREE.Group();
   system.add(hub);
   const up = new THREE.Vector3(0, 1, 0);
@@ -64,6 +93,7 @@ export function create(ctx: SceneCtx): Chapter {
     return { at, obj, link, pulses, phase: i * 0.37 };
   });
   scene.add(system);
+  MODELS.forEach(([i, name]) => swapIn(i, name));
   const anchors = nodes.map(() => new THREE.Vector3());
 
   const ch: Chapter = {

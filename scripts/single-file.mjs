@@ -21,6 +21,9 @@ const media = Object.fromEntries(
   readdirSync('public/media').map((f) => [f.replace(/\.webp$/, ''), `data:image/webp;base64,${readFileSync(`public/media/${f}`).toString('base64')}`]),
 );
 
+// 3D models, base64, handed to the Connected scene through a global.
+const models = Object.fromEntries(readdirSync('public/models').map((f) => [f.replace(/\.glb$/, ''), readFileSync(`public/models/${f}`).toString('base64')]));
+
 const dataUri = (path) => `data:font/woff2;base64,${readFileSync(`dist${path}`).toString('base64')}`;
 for (const [lang, file] of [['en', 'dist/index.html'], ['fr', 'dist/fr/index.html'], ['ar', 'dist/ar/index.html']]) {
   let html = readFileSync(file, 'utf8');
@@ -45,7 +48,7 @@ for (const [lang, file] of [['en', 'dist/index.html'], ['fr', 'dist/fr/index.htm
   }
   const setRoot = Object.entries(attrs).map(([k, v]) => `r.setAttribute(${JSON.stringify(k)},${JSON.stringify(v)});`).join('');
   html =
-    `<script>(function(r){${setRoot}})(document.documentElement);window.__arkMedia=${JSON.stringify(media)};</script>` +
+    `<script>(function(r){${setRoot}})(document.documentElement);window.__arkMedia=${JSON.stringify(media)};window.__arkModels=${JSON.stringify(models)};</script>` +
     // The host's frame sets a small system font on body; the site's type lives on :root.
     `<style>body{font:inherit;color:inherit;background:var(--bg)}</style>` +
     html +
