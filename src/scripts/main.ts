@@ -113,6 +113,8 @@ if (railLinks.length) {
     { rootMargin: '-50% 0px -50% 0px' },
   );
   railLinks.forEach((a) => { const s = document.getElementById(a.dataset.rail!); if (s) rail.observe(s); });
+  // Past the last chapter (dawn, start, footer) the rail steps aside: no link is current there.
+  ['dawn', 'start'].forEach((id) => { const s = document.getElementById(id); if (s) rail.observe(s); });
 }
 
 /* ---------- 03 Offline: cut the cloud ---------- */

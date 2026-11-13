@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { seeded } from './util';
 import type { Chapter, SceneCtx } from './types';
+import { smooth } from './util';
 
 type Kind = 'film' | 'album' | 'book';
 // A home library: titles a household here might own. Titles with artwork in /media show their real
@@ -121,6 +122,9 @@ export function create(ctx: SceneCtx): Chapter {
     glyph: 0,
     fall: 0,
     update(f) {
+      const wide = f.aspect > 1.05;
+      const side = ctx.rtl ? -1 : 1;
+      const shelfX = wide ? 3 * side : 0;
       const offset = f.p * 0.85 + (ctx.reduced ? 0 : f.time * 0.006);
       for (let i = 0; i < N; i++) {
         const u = (((i / N + offset) % 1) + 1) % 1;
@@ -130,13 +134,13 @@ export function create(ctx: SceneCtx): Chapter {
         m.compose(pos, q.setFromEuler(e), s);
         shelf.setMatrixAt(i, m);
         fade[i] = Math.min(1, u * 8, (1 - u) * 8);
+        // On wide screens the covers fade before they reach the words, so the headline stays clean.
+        if (wide) fade[i] *= smooth(-0.5, 2.8, (pos.x + shelfX) * side);
       }
       shelf.instanceMatrix.needsUpdate = true;
       fadeAttr.needsUpdate = true;
 
-      const wide = f.aspect > 1.05;
-      const side = ctx.rtl ? -1 : 1;
-      shelf.position.set(wide ? 3 * side : 0, wide ? 0 : 2.2, 0);
+      shelf.position.set(shelfX, wide ? 0 : 2.2, 0);
       camera.aspect = f.aspect;
       camera.position.set(0, 1.2, wide ? 15 : 24);
       camera.lookAt(0, wide ? 0 : 0.6, 0);
