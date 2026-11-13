@@ -244,6 +244,7 @@ export async function startStage() {
     ub.uNight.value = night;
     ub.uScroll.value = scrollY * pr;
     ub.uSky.value = 1 - 0.85 * smooth(0.25 * H, 1.1 * H, scrollY);
+    ub.uIntro.value = reduced ? 0 : 1 - smooth(0.3, 2.2, time);
     // Near a chapter seam the picture pixelates into blocks, then resolves into the next chapter.
     ug.uProgress.value = seamK;
 

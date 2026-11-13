@@ -166,11 +166,13 @@ export function baseMaterial(set: GlyphSet) {
       uScroll: { value: 0 },
       uNight: { value: 0 },
       uSky: { value: 1 },
+      uIntro: { value: 1 }, // 1 just after load, falling to 0: the opening decode
       uPointer: { value: new THREE.Vector3(-1e4, -1e4, 0) },
     },
     vertexShader: FULLSCREEN_VERT,
     fragmentShader: /* glsl */ `
       uniform vec3 uPointer; // pointer in drawing-buffer px (y up), z = how present it is
+      uniform float uIntro;
       uniform float uSky; // 1 on the opening screen (vivid sky), easing to clean paper below
       uniform sampler2D tScene, tCells, tAtlas;
       uniform vec2 uCells, uRes, uGrid;
@@ -202,7 +204,8 @@ export function baseMaterial(set: GlyphSet) {
         if (uFall > 0.0 && idx > 0.5 && hash(src.x * 7.1 + src.y * 13.3 + tick) < uFall * 0.8)
           idx = 1.0 + floor(hash(src.y * 3.7 + src.x * 1.1 + tick) * (uCount - 1.0));
         // Decode: as a chapter arrives or leaves, its letters shuffle before they settle.
-        float dec = 1.0 - uFade;
+        // On load the letters shuffle like a code being cracked, settling column by column from the left.
+        float dec = max(1.0 - uFade, clamp(uIntro * 1.6 - cell.x / uCells.x * 0.6, 0.0, 1.0));
         if (dec > 0.02 && idx > 0.5 && hash(src.x * 3.3 + src.y * 7.7 + tick) < dec * 0.9)
           idx = 10.0 + floor(hash(src.y * 2.9 + src.x * 5.1 + tick) * (uCount - 10.0));
         // The pointer stirs the letters it passes over.
