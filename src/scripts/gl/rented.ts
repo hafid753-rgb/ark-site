@@ -1,0 +1,373 @@
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { smooth, loadModel, fit } from './util';
+import atGlyph from './at-glyph.json';
+import earthMask from './earth-mask';
+import type { Chapter, SceneCtx } from './types';
+
+/** The timeline: one object per fact. What hangs on a server elsewhere pours away as it scrolls past. */
+export function create(ctx: SceneCtx): Chapter {
+  const scene = new THREE.Scene();
+  scene.environment = ctx.env;
+  scene.background = new THREE.Color(0x000000);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x222018, 0.8));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(-3, 5, 6);
+  scene.add(key);
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+
+  const matte = new THREE.MeshStandardMaterial({ color: 0xdcd7cd, roughness: 0.55, envMapIntensity: 0.6 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.5 });
+  const glow = new THREE.MeshBasicMaterial({ color: 0xffd09a });
+
+  const blue = new THREE.MeshBasicMaterial({ color: 0x2997ff });
+  const panel = (draw: (c: CanvasRenderingContext2D, w: number, h: number) => void, w: number, h: number) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    draw(canvas.getContext('2d')!, w, h);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+  };
+  const rounded = (c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+    c.beginPath();
+    c.roundRect(x, y, w, h, r);
+    c.fill();
+  };
+
+  // 2018: the day the country went offline, as an open hand, turning slowly: what was held was let go.
+  // The hand is the WebXR generic hand (immersive-web/webxr-input-profiles, W3C licence), shape only.
+  const cable = new THREE.Group();
+
+  // 2022: the national agenda, as a mast bringing broadband further out.
+  const mast = new THREE.Group();
+  const legs = 3, top = new THREE.Vector3(0, 1.5, 0);
+  for (let i = 0; i < legs; i++) {
+    const a = (i / legs) * Math.PI * 2;
+    const foot = new THREE.Vector3(Math.cos(a) * 0.7, -1.5, Math.sin(a) * 0.7);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, foot.distanceTo(top), 6), matte);
+    leg.position.copy(foot).lerp(top, 0.5);
+    leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), top.clone().sub(foot).normalize());
+    mast.add(leg);
+    const dish = new THREE.Mesh(new RoundedBoxGeometry(0.22, 0.75, 0.1, 2, 0.03), matte);
+    dish.position.set(Math.cos(a) * 0.16, 1.15, Math.sin(a) * 0.16);
+    dish.rotation.y = -a;
+    mast.add(dish);
+  }
+  for (let k = 1; k < 6; k++) {
+    const y = -1.5 + k * 0.5, r = 0.7 * (1 - k / 6) + 0.02;
+    const bar = new THREE.Mesh(new THREE.TorusGeometry(r, 0.02, 6, 3), matte);
+    bar.rotation.x = Math.PI / 2;
+    bar.position.y = y;
+    mast.add(bar);
+  }
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), blue);
+  beacon.position.y = 1.65;
+  mast.add(beacon);
+
+  // 2026: public services online, as an @ turning in the air: the real glyph from Droid Sans Bold (Apache 2.0).
+  const phone = new THREE.Group();
+  const atGeo = new TextGeometry('@', { font: new FontLoader().parse(atGlyph as never), size: 2.3, depth: 0.42, curveSegments: 10, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.04, bevelSegments: 3 });
+  atGeo.center();
+  phone.add(new THREE.Mesh(atGeo, matte));
+
+  // 15 GB: a folder of family photos, kept on someone else's servers.
+  const drive = new THREE.Group();
+  drive.add(new THREE.Mesh(new RoundedBoxGeometry(2.6, 1.8, 0.1, 3, 0.05), matte));
+  const tab = new THREE.Mesh(new RoundedBoxGeometry(0.9, 0.3, 0.1, 3, 0.05), matte);
+  tab.position.set(-0.85, 0.95, 0);
+  drive.add(tab);
+  const photos = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.2, 1.5),
+    panel((c, w, h) => {
+      c.fillStyle = '#f1ece2';
+      c.fillRect(0, 0, w, h);
+      for (let i = 0; i < 6; i++) {
+        c.fillStyle = ['#2997ff', '#3a3833', '#9d968a', '#1a1916', '#6b6760', '#c9c2b5'][i];
+        rounded(c, 20 + (i % 3) * 124, 22 + Math.floor(i / 3) * 112, 108, 96, 10);
+      }
+    }, 400, 250),
+  );
+  photos.position.set(0, 0.25, 0.08);
+  photos.rotation.z = -0.06;
+  drive.add(photos);
+  const flap = new THREE.Mesh(new RoundedBoxGeometry(2.6, 1.2, 0.08, 3, 0.04), matte);
+  flap.position.set(0, -0.32, 0.22);
+  flap.rotation.x = -0.25;
+  drive.add(flap);
+
+  // $7.99: a film on a screen, priced in dollars.
+  const tv = new THREE.Group();
+  tv.add(new THREE.Mesh(new RoundedBoxGeometry(3.4, 2.0, 0.12, 3, 0.04), dark));
+  const film = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.2, 1.8),
+    panel((c, w, h) => {
+      // High contrast so it still reads as a screen with a play button once drawn in letters.
+      c.fillStyle = '#f1ece2';
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = '#111';
+      c.beginPath();
+      c.arc(w / 2, h / 2, 92, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = '#f1ece2';
+      c.beginPath();
+      c.moveTo(w / 2 - 28, h / 2 - 46);
+      c.lineTo(w / 2 + 50, h / 2);
+      c.lineTo(w / 2 - 28, h / 2 + 46);
+      c.fill();
+      c.fillStyle = '#2997ff';
+      c.fillRect(0, h - 18, w * 0.38, 18);
+    }, 512, 288),
+  );
+  film.position.z = 0.065;
+  tv.add(film);
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.6, 12), dark);
+  stand.position.y = -1.3;
+  tv.add(stand);
+  const foot = new THREE.Mesh(new RoundedBoxGeometry(1.2, 0.08, 0.5, 2, 0.03), dark);
+  foot.position.y = -1.6;
+  tv.add(foot);
+
+  // $3.29: music, also in dollars.
+  const phones = new THREE.Group();
+  const band = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.09, 12, 48, Math.PI), matte);
+  band.position.y = 0.2;
+  phones.add(band);
+  for (const x of [-1, 1]) {
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.34, 32), matte);
+    cup.rotation.z = Math.PI / 2;
+    cup.position.set(x * 1.0, -0.15, 0);
+    phones.add(cup);
+    const pad = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.1, 10, 32), dark);
+    pad.rotation.y = Math.PI / 2;
+    pad.position.set(x * 0.8, -0.15, 0);
+    phones.add(pad);
+  }
+
+  // 2021: a speaker that learned Gulf Arabic, not Hassaniya.
+  const speaker = new THREE.Group();
+  speaker.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.85, 1.9, 48), matte));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.06, 10, 48), blue);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.96;
+  speaker.add(ring);
+  for (let k = 0; k < 9; k++) {
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.02), dark);
+    slot.position.set(0, -0.6 + k * 0.1, 0.84);
+    speaker.add(slot);
+  }
+
+  // 2025: the national identity card, now an app too.
+  const card = new THREE.Group();
+  card.add(new THREE.Mesh(new RoundedBoxGeometry(2.9, 1.8, 0.06, 3, 0.03), dark));
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.8, 1.7),
+    panel((c, w, h) => {
+      // Drawn bold for letters: light shapes become dense ink, dark ones stay open, and
+      // nothing thinner than a few character cells survives. A portrait and three lines.
+      c.fillStyle = '#16181c';
+      c.fillRect(0, 0, w, h);
+      c.fillStyle = '#f4f1ea';
+      c.beginPath();
+      c.arc(110, 108, 46, 0, Math.PI * 2); // head
+      c.fill();
+      c.beginPath();
+      c.ellipse(110, 250, 82, 70, 0, Math.PI, 0); // shoulders
+      c.fill();
+      for (let i = 0; i < 3; i++) rounded(c, 224, 74 + i * 58, 190 - i * 44, 30, 15);
+    }, 448, 272),
+  );
+  face.position.z = 0.035;
+  card.add(face);
+  card.rotation.x = -0.08;
+
+  // What remains: a house that keeps its things (Kenney City Builder, CC0), and someone walking home to it
+  // (CesiumMan from the Khronos glTF samples, CC BY 4.0), with the walk that comes with the model.
+  const house = new THREE.Group();
+  house.rotation.set(0.25, -0.5, 0);
+  const walker = new THREE.Group();
+  house.add(walker);
+  let mixer: THREE.AnimationMixer | undefined;
+  const shapeOnly = (m: THREE.Object3D) => m.traverse((o) => { if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).material = matte; });
+  // The hand keeps its skeleton: the fingers curl and open in a slow wave, one after another.
+  const joints: { bone: THREE.Object3D; rest: THREE.Quaternion; finger: number; depth: number }[] = [];
+  loadModel('hand').then((g) => {
+    shapeOnly(g.scene);
+    g.scene.rotation.z = Math.PI; // fingers up
+    cable.add(fit(g.scene, 3.7));
+    g.scene.traverse((o) => {
+      const m = /^(thumb|index|middle|ring|pinky)-.*(proximal|intermediate|distal)$/.exec(o.name);
+      if (m) joints.push({ bone: o, rest: o.quaternion.clone(), finger: ['thumb', 'index', 'middle', 'ring', 'pinky'].indexOf(m[1]), depth: ['proximal', 'intermediate', 'distal'].indexOf(m[2]) });
+    });
+  }).catch(() => {});
+  const curlAxis = new THREE.Vector3(1, 0, 0), curlQ = new THREE.Quaternion();
+  loadModel('house').then((g) => { shapeOnly(g.scene); house.add(fit(g.scene, 2.8, true)); g.scene.position.y -= 0.7; }).catch(() => {});
+  loadModel('walker').then((g) => {
+    shapeOnly(g.scene);
+    walker.add(fit(g.scene, 1.15, true));
+    mixer = new THREE.AnimationMixer(g.scene);
+    if (g.animations[0]) mixer.clipAction(g.animations[0]).play();
+  }).catch(() => {});
+  walker.position.set(-1.6, -0.7, 1.8);
+  // Ready-made models take the place of the hand-built stand-ins once they arrive (all CC0):
+  // a rooftop antenna (Quaternius), a laptop, a TV and a speaker (Kenney Furniture Kit).
+  const swap = (g: THREE.Group, name: string, size: number) =>
+    loadModel(name).then((m) => { shapeOnly(m.scene); g.clear(); g.add(fit(m.scene, size)); }).catch(() => {});
+  swap(drive, 'laptop', 2.6);
+
+  // 2022, the national digital agenda: the flag of Mauritania on a pole, waving (red bands, green
+  // field, gold crescent and star). Gold reads brightest in letters, so the crescent and star stand out.
+  mast.clear();
+  const flagW = 2.6, flagH = 1.7;
+  const flagGeo = new THREE.PlaneGeometry(flagW, flagH, 28, 14);
+  const flagRest = Float32Array.from(flagGeo.attributes.position.array);
+  const flag = new THREE.Mesh(flagGeo, panel((c, w, h) => {
+    c.fillStyle = '#b8242a'; c.fillRect(0, 0, w, h); // tuned for letters: deep green, mid red, bright pale gold
+    c.fillStyle = '#2a6e48'; c.fillRect(0, h * 0.2, w, h * 0.6);
+    const cx = w / 2, cy = h * 0.54, r = h * 0.3;
+    c.fillStyle = '#fff3b0';
+    c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#2a6e48';
+    c.beginPath(); c.arc(cx, cy - r * 0.32, r * 0.92, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff3b0';
+    c.beginPath();
+    for (let k = 0; k < 10; k++) {
+      const a = -Math.PI / 2 + (k * Math.PI) / 5, rr = k % 2 ? r * 0.19 : r * 0.46;
+      c.lineTo(cx + Math.cos(a) * rr, cy - r * 0.36 + Math.sin(a) * rr);
+    }
+    c.fill();
+  }, 520, 340));
+  (flag.material as THREE.MeshBasicMaterial).side = THREE.DoubleSide;
+  flag.position.set(flagW / 2 - 1.2, 0.55, 0);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.4, 12), matte);
+  pole.position.set(-1.25, -0.1, 0);
+  mast.add(flag, pole);
+
+  // The services, global: planet Earth turning, its land drawn from a NASA Blue Marble mask.
+  tv.clear();
+  const earthMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 });
+  new THREE.TextureLoader().load(earthMask, (tex) => { tex.colorSpace = THREE.SRGBColorSpace; earthMat.map = tex; earthMat.needsUpdate = true; });
+  const earth = new THREE.Mesh(new THREE.SphereGeometry(1.35, 64, 32), earthMat);
+  earth.rotation.z = 0.41; // the planet's tilt
+  tv.add(earth);
+  swap(speaker, 'speaker2', 2.2);
+
+  // The bridge between the country's story and the home's: a house still hanging from the cloud.
+  const services = [drive, tv, phones, speaker];
+  const things = [cable, mast, card, phone, drive, house];
+  // Only what depends on somewhere else pours away; what is built here stays.
+  const pours = [true, false, false, false, true, false];
+  const clouded = [true, false, false, false, true, false];
+  const blank = new THREE.Group();
+  const SERVICES = 4; // index of the step that groups the four services
+  const holder = new THREE.Group();
+  [...things, ...services.slice(1), blank].forEach((t) => holder.add(t));
+  scene.add(holder);
+
+  // The cloud each thing depends on, and the thread to it.
+  const cloud = new THREE.Group();
+  const puff = new THREE.SphereGeometry(1, 20, 14);
+  // Dim on purpose: the cloud reads as a ghost of letters, not a second object.
+  const ghost = new THREE.MeshStandardMaterial({ color: 0x4a4946, roughness: 0.95, envMapIntensity: 0.3 });
+  [[0, 0, 0, 0.75], [0.8, -0.15, 0.1, 0.55], [-0.8, -0.2, 0, 0.55], [0.35, 0.35, -0.2, 0.5], [-0.4, 0.3, 0.1, 0.45]].forEach(([x, y, z, s]) => {
+    const m = new THREE.Mesh(puff, ghost);
+    m.position.set(x, y, z);
+    m.scale.setScalar(s);
+    cloud.add(m);
+  });
+  const thread = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xbdb6aa }));
+  holder.add(cloud, thread);
+
+  let marks: HTMLElement[] = [];
+  const ch: Chapter = {
+    scene,
+    camera,
+    glyph: 1,
+    fall: 0,
+    update(f) {
+      if (!marks.length) marks = [...f.el.querySelectorAll<HTMLElement>('.fact, .services, .closing')];
+      // Which fact is closest to the middle of the screen, and how far past it we are.
+      let i = 0, c = Infinity;
+      marks.forEach((el, k) => {
+        const r = el.getBoundingClientRect();
+        const off = (r.top + r.height / 2 - f.H / 2) / f.H;
+        if (Math.abs(off) < Math.abs(c)) { c = off; i = k; }
+      });
+      if (c > 0.6) { i = 0; c = 0.6; } // still on the heading: show the first thing waiting
+
+      const last = i === things.length - 1;
+      const side0 = ctx.rtl ? 1 : -1;
+      ch.fall = pours[i] ? smooth(0.06, 0.42, -c) : 0;
+      const grow = smooth(0.62, 0.28, c);
+      [...things, ...services].forEach((t) => (t.visible = false));
+      let t = things[i];
+      if (i === SERVICES) {
+        // The four services take turns beside the receipt: each stands a few seconds, then pours away in letters for the next.
+        const beat = ctx.reduced ? 0 : f.time / 3.6;
+        t = services[Math.floor(beat) % services.length];
+        ch.fall = Math.max(ch.fall, smooth(0.78, 1, beat % 1));
+      }
+      t.visible = true;
+      // Flat objects read best large and facing the reader.
+      const big = t === card ? 1.45 : t === phone ? 1.2 : 1;
+      t.scale.setScalar((0.6 + 0.4 * grow) * big);
+      // Flat things sway so they never turn edge-on; solid things turn slowly.
+      const flat = t === card || t === drive || t === mast;
+      t.rotation.y = flat ? 0.12 * side0 + Math.sin(f.time * 0.6) * 0.2 : (last ? -0.5 : 0) + f.time * (last ? 0.12 : 0.35);
+      t.position.y = Math.sin(f.time * 0.8) * 0.06;
+      if (t === cable && !ctx.reduced) {
+        for (const j of joints) {
+          const wave = 0.5 + 0.5 * Math.sin(f.time * 1.6 - j.finger * 0.55);
+          curlQ.setFromAxisAngle(curlAxis, wave * (j.finger ? 0.75 : 0.4) * (1 - j.depth * 0.15));
+          j.bone.quaternion.copy(j.rest).multiply(curlQ);
+        }
+      }
+      if (t === mast) {
+        const fp = flagGeo.attributes.position as THREE.BufferAttribute;
+        for (let k = 0; k < fp.count; k++) {
+          const x = flagRest[k * 3], y = flagRest[k * 3 + 1], free = (x + flagW / 2) / flagW; // 0 at the pole
+          fp.setZ(k, ctx.reduced ? 0 : Math.sin(x * 2.4 - f.time * 3.2 + y * 0.4) * 0.16 * free);
+        }
+        fp.needsUpdate = true;
+        flagGeo.computeVertexNormals();
+      }
+      if (t === house) {
+        // The walker crosses to the door, again and again, on the model's own walk cycle.
+        const w = ctx.reduced ? 0.5 : (f.time * 0.12) % 1;
+        walker.position.x = -1.9 + w * 2.6;
+        walker.rotation.y = Math.PI / 2;
+        if (!ctx.reduced) mixer?.update(f.dt);
+        walker.visible = w < 0.94; // through the door
+      }
+
+      cloud.visible = clouded[i];
+      cloud.position.set(0, 2.5, -0.5);
+      cloud.rotation.y = f.time * 0.1;
+      const top = new THREE.Vector3(0, 1.0, 0);
+      const pos = thread.geometry.attributes.position as THREE.BufferAttribute;
+      pos.setXYZ(0, top.x, top.y, top.z);
+      pos.setXYZ(1, 0, 2.0, -0.4);
+      pos.needsUpdate = true;
+      thread.visible = clouded[i] && ch.fall < 0.02;
+
+      const wide = f.aspect > 1.05;
+      const side = ctx.rtl ? -1 : 1;
+      holder.position.set(wide ? 2.6 * side : 0, wide ? -0.3 : 1.6, 0);
+      holder.scale.setScalar(1);
+      if (wide && i === SERVICES) {
+        // The receipt fills the right column: the services take their turns small, in the gap under the words.
+        holder.position.set(-2.75 * side, -1.85, 0);
+        holder.scale.setScalar(0.62);
+        cloud.visible = thread.visible = false;
+      }
+      camera.aspect = f.aspect;
+      camera.position.set(0, 0.6, wide ? 12 : 17);
+      camera.lookAt(0, 0.3, 0);
+      camera.updateProjectionMatrix();
+    },
+  };
+  return ch;
+}

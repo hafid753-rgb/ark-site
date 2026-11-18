@@ -1,0 +1,91 @@
+---
+// The one-file edition: the whole story as a single self-contained HTML file.
+// No scripts, no fonts, no images, no requests. Opens from a download, offline.
+import { copy, langs, type Lang } from '../../i18n';
+import { coordinates } from '../../site';
+import { asciiMark } from '../../mark';
+
+export function getStaticPaths() {
+  return langs.map((lang) => ({ params: { lang } }));
+}
+const lang = Astro.params.lang as Lang;
+const t = copy[lang];
+const dir = lang === 'ar' ? 'rtl' : 'ltr';
+const art = asciiMark(lang === 'ar' ? 40 : 56, t.glyphs.replace(/\s/g, ''));
+const chapters = [
+  { k: t.rented.kicker, h: t.rented.title, p: '' },
+  { k: t.yours.kicker, h: t.yours.title, p: t.yours.body },
+  { k: t.connected.kicker, h: t.connected.title, p: t.connected.body },
+  { k: t.offline.kicker, h: t.offline.title, p: t.offline.after },
+  { k: t.control.kicker, h: t.control.title, p: t.control.body },
+  { k: t.cinema.kicker, h: t.cinema.title, p: t.cinema.body },
+  { k: t.setup.kicker, h: t.setup.title, p: t.setup.body },
+];
+---
+<!doctype html>
+<html lang={lang} dir={dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>{t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <style>
+      :root { color-scheme: dark; background: #000; color: #f5f5f7; font: 400 18px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      body { margin: 0; }
+      main { width: min(100% - 40px, 44rem); margin: 0 auto; padding: 72px 0; }
+      pre { font: 10px/1.05 ui-monospace, monospace; color: #86868b; overflow: hidden; margin: 0 0 48px; }
+      h1 { font-size: clamp(40px, 8vw, 72px); line-height: 1; letter-spacing: -0.03em; font-weight: 600; margin: 0 0 20px; }
+      h2 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 600; margin: 8px 0 16px; }
+      :lang(ar) h1, :lang(ar) h2 { letter-spacing: 0; line-height: 1.3; }
+      section { padding: 48px 0; border-top: 1px solid rgb(245 245 247 / 0.12); }
+      .k { font: 13px ui-monospace, monospace; color: #2997ff; }
+      .muted { color: #a1a1a6; }
+      ol, ul { padding-inline-start: 20px; }
+      li { margin: 12px 0; }
+      .year { font: 600 28px ui-monospace, monospace; color: #2997ff; display: block; }
+      a { color: #2997ff; }
+      footer { color: #86868b; font-size: 14px; padding-top: 32px; border-top: 1px solid rgb(245 245 247 / 0.12); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <pre aria-hidden="true">{art}</pre>
+      <h1>{t.hero.title}</h1>
+      <p class="muted">{t.hero.sub}</p>
+
+      {chapters.map((c, i) => (
+        <section>
+          <p class="k">{c.k}</p>
+          <h2>{c.h}</h2>
+          {c.p && <p class="muted">{c.p}</p>}
+          {i === 0 && (
+            <>
+              <ol>{t.rented.facts.map((f) => <li><span class="year">{f.year}</span>{f.text} <a href={f.source} rel="noreferrer">{t.rented.source}</a></li>)}</ol>
+              <h3>{t.rented.services.title}</h3>
+              <p class="muted">{t.rented.services.body}</p>
+              <ul>{t.rented.services.items.map((sv) => <li><strong>{sv.name}</strong>: {sv.value}. {sv.note} <a href={sv.source} rel="noreferrer">{t.rented.source}</a></li>)}</ul>
+              <p>{t.rented.lead}</p>
+              <p><strong>{t.rented.closing}</strong></p>
+            </>
+          )}
+          {i === 1 && <ul>{t.yours.parts.map((p) => <li><strong>{p.name}</strong> {p.text}</li>)}</ul>}
+          {i === 5 && <ul>{t.cinema.apps.map((a) => <li><strong>{a.name}</strong> {a.text}</li>)}</ul>}
+          {i === 6 && t.setup.places.map((pl) => <><h3>{pl.name}</h3><ul>{pl.items.map((it) => <li>{it}</li>)}</ul></>)}
+        </section>
+      ))}
+
+
+      <section>
+        <h2>{t.start.title}</h2>
+        <ul>{t.start.offers.map((o) => <li><strong>{o.name}</strong> {o.text}</li>)}</ul>
+      </section>
+
+      <footer>
+        <p>{t.footer.tagline}</p>
+        <p>{t.footer.privacy}</p>
+        <p dir="ltr">{coordinates}</p>
+      </footer>
+    </main>
+  </body>
+</html>
